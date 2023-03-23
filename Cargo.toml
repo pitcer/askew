@@ -5,3 +5,14 @@ authors = ["Piotr Dobiech"]
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.70"
+
+[dependencies.winit]
+version = "0.28.3"
+default-features = false
+features = ["x11"]
+
+[dependencies.softbuffer]
+version = "0.2.0"
+default-features = false
+features = ["x11"]
