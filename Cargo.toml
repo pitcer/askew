@@ -6,13 +6,21 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.70"
+bytemuck = "1.13.1"
+nalgebra = "0.32.2"
+tiny-skia-path = "0.8.3"
 
-[dependencies.winit]
-version = "0.28.3"
+[dependencies.tiny-skia]
+version = "0.8.3"
 default-features = false
-features = ["x11"]
+features = ["std", "simd"]
 
 [dependencies.softbuffer]
 version = "0.2.0"
+default-features = false
+features = ["x11"]
+
+[dependencies.winit]
+version = "0.28.3"
 default-features = false
 features = ["x11"]
