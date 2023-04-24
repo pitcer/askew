@@ -1,12 +1,12 @@
 use anyhow::Result;
-use nalgebra::Point2;
-use tiny_skia_path::{PathBuilder, Stroke};
+use tiny_skia_path::{Path, PathBuilder, Stroke};
 
-use crate::canvas::curve::Curve;
+use crate::canvas::curve::{Curve, CurvePoint};
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
 use crate::canvas::layout::Panel;
 use crate::canvas::paint::{BgraColor, PaintBuilder};
+use crate::curve_apply;
 
 pub mod curve;
 pub mod geometry;
@@ -24,21 +24,17 @@ impl Canvas {
     }
 
     pub fn add_point(&mut self, point: Point<f32>) {
-        let point = Point2::from([point.horizontal(), point.vertical()]);
         self.content.add_point(point)
     }
 
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
-        let mut path = PathBuilder::new();
-        let mut points = self.content.line_approx_points();
-        let Some(first_point) = points.next() else {
+        if self.content.points().len() < 2 {
             return Ok(());
-        };
-        path.move_to(first_point.x, first_point.y);
-        for point in points {
-            path.line_to(point.x, point.y);
         }
-        let Some(path) = path.finish() else {
+
+        let Some(path) = curve_apply!(&self.content => |curve| {
+            Self::create_path(curve.line_approx_points())
+        }) else {
             return Ok(());
         };
 
@@ -54,5 +50,19 @@ impl Canvas {
         panel.draw_path(&path, &paint, &stroke)?;
 
         Ok(())
+    }
+
+    fn create_path(mut points: impl Iterator<Item = CurvePoint>) -> Option<Path> {
+        let mut path = PathBuilder::new();
+
+        let point = points.next()?;
+        path.move_to(point.horizontal(), point.vertical());
+
+        for point in points {
+            path.line_to(point.horizontal(), point.vertical());
+        }
+
+        let path = path.finish()?;
+        Some(path)
     }
 }

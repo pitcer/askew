@@ -5,7 +5,7 @@ use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
-use crate::canvas::curve::polyline::Polyline;
+use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::Curve;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
@@ -26,12 +26,27 @@ impl Frame {
         let context =
             unsafe { GraphicsContext::new(&window, &window) }.expect("Platform is not supported");
         let size = window.inner_size();
-        let pixmap = Pixmap::new(size.width, size.height).unwrap();
+        let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
         let window_rectangle = Self::size_rectangle(size);
         let layout = Layout::new(pixmap, window_rectangle);
+        // let canvas = Canvas::new(
+        //     Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
+        //     Curve::Trochoid(Trochoid::new(
+        //         5000,
+        //         (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
+        //         0.3,
+        //         0.8,
+        //         0.3,
+        //         0.7,
+        //     )),
+        // );
+        // let canvas = Canvas::new(
+        //     window_rectangle.into(),
+        //     Curve::Polyline(Polyline::new(vec![])),
+        // );
         let canvas = Canvas::new(
             window_rectangle.into(),
-            Curve::Polyline(Polyline::new(vec![])),
+            Curve::Interpolation(Interpolation::new(vec![], 5000, (0.0, size.width as f32))),
         );
         Ok(Self {
             window,
@@ -67,7 +82,7 @@ impl Frame {
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        let pixmap = Pixmap::new(size.width, size.height).unwrap();
+        let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
         let rectangle = Self::size_rectangle(size);
         let layout = Layout::new(pixmap, rectangle);
         self.layout = layout

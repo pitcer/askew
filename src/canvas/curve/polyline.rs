@@ -1,19 +1,23 @@
-use nalgebra::Point2;
+use crate::canvas::curve::CurvePoint;
 
 pub struct Polyline {
-    points: Vec<Point2<f32>>,
+    points: Vec<CurvePoint>,
 }
 
 impl Polyline {
-    pub fn new(points: Vec<Point2<f32>>) -> Self {
+    pub fn new(points: Vec<CurvePoint>) -> Self {
         Self { points }
     }
 
-    pub fn line_approx_points(&self) -> impl Iterator<Item = &Point2<f32>> {
-        self.points.iter()
+    pub fn line_approx_points(&self) -> impl Iterator<Item = CurvePoint> + '_ {
+        self.points.iter().copied()
     }
 
-    pub fn add_point(&mut self, point: Point2<f32>) {
+    pub fn add_point(&mut self, point: CurvePoint) {
         self.points.push(point)
+    }
+
+    pub fn points(&self) -> &[CurvePoint] {
+        &self.points
     }
 }

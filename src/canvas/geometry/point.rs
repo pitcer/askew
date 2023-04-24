@@ -28,6 +28,21 @@ where
     }
 }
 
+impl<T> From<Point<T>> for (T, T) {
+    fn from(value: Point<T>) -> Self {
+        (value.horizontal, value.vertical)
+    }
+}
+
+impl<T> From<(T, T)> for Point<T> {
+    fn from(value: (T, T)) -> Self {
+        Point {
+            horizontal: value.0,
+            vertical: value.1,
+        }
+    }
+}
+
 impl From<Point<NonZeroU32>> for Point<u32> {
     fn from(value: Point<NonZeroU32>) -> Self {
         Point {

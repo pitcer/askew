@@ -48,4 +48,8 @@ impl<'a> Panel<'a> {
             .stroke_path(path, paint, stroke, Transform::identity(), None)
             .ok_or_else(|| anyhow!("Invalid arguments"))
     }
+
+    pub fn area(&self) -> Rectangle<u32> {
+        self.area
+    }
 }

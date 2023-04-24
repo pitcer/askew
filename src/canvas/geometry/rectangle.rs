@@ -1,5 +1,5 @@
 use std::num::NonZeroU32;
-use std::ops::Add;
+use std::ops::{Add, Div};
 
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::size::Size;
@@ -27,6 +27,15 @@ where
 
     pub fn size(&self) -> Size<T> {
         self.size
+    }
+}
+
+impl<T> Rectangle<T>
+where
+    T: Copy + Div<Output = T>,
+{
+    pub fn sides_ratio(&self) -> T {
+        self.size.width() / self.size.height()
     }
 }
 
