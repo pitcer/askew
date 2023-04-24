@@ -6,11 +6,9 @@ pub struct PaintBuilder<'a> {
 
 impl<'a> PaintBuilder<'a> {
     pub fn new() -> Self {
-        let paint = Paint {
-            anti_alias: true,
-            ..Paint::default()
-        };
-        Self { paint }
+        Self {
+            paint: Paint::default(),
+        }
     }
 
     pub fn bgra_color(mut self, color: BgraColor) -> PaintBuilder<'a> {

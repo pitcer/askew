@@ -43,10 +43,9 @@ impl<'a> Panel<'a> {
         self.buffer.fill(color.into())
     }
 
-    pub fn draw_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) -> Result<()> {
+    pub fn draw_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
         self.buffer
             .stroke_path(path, paint, stroke, Transform::identity(), None)
-            .ok_or_else(|| anyhow!("Invalid arguments"))
     }
 
     pub fn area(&self) -> Rectangle<u32> {

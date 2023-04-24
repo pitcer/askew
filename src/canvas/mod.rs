@@ -47,7 +47,7 @@ impl Canvas {
             ..Stroke::default()
         };
 
-        panel.draw_path(&path, &paint, &stroke)?;
+        panel.draw_path(&path, &paint, &stroke);
 
         Ok(())
     }
