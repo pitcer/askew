@@ -1,5 +1,5 @@
 [package]
-name = "cue"
+name = "askew"
 version = "0.1.0"
 authors = ["Piotr Dobiech"]
 edition = "2021"

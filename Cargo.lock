@@ -54,6 +54,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 
 [[package]]
+name = "askew"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "nalgebra",
+ "softbuffer",
+ "tiny-skia",
+ "tiny-skia-path",
+ "winit",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -193,19 +206,6 @@ dependencies = [
  "core-foundation",
  "foreign-types",
  "libc",
-]
-
-[[package]]
-name = "cue"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "nalgebra",
- "softbuffer",
- "tiny-skia",
- "tiny-skia-path",
- "winit",
 ]
 
 [[package]]
