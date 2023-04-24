@@ -69,16 +69,16 @@ impl Frame {
         let buffer = self.layout.buffer();
         let buffer = buffer.data();
         let buffer = bytemuck::cast_slice(buffer);
-        let size = self.window.inner_size();
-        let (width, height) = (size.width, size.height);
-        self.context.set_buffer(buffer, width as u16, height as u16);
-        self.window.request_redraw();
+        let size = self.layout.area().size();
+        self.context
+            .set_buffer(buffer, size.width() as u16, size.height() as u16);
         Ok(())
     }
 
     pub fn add_point(&mut self, position: PhysicalPosition<f64>) {
         let point = self.scale_position(position);
-        self.canvas.add_point(point)
+        self.canvas.add_point(point);
+        self.window.request_redraw();
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {

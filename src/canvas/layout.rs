@@ -1,4 +1,3 @@
-use anyhow::{anyhow, Result};
 use tiny_skia::{Paint, Pixmap, PixmapMut, PixmapRef};
 use tiny_skia_path::{Path, Stroke, Transform};
 
@@ -26,6 +25,10 @@ impl Layout {
 
     pub fn buffer(&self) -> PixmapRef<'_> {
         self.buffer.as_ref()
+    }
+
+    pub fn area(&self) -> Rectangle<u32> {
+        self.area
     }
 }
 

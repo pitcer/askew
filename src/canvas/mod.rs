@@ -27,6 +27,10 @@ impl Canvas {
         self.content.add_point(point)
     }
 
+    pub fn resize(&mut self, area: Rectangle<f32>) {
+        self.area = area
+    }
+
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
         if self.content.points().len() < 2 {
             return Ok(());
