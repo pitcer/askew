@@ -1,3 +1,4 @@
+use crate::command::{Command, SaveFormat};
 use anyhow::Result;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{DeviceId, ElementState, Event, MouseButton, WindowEvent};
@@ -8,14 +9,16 @@ use crate::ui::frame::Frame;
 pub struct EventHandler {
     frame: Frame,
     cursor_position: PhysicalPosition<f64>,
+    save_format: Option<SaveFormat>,
 }
 
 impl EventHandler {
-    pub fn new(frame: Frame) -> Self {
+    pub fn new(frame: Frame, command: &Command) -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
         Self {
             frame,
             cursor_position,
+            save_format: command.save_format,
         }
     }
 
@@ -27,7 +30,7 @@ impl EventHandler {
                 self.frame.draw()?;
             }
             Event::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
-                self.handle_window_event(event, control_flow)
+                self.handle_window_event(event, control_flow)?
             }
             _ => {}
         }
@@ -35,10 +38,19 @@ impl EventHandler {
         Ok(())
     }
 
-    fn handle_window_event(&mut self, event: WindowEvent, control_flow: &mut ControlFlow) {
+    fn handle_window_event(
+        &mut self,
+        event: WindowEvent,
+        control_flow: &mut ControlFlow,
+    ) -> Result<()> {
         match event {
             WindowEvent::Resized(size) => self.handle_resized(size),
-            WindowEvent::CloseRequested => control_flow.set_exit(),
+            WindowEvent::CloseRequested => {
+                if let Some(format) = self.save_format {
+                    self.frame.save(format)?;
+                }
+                control_flow.set_exit()
+            }
             WindowEvent::CursorMoved {
                 device_id,
                 position,
@@ -52,6 +64,7 @@ impl EventHandler {
             } => self.handle_mouse_input(device_id, state, button),
             _ => {}
         }
+        Ok(())
     }
 
     fn handle_resized(&mut self, size: PhysicalSize<u32>) {

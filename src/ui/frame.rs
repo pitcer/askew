@@ -1,4 +1,5 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use image::{ImageFormat, RgbImage};
 use softbuffer::GraphicsContext;
 use tiny_skia::Pixmap;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
@@ -15,7 +16,7 @@ use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
 use crate::canvas::paint::BgraColor;
 use crate::canvas::Canvas;
-use crate::command::{Command, CurveType};
+use crate::command::{Command, CurveType, SaveFormat};
 
 pub struct Frame {
     window: Window,
@@ -98,6 +99,28 @@ impl Frame {
         let rectangle = Self::size_rectangle(size);
         let layout = Layout::new(pixmap, rectangle);
         self.layout = layout
+    }
+
+    pub fn save(&mut self, format: SaveFormat) -> Result<()> {
+        match format {
+            SaveFormat::Png => {
+                let panel = self.layout.panel();
+                self.canvas.rasterize(panel)?;
+                let buffer = self.layout.buffer();
+                let buffer = buffer.data();
+                let buffer: &[[u8; 4]] = bytemuck::cast_slice(buffer);
+                let buffer = buffer
+                    .iter()
+                    .copied()
+                    .flat_map(|[b, g, r, _a]| [r, g, b])
+                    .collect::<Vec<_>>();
+                let size = self.layout.area().size();
+                let image = RgbImage::from_raw(size.width(), size.height(), buffer)
+                    .ok_or_else(|| anyhow!("Image should fit"))?;
+                image.save_with_format("curve.png", ImageFormat::Png)?;
+            }
+        }
+        Ok(())
     }
 
     pub fn has_id(&self, id: WindowId) -> bool {
