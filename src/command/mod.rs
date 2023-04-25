@@ -4,6 +4,9 @@ pub struct Command {
     #[arg(short, long, value_enum, default_value_t = CurveType::Polyline)]
     pub curve_type: CurveType,
 
+    #[arg(short = 'e', long, default_value_t = false)]
+    pub chebyshev_nodes: bool,
+
     #[arg(short, long, default_value_t = 5000)]
     pub interpolation_samples: u32,
 

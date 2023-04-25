@@ -45,6 +45,7 @@ impl Frame {
                 Curve::Interpolation(Interpolation::new(
                     Vec::new(),
                     command.interpolation_samples,
+                    command.chebyshev_nodes,
                 )),
                 command,
             ),
