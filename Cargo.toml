@@ -10,15 +10,19 @@ bytemuck = "1.13.1"
 nalgebra = "0.32.2"
 tiny-skia-path = "0.9.0"
 
-[dependencies.tiny-skia]
-version = "0.9.0"
-default-features = false
-features = ["std", "simd"]
+[dependencies.clap]
+version = "4.2.4"
+features = ["derive"]
 
 [dependencies.softbuffer]
 version = "0.2.0"
 default-features = false
 features = ["x11"]
+
+[dependencies.tiny-skia]
+version = "0.9.0"
+default-features = false
+features = ["std", "simd"]
 
 [dependencies.winit]
 version = "0.28.3"

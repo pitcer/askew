@@ -7,6 +7,7 @@ use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
 use crate::canvas::layout::Panel;
 use crate::canvas::paint::{BgraColor, PaintBuilder};
+use crate::command::Command;
 use crate::curve_apply;
 
 pub mod curve;
@@ -17,11 +18,18 @@ pub mod paint;
 pub struct Canvas {
     area: Rectangle<f32>,
     content: Curve,
+    line_width: f32,
+    point_radius: f32,
 }
 
 impl Canvas {
-    pub fn new(area: Rectangle<f32>, content: Curve) -> Self {
-        Self { area, content }
+    pub fn new(area: Rectangle<f32>, content: Curve, command: &Command) -> Self {
+        Self {
+            area,
+            content,
+            line_width: command.line_width,
+            point_radius: command.point_radius,
+        }
     }
 
     pub fn add_point(&mut self, point: Point<f32>) {
@@ -40,7 +48,7 @@ impl Canvas {
                 .bgra_color(BgraColor::from_rgba(255, 255, 0, 255))
                 .build();
             let stroke = Stroke {
-                width: 4.0,
+                width: self.line_width,
                 ..Stroke::default()
             };
             panel.draw_stroke_path(&path, &paint, &stroke);
@@ -74,7 +82,7 @@ impl Canvas {
         let mut path = PathBuilder::new();
 
         for point in self.content.points() {
-            path.push_circle(point.horizontal(), point.vertical(), 6.0);
+            path.push_circle(point.horizontal(), point.vertical(), self.point_radius);
         }
 
         let path = path.finish()?;

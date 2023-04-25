@@ -6,12 +6,16 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
 use crate::canvas::curve::interpolation::Interpolation;
+use crate::canvas::curve::polyline::Polyline;
+use crate::canvas::curve::trochoid::Trochoid;
 use crate::canvas::curve::Curve;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
+use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
 use crate::canvas::paint::BgraColor;
 use crate::canvas::Canvas;
+use crate::command::{Command, CurveType};
 
 pub struct Frame {
     window: Window,
@@ -21,33 +25,41 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(event_loop: &EventLoop<()>) -> Result<Self> {
-        let window = WindowBuilder::new().with_title("cue").build(event_loop)?;
+    pub fn new(event_loop: &EventLoop<()>, command: &Command) -> Result<Self> {
+        let window = WindowBuilder::new().with_title("askew").build(event_loop)?;
         let context =
             unsafe { GraphicsContext::new(&window, &window) }.expect("Platform is not supported");
         let size = window.inner_size();
         let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
         let window_rectangle = Self::size_rectangle(size);
         let layout = Layout::new(pixmap, window_rectangle);
-        // let canvas = Canvas::new(
-        //     Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
-        //     Curve::Trochoid(Trochoid::new(
-        //         5000,
-        //         (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
-        //         0.3,
-        //         0.8,
-        //         0.3,
-        //         0.7,
-        //     )),
-        // );
-        // let canvas = Canvas::new(
-        //     window_rectangle.into(),
-        //     Curve::Polyline(Polyline::new(Vec::new())),
-        // );
-        let canvas = Canvas::new(
-            window_rectangle.into(),
-            Curve::Interpolation(Interpolation::new(Vec::new(), 5000)),
-        );
+        let canvas = match command.curve_type {
+            CurveType::Polyline => Canvas::new(
+                window_rectangle.into(),
+                Curve::Polyline(Polyline::new(Vec::new())),
+                command,
+            ),
+            CurveType::Interpolation => Canvas::new(
+                window_rectangle.into(),
+                Curve::Interpolation(Interpolation::new(
+                    Vec::new(),
+                    command.interpolation_samples,
+                )),
+                command,
+            ),
+            CurveType::Trochoid => Canvas::new(
+                Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
+                Curve::Trochoid(Trochoid::new(
+                    5000,
+                    (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
+                    0.3,
+                    0.8,
+                    0.3,
+                    0.7,
+                )),
+                command,
+            ),
+        };
         Ok(Self {
             window,
             context,
