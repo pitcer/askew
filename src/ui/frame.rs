@@ -42,11 +42,11 @@ impl Frame {
         // );
         // let canvas = Canvas::new(
         //     window_rectangle.into(),
-        //     Curve::Polyline(Polyline::new(vec![])),
+        //     Curve::Polyline(Polyline::new(Vec::new())),
         // );
         let canvas = Canvas::new(
             window_rectangle.into(),
-            Curve::Interpolation(Interpolation::new(vec![], 5000, (0.0, size.width as f32))),
+            Curve::Interpolation(Interpolation::new(Vec::new(), 5000)),
         );
         Ok(Self {
             window,

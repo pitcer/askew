@@ -3,35 +3,25 @@ use crate::canvas::curve::CurvePoint;
 pub struct Interpolation {
     points: Vec<CurvePoint>,
     samples: u32,
-    range: (f32, f32),
 }
 
 impl Interpolation {
-    pub fn new(points: Vec<CurvePoint>, samples: u32, range: (f32, f32)) -> Self {
-        Self {
-            points,
-            samples,
-            range,
-        }
+    pub fn new(points: Vec<CurvePoint>, samples: u32) -> Self {
+        Self { points, samples }
     }
 
     pub fn line_approx_points(&self) -> Option<impl Iterator<Item = CurvePoint> + '_> {
-        if self.points.is_empty() {
+        if self.points.len() < 2 {
             return None;
         }
 
-        let delta = self.range.1 - self.range.0;
-        let times = (0..=self.samples)
-            .map(move |index| self.range.0 + (index as f32 * delta) / self.samples as f32);
+        let times = (0..self.samples).map(|index| index as f32 / (self.samples - 1) as f32);
         let ts = (0..self.points.len())
-            .map(move |index| self.range.0 + (index as f32 * delta) / self.points.len() as f32)
+            .map(|index| index as f32 / (self.points.len() - 1) as f32)
             .collect::<Vec<_>>();
+
         let (xs, ys): (Vec<_>, Vec<_>) = self.points.iter().map(|point| (*point).into()).unzip();
-        Some(
-            times
-                .into_iter()
-                .map(move |t| (self.lagrange(t, &ts, &xs), self.lagrange(t, &ts, &ys)).into()),
-        )
+        Some(times.map(move |t| (self.lagrange(t, &ts, &xs), self.lagrange(t, &ts, &ys)).into()))
     }
 
     pub fn add_point(&mut self, point: CurvePoint) {
