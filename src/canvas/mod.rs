@@ -1,4 +1,5 @@
 use anyhow::Result;
+use tiny_skia::FillRule;
 use tiny_skia_path::{Path, PathBuilder, Stroke};
 
 use crate::canvas::curve::{Curve, CurvePoint};
@@ -32,31 +33,30 @@ impl Canvas {
     }
 
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
-        if self.content.points().len() < 2 {
-            return Ok(());
+        if let Some(path) = curve_apply!(&self.content => |curve| {
+            Self::create_path(curve.line_approx_points())
+        }) {
+            let paint = PaintBuilder::new()
+                .bgra_color(BgraColor::from_rgba(255, 255, 0, 255))
+                .build();
+            let stroke = Stroke {
+                width: 4.0,
+                ..Stroke::default()
+            };
+            panel.draw_stroke_path(&path, &paint, &stroke);
         }
 
-        let Some(path) = curve_apply!(&self.content => |curve| {
-            Self::create_path(curve.line_approx_points())
-        }) else {
-            return Ok(());
-        };
-
-        let paint = PaintBuilder::new()
-            .bgra_color(BgraColor::from_rgba(255, 255, 0, 255))
-            .build();
-
-        let stroke = Stroke {
-            width: 4.0,
-            ..Stroke::default()
-        };
-
-        panel.draw_path(&path, &paint, &stroke);
-
+        if let Some(points_path) = self.create_points_path() {
+            let points_paint = PaintBuilder::new()
+                .bgra_color(BgraColor::from_rgba(255, 0, 255, 255))
+                .build();
+            panel.draw_fill_path(&points_path, &points_paint, FillRule::Winding);
+        }
         Ok(())
     }
 
-    fn create_path(mut points: impl Iterator<Item = CurvePoint>) -> Option<Path> {
+    fn create_path(points: Option<impl Iterator<Item = CurvePoint>>) -> Option<Path> {
+        let mut points = points?;
         let mut path = PathBuilder::new();
 
         let point = points.next()?;
@@ -64,6 +64,17 @@ impl Canvas {
 
         for point in points {
             path.line_to(point.horizontal(), point.vertical());
+        }
+
+        let path = path.finish()?;
+        Some(path)
+    }
+
+    fn create_points_path(&self) -> Option<Path> {
+        let mut path = PathBuilder::new();
+
+        for point in self.content.points() {
+            path.push_circle(point.horizontal(), point.vertical(), 6.0);
         }
 
         let path = path.finish()?;

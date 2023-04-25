@@ -1,4 +1,4 @@
-use tiny_skia::{Paint, Pixmap, PixmapMut, PixmapRef};
+use tiny_skia::{FillRule, Paint, Pixmap, PixmapMut, PixmapRef};
 use tiny_skia_path::{Path, Stroke, Transform};
 
 use crate::canvas::geometry::rectangle::Rectangle;
@@ -46,9 +46,14 @@ impl<'a> Panel<'a> {
         self.buffer.fill(color.into())
     }
 
-    pub fn draw_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
+    pub fn draw_stroke_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
         self.buffer
             .stroke_path(path, paint, stroke, Transform::identity(), None)
+    }
+
+    pub fn draw_fill_path(&mut self, path: &Path, paint: &Paint<'_>, fill_rule: FillRule) {
+        self.buffer
+            .fill_path(path, paint, fill_rule, Transform::identity(), None)
     }
 
     pub fn area(&self) -> Rectangle<u32> {

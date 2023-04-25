@@ -15,7 +15,11 @@ impl Interpolation {
         }
     }
 
-    pub fn line_approx_points(&self) -> impl Iterator<Item = CurvePoint> + '_ {
+    pub fn line_approx_points(&self) -> Option<impl Iterator<Item = CurvePoint> + '_> {
+        if self.points.is_empty() {
+            return None;
+        }
+
         let delta = self.range.1 - self.range.0;
         let times = (0..=self.samples)
             .map(move |index| self.range.0 + (index as f32 * delta) / self.samples as f32);
@@ -23,12 +27,11 @@ impl Interpolation {
             .map(move |index| self.range.0 + (index as f32 * delta) / self.points.len() as f32)
             .collect::<Vec<_>>();
         let (xs, ys): (Vec<_>, Vec<_>) = self.points.iter().map(|point| (*point).into()).unzip();
-        // times
-        //     .into_iter()
-        //     .map(move |t| (t, self.lagrange(t, &xs, &ys)).into())
-        times
-            .into_iter()
-            .map(move |t| (self.lagrange(t, &ts, &xs), self.lagrange(t, &ts, &ys)).into())
+        Some(
+            times
+                .into_iter()
+                .map(move |t| (self.lagrange(t, &ts, &xs), self.lagrange(t, &ts, &ys)).into()),
+        )
     }
 
     pub fn add_point(&mut self, point: CurvePoint) {

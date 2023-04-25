@@ -9,8 +9,8 @@ impl Polyline {
         Self { points }
     }
 
-    pub fn line_approx_points(&self) -> impl Iterator<Item = CurvePoint> + '_ {
-        self.points.iter().copied()
+    pub fn line_approx_points(&self) -> Option<impl Iterator<Item = CurvePoint> + '_> {
+        Some(self.points.iter().copied())
     }
 
     pub fn add_point(&mut self, point: CurvePoint) {
