@@ -1,4 +1,4 @@
-use tiny_skia::{FillRule, Paint, Pixmap, PixmapMut, PixmapRef};
+use tiny_skia::{FillRule, Paint, Pixmap, PixmapMut, PixmapPaint, PixmapRef};
 use tiny_skia_path::{Path, Stroke, Transform};
 
 use crate::canvas::geometry::rectangle::Rectangle;
@@ -21,6 +21,10 @@ impl Layout {
 
     pub fn fill(&mut self, color: BgraColor) {
         self.buffer.fill(color.into())
+    }
+
+    pub fn draw_pixmap(&mut self, x: i32, y: i32, pixmap: PixmapRef) {
+        self.buffer.draw_pixmap(x, y, pixmap, &PixmapPaint::default(), Transform::identity(), None)
     }
 
     pub fn buffer(&self) -> PixmapRef<'_> {

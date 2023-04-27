@@ -1,21 +1,22 @@
 use anyhow::{anyhow, Result};
-use image::{ImageFormat, RgbImage};
+use image::{EncodableLayout, ImageFormat, RgbImage};
 use softbuffer::GraphicsContext;
 use tiny_skia::Pixmap;
+use tiny_skia_path::IntSize;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
+use crate::canvas::Canvas;
+use crate::canvas::curve::Curve;
 use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::polyline::Polyline;
 use crate::canvas::curve::trochoid::Trochoid;
-use crate::canvas::curve::Curve;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
 use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
 use crate::canvas::paint::BgraColor;
-use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 
 pub struct Frame {
@@ -23,6 +24,7 @@ pub struct Frame {
     context: GraphicsContext,
     layout: Layout,
     canvas: Canvas,
+    background: Option<Pixmap>,
 }
 
 impl Frame {
@@ -32,6 +34,20 @@ impl Frame {
             unsafe { GraphicsContext::new(&window, &window) }.expect("Platform is not supported");
         let size = window.inner_size();
         let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
+        let background = if let Some(path) = &command.background_path {
+            let image = image::open(path)?;
+            let image = image.into_rgb8();
+            let buffer: &[[u8; 3]] = bytemuck::cast_slice(image.as_bytes());
+            let buffer = buffer
+                .iter()
+                .copied()
+                .flat_map(|[r, g, b]| [b, g, r, 0])
+                .collect::<Vec<_>>();
+            let image_pixmap = Pixmap::from_vec(buffer, IntSize::from_wh(image.width(), image.height()).unwrap()).unwrap();
+            Some(image_pixmap)
+        } else {
+            None
+        };
         let window_rectangle = Self::size_rectangle(size);
         let layout = Layout::new(pixmap, window_rectangle);
         let canvas = match command.curve_type {
@@ -67,6 +83,7 @@ impl Frame {
             context,
             layout,
             canvas,
+            background
         })
     }
 
@@ -78,6 +95,9 @@ impl Frame {
 
     pub fn draw(&mut self) -> Result<()> {
         self.layout.fill(BgraColor::from_rgba(32, 32, 32, 255));
+        if let Some(background) = &self.background {
+            self.layout.draw_pixmap(0, 0, background.as_ref());
+        }
         let panel = self.layout.panel();
         self.canvas.rasterize(panel)?;
         let buffer = self.layout.buffer();

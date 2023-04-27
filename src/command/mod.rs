@@ -18,6 +18,9 @@ pub struct Command {
 
     #[arg(short, long, value_enum)]
     pub save_format: Option<SaveFormat>,
+
+    #[arg(short, long)]
+    pub background_path: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy)]
