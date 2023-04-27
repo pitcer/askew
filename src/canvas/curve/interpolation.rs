@@ -8,7 +8,11 @@ pub struct Interpolation {
 
 impl Interpolation {
     pub fn new(points: Vec<CurvePoint>, samples: u32, chebyshev_nodes: bool) -> Self {
-        Self { points, samples, chebyshev_nodes }
+        Self {
+            points,
+            samples,
+            chebyshev_nodes,
+        }
     }
 
     pub fn line_approx_points(&self) -> Option<impl Iterator<Item = CurvePoint> + '_> {
@@ -30,9 +34,8 @@ impl Interpolation {
             (ts, 0.0, 1.0)
         };
 
-        let times = (0..self.samples).map(move |index| {
-            (index as f32 / (self.samples - 1) as f32) * (last - first) + first
-        });
+        let times = (0..self.samples)
+            .map(move |index| (index as f32 / (self.samples - 1) as f32) * (last - first) + first);
         let (xs, ys): (Vec<_>, Vec<_>) = self.points.iter().map(|point| (*point).into()).unzip();
         Some(times.map(move |t| (self.lagrange(t, &ts, &xs), self.lagrange(t, &ts, &ys)).into()))
     }

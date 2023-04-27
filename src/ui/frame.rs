@@ -7,16 +7,16 @@ use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
-use crate::canvas::Canvas;
-use crate::canvas::curve::Curve;
 use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::polyline::Polyline;
 use crate::canvas::curve::trochoid::Trochoid;
+use crate::canvas::curve::Curve;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
 use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
 use crate::canvas::paint::BgraColor;
+use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 
 pub struct Frame {
@@ -43,7 +43,11 @@ impl Frame {
                 .copied()
                 .flat_map(|[r, g, b]| [b, g, r, 0])
                 .collect::<Vec<_>>();
-            let image_pixmap = Pixmap::from_vec(buffer, IntSize::from_wh(image.width(), image.height()).unwrap()).unwrap();
+            let image_pixmap = Pixmap::from_vec(
+                buffer,
+                IntSize::from_wh(image.width(), image.height()).unwrap(),
+            )
+            .unwrap();
             Some(image_pixmap)
         } else {
             None
@@ -83,7 +87,7 @@ impl Frame {
             context,
             layout,
             canvas,
-            background
+            background,
         })
     }
 

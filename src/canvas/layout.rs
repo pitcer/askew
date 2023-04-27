@@ -20,11 +20,18 @@ impl Layout {
     }
 
     pub fn fill(&mut self, color: BgraColor) {
-        self.buffer.fill(color.into())
+        self.buffer.fill(color.into());
     }
 
     pub fn draw_pixmap(&mut self, x: i32, y: i32, pixmap: PixmapRef) {
-        self.buffer.draw_pixmap(x, y, pixmap, &PixmapPaint::default(), Transform::identity(), None)
+        self.buffer.draw_pixmap(
+            x,
+            y,
+            pixmap,
+            &PixmapPaint::default(),
+            Transform::identity(),
+            None,
+        )
     }
 
     pub fn buffer(&self) -> PixmapRef<'_> {
