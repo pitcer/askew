@@ -7,6 +7,7 @@ use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
+use crate::canvas::curve::bezier::Bezier;
 use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::polyline::Polyline;
 use crate::canvas::curve::trochoid::Trochoid;
@@ -64,9 +65,14 @@ impl Frame {
                 window_rectangle.into(),
                 Curve::Interpolation(Interpolation::new(
                     Vec::new(),
-                    command.interpolation_samples,
+                    command.samples,
                     command.chebyshev_nodes,
                 )),
+                command,
+            ),
+            CurveType::Bezier => Canvas::new(
+                window_rectangle.into(),
+                Curve::Bezier(Bezier::new(Vec::new(), command.samples)),
                 command,
             ),
             CurveType::Trochoid => Canvas::new(

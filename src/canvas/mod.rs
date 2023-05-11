@@ -13,6 +13,7 @@ use crate::curve_apply;
 pub mod curve;
 pub mod geometry;
 pub mod layout;
+pub mod math;
 pub mod paint;
 
 pub struct Canvas {
