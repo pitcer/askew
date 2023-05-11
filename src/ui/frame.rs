@@ -41,7 +41,7 @@ impl Frame {
             let buffer = buffer
                 .iter()
                 .copied()
-                .flat_map(|[r, g, b]| [b, g, r, 0])
+                .flat_map(|[r, g, b]| [b, g, r, 255])
                 .collect::<Vec<_>>();
             let image_pixmap = Pixmap::from_vec(
                 buffer,

@@ -1,5 +1,6 @@
 use crate::canvas::curve::CurvePoint;
 
+#[derive(Debug)]
 pub struct Polyline {
     points: Vec<CurvePoint>,
 }

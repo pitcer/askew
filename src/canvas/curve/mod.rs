@@ -20,6 +20,7 @@ macro_rules! curve_apply {
 
 pub type CurvePoint = Point<f32>;
 
+#[derive(Debug)]
 pub enum Curve {
     Polyline(Polyline),
     Interpolation(Interpolation),

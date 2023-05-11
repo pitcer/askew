@@ -1,6 +1,7 @@
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::geometry::point::Point;
 
+#[derive(Debug)]
 pub struct Trochoid {
     samples: u32,
     range: (f32, f32),
@@ -28,7 +29,8 @@ impl Trochoid {
             .map(move |index| self.range.0 + (index as f32 * delta) / self.samples as f32);
         let x = move |t| self.r_1 * f32::cos(self.w_1 * t) + self.r_2 * f32::cos(self.w_2 * t);
         let y = move |t| self.r_1 * f32::sin(self.w_1 * t) + self.r_2 * f32::sin(self.w_2 * t);
-        Some(times.map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0)))
+        let map = times.map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0));
+        Some(map)
     }
 
     pub fn add_point(&mut self, _point: CurvePoint) {}
