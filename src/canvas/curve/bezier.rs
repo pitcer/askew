@@ -38,11 +38,12 @@ impl Bezier {
                 let bernstein = math::bernstein(n, k as u32, t);
                 CurvePoint::new(point.horizontal() * bernstein, point.vertical() * bernstein)
             })
-            .fold(CurvePoint::new(0.0, 0.0), |accumulator, item| {
+            .reduce(|accumulator, point| {
                 CurvePoint::new(
-                    accumulator.horizontal() + item.horizontal(),
-                    accumulator.vertical() + item.vertical(),
+                    accumulator.horizontal() + point.horizontal(),
+                    accumulator.vertical() + point.vertical(),
                 )
             })
+            .expect("points should not be empty")
     }
 }
