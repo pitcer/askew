@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use image::{EncodableLayout, ImageFormat, RgbImage};
+use rand::Rng;
 use softbuffer::GraphicsContext;
 use tiny_skia::Pixmap;
 use tiny_skia_path::IntSize;
@@ -54,25 +55,39 @@ impl Frame {
             None
         };
         let window_rectangle = Self::size_rectangle(size);
+        let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
         let layout = Layout::new(pixmap, window_rectangle);
+        let mut rng = rand::thread_rng();
+        let points = (0..command.random_points)
+            .map(|_| {
+                Point::new(
+                    rng.gen_range(
+                        canvas_rectangle.origin().horizontal()..=canvas_rectangle.size().width(),
+                    ),
+                    rng.gen_range(
+                        canvas_rectangle.origin().vertical()..=canvas_rectangle.size().height(),
+                    ),
+                )
+            })
+            .collect::<Vec<_>>();
         let canvas = match command.curve_type {
             CurveType::Polyline => Canvas::new(
-                window_rectangle.into(),
-                Curve::Polyline(Polyline::new(Vec::new())),
+                canvas_rectangle,
+                Curve::Polyline(Polyline::new(points)),
                 command,
             ),
             CurveType::Interpolation => Canvas::new(
-                window_rectangle.into(),
+                canvas_rectangle,
                 Curve::Interpolation(Interpolation::new(
-                    Vec::new(),
+                    points,
                     command.samples,
                     command.chebyshev_nodes,
                 )),
                 command,
             ),
             CurveType::Bezier => Canvas::new(
-                window_rectangle.into(),
-                Curve::Bezier(Bezier::new(Vec::new(), command.samples)),
+                canvas_rectangle,
+                Curve::Bezier(Bezier::new(points, command.samples)),
                 command,
             ),
             CurveType::Trochoid => Canvas::new(

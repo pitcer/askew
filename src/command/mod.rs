@@ -21,6 +21,9 @@ pub struct Command {
 
     #[arg(short, long)]
     pub background_path: Option<String>,
+
+    #[arg(short = 'n', long, default_value_t = 0)]
+    pub random_points: u32,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy)]
