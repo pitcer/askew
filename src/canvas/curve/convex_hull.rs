@@ -1,5 +1,6 @@
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::geometry::convex_hull::GrahamScan;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct ConvexHull {
@@ -29,7 +30,7 @@ impl ConvexHull {
         self.points.push(point);
     }
 
-    pub fn points(&self) -> &[CurvePoint] {
-        &self.points
+    pub fn points(&self) -> Cow<'_, [CurvePoint]> {
+        Cow::from(&self.points)
     }
 }

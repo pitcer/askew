@@ -12,6 +12,7 @@ use crate::canvas::curve::bezier::Bezier;
 use crate::canvas::curve::convex_hull::ConvexHull;
 use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::polyline::Polyline;
+use crate::canvas::curve::rational_bezier::{RationalBezier, RationalBezierPoint};
 use crate::canvas::curve::trochoid::Trochoid;
 use crate::canvas::curve::Curve;
 use crate::canvas::geometry::point::Point;
@@ -91,6 +92,30 @@ impl Frame {
                 Curve::Bezier(Bezier::new(points, command.samples)),
                 command,
             ),
+            CurveType::RationalBezier => {
+                let points = (0..command.random_points)
+                    .map(|_| {
+                        RationalBezierPoint::new(
+                            Point::new(
+                                rng.gen_range(
+                                    canvas_rectangle.origin().horizontal()
+                                        ..=canvas_rectangle.size().width(),
+                                ),
+                                rng.gen_range(
+                                    canvas_rectangle.origin().vertical()
+                                        ..=canvas_rectangle.size().height(),
+                                ),
+                            ),
+                            rng.gen_range(0.0..1.0),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                Canvas::new(
+                    canvas_rectangle,
+                    Curve::RationalBezier(RationalBezier::new(points, command.samples)),
+                    command,
+                )
+            }
             CurveType::ConvexHull => Canvas::new(
                 canvas_rectangle,
                 Curve::ConvexHull(ConvexHull::new(points)),

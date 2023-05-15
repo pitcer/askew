@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::math;
 
@@ -25,8 +26,8 @@ impl Bezier {
         self.points.push(point)
     }
 
-    pub fn points(&self) -> &[CurvePoint] {
-        &self.points
+    pub fn points(&self) -> Cow<'_, [CurvePoint]> {
+        Cow::from(&self.points)
     }
 
     fn bezier(&self, t: f32) -> CurvePoint {

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::geometry::point::Point;
 
@@ -35,7 +37,7 @@ impl Trochoid {
 
     pub fn add_point(&mut self, _point: CurvePoint) {}
 
-    pub fn points(&self) -> &[CurvePoint] {
-        &[]
+    pub fn points(&self) -> Cow<'_, [CurvePoint]> {
+        Cow::Borrowed(&[])
     }
 }

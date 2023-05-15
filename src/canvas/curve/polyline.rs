@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use crate::canvas::curve::CurvePoint;
 
 #[derive(Debug)]
@@ -18,7 +19,7 @@ impl Polyline {
         self.points.push(point)
     }
 
-    pub fn points(&self) -> &[CurvePoint] {
-        &self.points
+    pub fn points(&self) -> Cow<'_, [CurvePoint]> {
+        Cow::from(&self.points)
     }
 }

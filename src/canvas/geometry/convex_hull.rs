@@ -19,7 +19,7 @@ enum Orientation {
 
 impl<T> GrahamScan<T>
 where
-    T: Debug + Copy + PartialOrd + Num,
+    T: Copy + PartialOrd + Num,
 {
     pub fn new(points: Vec<Point<T>>) -> Self {
         debug_assert!(points.len() >= 3);
@@ -28,8 +28,6 @@ where
     }
 
     pub fn convex_hull(&mut self) -> Vec<Point<T>> {
-        dbg!(&self.points);
-
         let (lowest_left_index, lowest_left) =
             self.find_lowest_left().expect("points should not be empty");
         self.points.swap(0, lowest_left_index);
@@ -65,7 +63,6 @@ where
             stack.push(*point)
         }
 
-        dbg!(&stack);
         stack.shrink_to_fit();
         stack
     }

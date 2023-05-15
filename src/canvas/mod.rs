@@ -93,8 +93,7 @@ impl Canvas {
 
     fn create_convex_hull_path(&self) -> Option<Path> {
         let points = self.content.points();
-        let points_clone = points.to_owned();
-        let mut graham_scan = GrahamScan::new(points_clone);
+        let mut graham_scan = GrahamScan::new(points.into_owned());
         let hull = graham_scan.convex_hull();
         let mut path = Self::build_path(hull.into_iter())?;
         path.close();
@@ -117,7 +116,7 @@ impl Canvas {
     fn create_points_path(&self) -> Option<Path> {
         let mut path = PathBuilder::new();
 
-        for point in self.content.points() {
+        for point in self.content.points().iter() {
             path.push_circle(point.horizontal(), point.vertical(), self.point_radius);
         }
 
