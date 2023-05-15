@@ -3,6 +3,7 @@ use tiny_skia::FillRule;
 use tiny_skia_path::{Path, PathBuilder, Stroke};
 
 use crate::canvas::curve::{Curve, CurvePoint};
+use crate::canvas::geometry::convex_hull::GrahamScan;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
 use crate::canvas::layout::Panel;
@@ -21,6 +22,7 @@ pub struct Canvas {
     content: Curve,
     line_width: f32,
     point_radius: f32,
+    show_convex_hull: bool,
 }
 
 impl Canvas {
@@ -30,6 +32,7 @@ impl Canvas {
             content,
             line_width: command.line_width,
             point_radius: command.point_radius,
+            show_convex_hull: command.show_convex_hull,
         }
     }
 
@@ -42,8 +45,32 @@ impl Canvas {
     }
 
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
+        if self.show_convex_hull
+            && !matches!(self.content, Curve::ConvexHull(_))
+            && self.content.points().len() >= 3
+        {
+            if let Some(path) = self.create_convex_hull_path() {
+                let paint = PaintBuilder::new()
+                    .bgra_color(BgraColor::from_rgba(0, 255, 255, 255))
+                    .build();
+                let stroke = Stroke {
+                    width: self.line_width,
+                    ..Stroke::default()
+                };
+                panel.draw_stroke_path(&path, &paint, &stroke);
+            }
+        }
+
         if let Some(path) = curve_apply!(&self.content => |curve| {
-            Self::create_path(curve.line_approx_points())
+            curve.line_approx_points()
+                .and_then(Self::build_path)
+                .map(|mut path| {
+                    if matches!(self.content, Curve::ConvexHull(_)) {
+                        path.close()
+                    }
+                    path
+                })
+                .and_then(PathBuilder::finish)
         }) {
             let paint = PaintBuilder::new()
                 .bgra_color(BgraColor::from_rgba(255, 255, 0, 255))
@@ -64,8 +91,17 @@ impl Canvas {
         Ok(())
     }
 
-    fn create_path(points: Option<impl Iterator<Item = CurvePoint>>) -> Option<Path> {
-        let mut points = points?;
+    fn create_convex_hull_path(&self) -> Option<Path> {
+        let points = self.content.points();
+        let points_clone = points.to_owned();
+        let mut graham_scan = GrahamScan::new(points_clone);
+        let hull = graham_scan.convex_hull();
+        let mut path = Self::build_path(hull.into_iter())?;
+        path.close();
+        path.finish()
+    }
+
+    fn build_path(mut points: impl Iterator<Item = CurvePoint>) -> Option<PathBuilder> {
         let mut path = PathBuilder::new();
 
         let point = points.next()?;
@@ -75,7 +111,6 @@ impl Canvas {
             path.line_to(point.horizontal(), point.vertical());
         }
 
-        let path = path.finish()?;
         Some(path)
     }
 

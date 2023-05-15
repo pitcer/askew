@@ -9,6 +9,7 @@ use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
 use crate::canvas::curve::bezier::Bezier;
+use crate::canvas::curve::convex_hull::ConvexHull;
 use crate::canvas::curve::interpolation::Interpolation;
 use crate::canvas::curve::polyline::Polyline;
 use crate::canvas::curve::trochoid::Trochoid;
@@ -88,6 +89,11 @@ impl Frame {
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
                 Curve::Bezier(Bezier::new(points, command.samples)),
+                command,
+            ),
+            CurveType::ConvexHull => Canvas::new(
+                canvas_rectangle,
+                Curve::ConvexHull(ConvexHull::new(points)),
                 command,
             ),
             CurveType::Trochoid => Canvas::new(

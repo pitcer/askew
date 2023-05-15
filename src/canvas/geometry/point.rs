@@ -1,4 +1,7 @@
 use std::num::NonZeroU32;
+use std::ops::{Add, Mul, Sub};
+
+use crate::canvas::geometry::vector::Vector;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Point<T> {
@@ -25,6 +28,31 @@ where
 
     pub fn vertical(&self) -> T {
         self.vertical
+    }
+}
+
+impl<T> Point<T>
+where
+    T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
+{
+    pub fn distance_squared(&self, other: Point<T>) -> T {
+        let horizontal = self.horizontal - other.horizontal;
+        let vertical = self.vertical - other.vertical;
+        horizontal * horizontal + vertical * vertical
+    }
+}
+
+impl<T> Sub for Point<T>
+where
+    T: Sub<Output = T>,
+{
+    type Output = Vector<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector::new(
+            self.horizontal - rhs.horizontal,
+            self.vertical - rhs.vertical,
+        )
     }
 }
 

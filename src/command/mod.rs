@@ -7,6 +7,9 @@ pub struct Command {
     #[arg(short = 'e', long, default_value_t = false)]
     pub chebyshev_nodes: bool,
 
+    #[arg(short = 'H', long, default_value_t = false)]
+    pub show_convex_hull: bool,
+
     #[arg(short, long, default_value_t = 5000)]
     pub samples: u32,
 
@@ -31,6 +34,7 @@ pub enum CurveType {
     Polyline,
     Interpolation,
     Bezier,
+    ConvexHull,
     Trochoid,
 }
 

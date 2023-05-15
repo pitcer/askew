@@ -107,6 +107,7 @@ dependencies = [
  "bytemuck",
  "clap",
  "image",
+ "num-traits",
  "rand",
  "softbuffer",
  "tiny-skia",
