@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use crate::canvas::curve::CurvePoint;
+use crate::canvas::geometry::vector::Vector;
 
 #[derive(Debug)]
 pub struct Interpolation {
@@ -52,6 +53,12 @@ impl Interpolation {
 
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         Cow::from(&self.points)
+    }
+
+    pub fn move_point(&mut self, index: usize, vector: Vector<f32>) {
+        if let Some(point) = self.points.get_mut(index) {
+            *point = *point + vector
+        }
     }
 
     fn lagrange(&self, t: f32, xs: &[f32], ys: &[f32]) -> f32 {

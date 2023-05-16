@@ -58,7 +58,7 @@ impl Canvas {
             }
             CanvasEvent::ChangeWeight(weight) => {
                 if let Curve::RationalBezier(ref mut bezier) = self.content {
-                    if let Some(point) = bezier.points_mut().get_mut(self.current_point_index) {
+                    if let Some(point) = bezier.weighted_points_mut().get_mut(self.current_point_index) {
                         point.change_weight(weight)
                     }
                 }
@@ -68,6 +68,9 @@ impl Canvas {
             }
             CanvasEvent::DeleteCurrentPoint => {
                 self.content.remove_point(self.current_point_index);
+            }
+            CanvasEvent::MoveCurrentPoint(vector) => {
+                self.content.move_point(self.current_point_index, vector);
             }
         }
         Ok(())

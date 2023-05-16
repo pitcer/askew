@@ -1,6 +1,7 @@
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::math;
 use std::borrow::Cow;
+use crate::canvas::geometry::vector::Vector;
 
 #[derive(Debug)]
 pub struct RationalBezier {
@@ -34,8 +35,14 @@ impl RationalBezier {
         self.points.remove(index);
     }
 
-    pub fn points_mut(&mut self) -> &mut [RationalBezierPoint] {
+    pub fn weighted_points_mut(&mut self) -> &mut [RationalBezierPoint] {
         &mut self.points
+    }
+
+    pub fn move_point(&mut self, index: usize, vector: Vector<f32>) {
+        if let Some(point) = self.points.get_mut(index) {
+            point.point = point.point + vector
+        }
     }
 
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {

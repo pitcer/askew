@@ -1,5 +1,6 @@
+use num_traits::Num;
 use std::num::NonZeroU32;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Sub};
 
 use crate::canvas::geometry::vector::Vector;
 
@@ -33,12 +34,26 @@ where
 
 impl<T> Point<T>
 where
-    T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>,
+    T: Copy + Num,
 {
     pub fn distance_squared(&self, other: Point<T>) -> T {
         let horizontal = self.horizontal - other.horizontal;
         let vertical = self.vertical - other.vertical;
         horizontal * horizontal + vertical * vertical
+    }
+}
+
+impl<T> Add<Vector<T>> for Point<T>
+where
+    T: Copy + Num,
+{
+    type Output = Point<T>;
+
+    fn add(self, rhs: Vector<T>) -> Self::Output {
+        Point {
+            horizontal: self.horizontal + rhs.horizontal(),
+            vertical: self.vertical + rhs.vertical(),
+        }
     }
 }
 

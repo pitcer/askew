@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::canvas::event::CanvasEvent;
+use crate::canvas::geometry::vector::Vector;
 use anyhow::Result;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
@@ -111,6 +112,16 @@ impl EventHandler {
             Some(VirtualKeyCode::O) => Some(CanvasEvent::ChangeWeight(-1.5)),
             Some(VirtualKeyCode::H) => Some(CanvasEvent::ToggleConvexHull),
             Some(VirtualKeyCode::D) => Some(CanvasEvent::DeleteCurrentPoint),
+            Some(VirtualKeyCode::Up) => Some(CanvasEvent::MoveCurrentPoint(Vector::new(0.0, -4.0))),
+            Some(VirtualKeyCode::Down) => {
+                Some(CanvasEvent::MoveCurrentPoint(Vector::new(0.0, 4.0)))
+            }
+            Some(VirtualKeyCode::Left) => {
+                Some(CanvasEvent::MoveCurrentPoint(Vector::new(-4.0, 0.0)))
+            }
+            Some(VirtualKeyCode::Right) => {
+                Some(CanvasEvent::MoveCurrentPoint(Vector::new(4.0, 0.0)))
+            }
             _ => None,
         }
     }

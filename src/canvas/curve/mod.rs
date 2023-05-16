@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use crate::canvas::curve::bezier::Bezier;
 use crate::canvas::curve::convex_hull::ConvexHull;
 use crate::canvas::curve::interpolation::Interpolation;
@@ -6,6 +5,8 @@ use crate::canvas::curve::polyline::Polyline;
 use crate::canvas::curve::rational_bezier::RationalBezier;
 use crate::canvas::curve::trochoid::Trochoid;
 use crate::canvas::geometry::point::Point;
+use crate::canvas::geometry::vector::Vector;
+use std::borrow::Cow;
 
 pub mod bezier;
 pub mod convex_hull;
@@ -49,7 +50,11 @@ impl Curve {
         curve_apply!(self => |curve| curve.remove_point(index))
     }
 
-    pub fn points(&self) -> Cow<'_ , [CurvePoint]> {
+    pub fn move_point(&mut self, index: usize, vector: Vector<f32>) {
+        curve_apply!(self => |curve| curve.move_point(index, vector))
+    }
+
+    pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         curve_apply!(self => |curve| curve.points())
     }
 }

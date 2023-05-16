@@ -1,5 +1,6 @@
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::geometry::convex_hull::GrahamScan;
+use crate::canvas::geometry::vector::Vector;
 use std::borrow::Cow;
 
 #[derive(Debug)]
@@ -36,5 +37,11 @@ impl ConvexHull {
 
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         Cow::from(&self.points)
+    }
+
+    pub fn move_point(&mut self, index: usize, vector: Vector<f32>) {
+        if let Some(point) = self.points.get_mut(index) {
+            *point = *point + vector
+        }
     }
 }

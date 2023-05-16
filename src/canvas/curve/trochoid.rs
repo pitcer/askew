@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use crate::canvas::curve::CurvePoint;
 use crate::canvas::geometry::point::Point;
+use crate::canvas::geometry::vector::Vector;
 
 #[derive(Debug)]
 pub struct Trochoid {
@@ -42,4 +43,6 @@ impl Trochoid {
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         Cow::Borrowed(&[])
     }
+
+    pub fn move_point(&mut self, _index: usize, _vector: Vector<f32>) {}
 }
