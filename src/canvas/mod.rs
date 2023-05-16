@@ -56,6 +56,13 @@ impl Canvas {
                     .rem_euclid(self.content.points().len() as i32))
                     as usize
             }
+            CanvasEvent::ChangeWeight(weight) => {
+                if let Curve::RationalBezier(ref mut bezier) = self.content {
+                    if let Some(point) = bezier.points_mut().get_mut(self.current_point_index) {
+                        point.change_weight(weight)
+                    }
+                }
+            }
         }
         Ok(())
     }

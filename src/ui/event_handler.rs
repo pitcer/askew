@@ -107,6 +107,8 @@ impl EventHandler {
         match input.virtual_keycode {
             Some(VirtualKeyCode::J) => Some(CanvasEvent::ChangeCurrentIndex(-1)),
             Some(VirtualKeyCode::K) => Some(CanvasEvent::ChangeCurrentIndex(1)),
+            Some(VirtualKeyCode::I) => Some(CanvasEvent::ChangeWeight(1.5)),
+            Some(VirtualKeyCode::O) => Some(CanvasEvent::ChangeWeight(-1.5)),
             _ => None,
         }
     }

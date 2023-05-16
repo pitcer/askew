@@ -30,6 +30,10 @@ impl RationalBezier {
         self.points.push(RationalBezierPoint { point, weight })
     }
 
+    pub fn points_mut(&mut self) -> &mut [RationalBezierPoint] {
+        &mut self.points
+    }
+
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         self.points.iter().map(|point| point.point).collect()
     }
@@ -73,5 +77,13 @@ pub struct RationalBezierPoint {
 impl RationalBezierPoint {
     pub fn new(point: CurvePoint, weight: f32) -> Self {
         Self { point, weight }
+    }
+
+    pub fn change_weight(&mut self, change: f32) {
+        if change < 0.0 {
+            self.weight /= -change
+        } else {
+            self.weight *= change
+        }
     }
 }
