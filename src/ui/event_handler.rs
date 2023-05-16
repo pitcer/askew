@@ -34,11 +34,11 @@ impl EventHandler {
 
         match event {
             Event::RedrawRequested(window_id) if self.frame.has_id(window_id) => {
-                self.frame.draw(None)?;
+                self.frame.draw()?;
             }
             Event::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
                 let event = self.handle_window_event(event, control_flow)?;
-                self.frame.draw(event)?;
+                self.frame.handle_event(event)?;
             }
             _ => {}
         }

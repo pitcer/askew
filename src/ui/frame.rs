@@ -150,15 +150,20 @@ impl Frame {
         Rectangle::new(origin, size)
     }
 
-    pub fn draw(&mut self, event: Option<CanvasEvent>) -> Result<()> {
+    pub fn handle_event(&mut self, event: Option<CanvasEvent>) -> Result<()> {
+        if let Some(event) = event {
+            self.canvas.handle_event(event)?;
+            self.window.request_redraw();
+        }
+        Ok(())
+    }
+
+    pub fn draw(&mut self) -> Result<()> {
         self.layout.fill(BgraColor::from_rgba(32, 32, 32, 255));
         if let Some(background) = &self.background {
             self.layout.draw_pixmap(0, 0, background.as_ref());
         }
         let panel = self.layout.panel();
-        if let Some(event) = event {
-            self.canvas.handle_event(event)?;
-        }
         self.canvas.rasterize(panel)?;
         let buffer = self.layout.buffer();
         let buffer = buffer.data();
