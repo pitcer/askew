@@ -30,6 +30,10 @@ impl RationalBezier {
         self.points.push(RationalBezierPoint { point, weight })
     }
 
+    pub fn remove_point(&mut self, index: usize) {
+        self.points.remove(index);
+    }
+
     pub fn points_mut(&mut self) -> &mut [RationalBezierPoint] {
         &mut self.points
     }

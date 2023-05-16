@@ -66,6 +66,9 @@ impl Canvas {
             CanvasEvent::ToggleConvexHull => {
                 self.show_convex_hull = !self.show_convex_hull;
             }
+            CanvasEvent::DeleteCurrentPoint => {
+                self.content.remove_point(self.current_point_index);
+            }
         }
         Ok(())
     }

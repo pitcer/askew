@@ -45,6 +45,10 @@ impl Curve {
         curve_apply!(self => |curve| curve.add_point(point))
     }
 
+    pub fn remove_point(&mut self, index: usize) {
+        curve_apply!(self => |curve| curve.remove_point(index))
+    }
+
     pub fn points(&self) -> Cow<'_ , [CurvePoint]> {
         curve_apply!(self => |curve| curve.points())
     }

@@ -37,6 +37,8 @@ impl Trochoid {
 
     pub fn add_point(&mut self, _point: CurvePoint) {}
 
+    pub fn remove_point(&mut self, _index: usize) {}
+
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         Cow::Borrowed(&[])
     }

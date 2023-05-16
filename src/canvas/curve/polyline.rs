@@ -19,6 +19,10 @@ impl Polyline {
         self.points.push(point)
     }
 
+    pub fn remove_point(&mut self, index: usize) {
+        self.points.remove(index);
+    }
+
     pub fn points(&self) -> Cow<'_, [CurvePoint]> {
         Cow::from(&self.points)
     }

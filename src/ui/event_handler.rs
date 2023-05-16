@@ -110,6 +110,7 @@ impl EventHandler {
             Some(VirtualKeyCode::I) => Some(CanvasEvent::ChangeWeight(1.5)),
             Some(VirtualKeyCode::O) => Some(CanvasEvent::ChangeWeight(-1.5)),
             Some(VirtualKeyCode::H) => Some(CanvasEvent::ToggleConvexHull),
+            Some(VirtualKeyCode::D) => Some(CanvasEvent::DeleteCurrentPoint),
             _ => None,
         }
     }
