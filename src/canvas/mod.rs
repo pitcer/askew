@@ -63,6 +63,9 @@ impl Canvas {
                     }
                 }
             }
+            CanvasEvent::ToggleConvexHull => {
+                self.show_convex_hull = !self.show_convex_hull;
+            }
         }
         Ok(())
     }
