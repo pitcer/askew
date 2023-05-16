@@ -1,8 +1,10 @@
 use anyhow::Result;
+use num_traits::Euclid;
 use tiny_skia::FillRule;
 use tiny_skia_path::{Path, PathBuilder, Stroke};
 
 use crate::canvas::curve::{Curve, CurvePoint};
+use crate::canvas::event::CanvasEvent;
 use crate::canvas::geometry::convex_hull::GrahamScan;
 use crate::canvas::geometry::point::Point;
 use crate::canvas::geometry::rectangle::Rectangle;
@@ -12,6 +14,7 @@ use crate::command::Command;
 use crate::curve_apply;
 
 pub mod curve;
+pub mod event;
 pub mod geometry;
 pub mod layout;
 pub mod math;
@@ -23,6 +26,7 @@ pub struct Canvas {
     line_width: f32,
     point_radius: f32,
     show_convex_hull: bool,
+    current_point_index: usize,
 }
 
 impl Canvas {
@@ -33,6 +37,7 @@ impl Canvas {
             line_width: command.line_width,
             point_radius: command.point_radius,
             show_convex_hull: command.show_convex_hull,
+            current_point_index: 0,
         }
     }
 
@@ -42,6 +47,17 @@ impl Canvas {
 
     pub fn resize(&mut self, area: Rectangle<f32>) {
         self.area = area
+    }
+
+    pub fn handle_event(&mut self, event: CanvasEvent) -> Result<()> {
+        match event {
+            CanvasEvent::ChangeCurrentIndex(change) => {
+                self.current_point_index = ((self.current_point_index as i32 + change)
+                    .rem_euclid(self.content.points().len() as i32))
+                    as usize
+            }
+        }
+        Ok(())
     }
 
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
@@ -87,6 +103,22 @@ impl Canvas {
                 .bgra_color(BgraColor::from_rgba(255, 0, 255, 255))
                 .build();
             panel.draw_fill_path(&points_path, &points_paint, FillRule::Winding);
+        }
+
+        if let Some(point) = self.content.points().get(self.current_point_index) {
+            let points_paint = PaintBuilder::new()
+                .bgra_color(BgraColor::from_rgba(255, 255, 255, 255))
+                .build();
+            let mut path = PathBuilder::new();
+            path.push_circle(
+                point.horizontal(),
+                point.vertical(),
+                self.point_radius * 2.0,
+            );
+            let path = path.finish();
+            if let Some(path) = path {
+                panel.draw_fill_path(&path, &points_paint, FillRule::Winding);
+            }
         }
         Ok(())
     }

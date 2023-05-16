@@ -21,6 +21,7 @@ use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
 use crate::canvas::paint::BgraColor;
 use crate::canvas::Canvas;
+use crate::canvas::event::CanvasEvent;
 use crate::command::{Command, CurveType, SaveFormat};
 
 pub struct Frame {
@@ -51,7 +52,7 @@ impl Frame {
                 buffer,
                 IntSize::from_wh(image.width(), image.height()).unwrap(),
             )
-            .unwrap();
+                .unwrap();
             Some(image_pixmap)
         } else {
             None
@@ -149,12 +150,15 @@ impl Frame {
         Rectangle::new(origin, size)
     }
 
-    pub fn draw(&mut self) -> Result<()> {
+    pub fn draw(&mut self, event: Option<CanvasEvent>) -> Result<()> {
         self.layout.fill(BgraColor::from_rgba(32, 32, 32, 255));
         if let Some(background) = &self.background {
             self.layout.draw_pixmap(0, 0, background.as_ref());
         }
         let panel = self.layout.panel();
+        if let Some(event) = event {
+            self.canvas.handle_event(event)?;
+        }
         self.canvas.rasterize(panel)?;
         let buffer = self.layout.buffer();
         let buffer = buffer.data();
