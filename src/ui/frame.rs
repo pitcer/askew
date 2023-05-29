@@ -93,7 +93,7 @@ impl Frame {
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
                 vec![Curve::ControlPoints(ControlPointsCurve::Bezier(
-                    Bezier::new(points, command.samples),
+                    Bezier::new(points, command.samples, true),
                 ))],
                 command,
             ),

@@ -11,11 +11,16 @@ use crate::canvas::math;
 pub struct Bezier {
     points: CurvePoints,
     samples: u32,
+    de_casteljau: bool,
 }
 
 impl Bezier {
-    pub fn new(points: CurvePoints, samples: u32) -> Self {
-        Self { points, samples }
+    pub fn new(points: CurvePoints, samples: u32, de_casteljau: bool) -> Self {
+        Self {
+            points,
+            samples,
+            de_casteljau,
+        }
     }
 
     fn bezier(&self, t: f32) -> CurvePoint {
@@ -41,6 +46,13 @@ impl ToPath for Bezier {
     fn to_path(&self) -> Option<Path> {
         if self.points.length() < 2 {
             return None;
+        }
+
+        if self.de_casteljau {
+            let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize)
+                .map(|t| math::de_casteljau(&self.points.points, t));
+            let path = CurvePath::from_iter(path);
+            return path.into_skia_path();
         }
 
         let path =
