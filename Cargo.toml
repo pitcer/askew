@@ -41,3 +41,7 @@ criterion = "0.5.1"
 [[bench]]
 name = "convex_hull"
 harness = false
+
+[[bench]]
+name = "bezier"
+harness = false
