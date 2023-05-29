@@ -4,7 +4,7 @@ use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::EventHandler;
 use crate::canvas::layout::Panel;
 use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::properties::CanvasProperties;
+use crate::canvas::properties::{CanvasProperties, CanvasPropertiesBuilder};
 use crate::canvas::rasterizer::Rasterizer;
 use crate::command::Command;
 use crate::event::CanvasEvent;
@@ -26,15 +26,9 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(area: Rectangle<f32>, curves: Vec<Curve>, command: &Command) -> Self {
-        let properties = CanvasProperties {
-            area,
-            line_width: command.line_width,
-            point_radius: command.point_radius,
-            show_convex_hull: command.show_convex_hull,
-            current_point_index: 0,
-            current_curve: 0,
-            default_weight: 1.0,
-        };
+        let properties = CanvasPropertiesBuilder::new(area)
+            .include_command(command)
+            .build();
         Self {
             rasterizer: Rasterizer {},
             event_handler: EventHandler {},

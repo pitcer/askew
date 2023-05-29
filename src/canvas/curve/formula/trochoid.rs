@@ -33,7 +33,7 @@ impl ToPath for Trochoid {
         let y = move |t| self.r_1 * f32::sin(self.w_1 * t) + self.r_2 * f32::sin(self.w_2 * t);
         let path = curve_path::equally_spaced(self.range.0..=self.range.1, self.samples as usize)
             .map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0));
-        let path = CurvePath::from_iter(path);
+        let path = CurvePath::new(path);
         path.into_skia_path()
     }
 }

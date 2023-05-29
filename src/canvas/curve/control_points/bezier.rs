@@ -59,17 +59,17 @@ impl ToPath for Bezier {
         match self.algorithm {
             BezierAlgorithm::Generic => {
                 let path = path.map(|t| self.bezier(t));
-                let path = CurvePath::from_iter(path);
+                let path = CurvePath::new(path);
                 path.into_skia_path()
             }
             BezierAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::de_casteljau(&self.points.points, t));
-                let path = CurvePath::from_iter(path);
+                let path = CurvePath::new(path);
                 path.into_skia_path()
             }
             BezierAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::chudy_wozny(&self.points.points, t));
-                let path = CurvePath::from_iter(path);
+                let path = CurvePath::new(path);
                 path.into_skia_path()
             }
         }

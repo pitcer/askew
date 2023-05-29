@@ -25,11 +25,7 @@ impl Rasterizer {
                 enum_apply!(curve,
                 ControlPointsCurve::Polyline | ControlPointsCurve::Interpolation |
                 ControlPointsCurve::Bezier | ControlPointsCurve::RationalBezier => |curve| {
-                    let mut rasterizer = CurveRasterizer {
-                        curve,
-                        properties,
-                        panel,
-                    };
+                    let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
                     rasterizer.draw_convex_hull();
                     rasterizer.draw_curve();
                     rasterizer.draw_control_points();
@@ -37,11 +33,7 @@ impl Rasterizer {
                 });
             }
             Curve::Formula(curve) => {
-                let mut rasterizer = CurveRasterizer {
-                    curve,
-                    properties,
-                    panel,
-                };
+                let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
                 rasterizer.draw_curve();
             }
         }
@@ -146,7 +138,7 @@ where
             .copied();
         let graham_scan = GrahamScan::new(points.collect());
         let hull = graham_scan.convex_hull();
-        let mut path = CurvePath::from_iter(hull.into_iter());
+        let mut path = CurvePath::new(hull.into_iter());
         path.close();
         path.into_skia_path()
     }

@@ -1,7 +1,5 @@
 use crate::canvas::curve::control_points::ControlPointsCurve;
-use crate::canvas::curve::curve_path::ToPath;
 use crate::canvas::curve::formula::FormulaCurve;
-use tiny_skia::Path;
 
 pub mod control_points;
 pub mod curve_path;
@@ -25,9 +23,3 @@ pub enum Curve {
     ControlPoints(ControlPointsCurve),
     Formula(FormulaCurve),
 }
-
-// impl ToPath for Curve {
-//     fn to_path(&self) -> Option<Path> {
-//         enum_apply!(self, Curve::ControlPoints | Curve::Formula => |curve| curve.to_path())
-//     }
-// }

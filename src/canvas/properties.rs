@@ -1,6 +1,4 @@
-use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::math::size::Size;
 use crate::command::Command;
 
 pub struct CanvasProperties {
@@ -13,8 +11,6 @@ pub struct CanvasProperties {
     pub default_weight: f32,
 }
 
-impl CanvasProperties {}
-
 pub struct CanvasPropertiesBuilder {
     area: Rectangle<f32>,
     line_width: f32,
@@ -26,9 +22,9 @@ pub struct CanvasPropertiesBuilder {
 }
 
 impl CanvasPropertiesBuilder {
-    pub fn new() -> Self {
+    pub fn new(area: Rectangle<f32>) -> Self {
         Self {
-            area: Rectangle::new(Point::new(0.0, 0.0), Size::new(0.0, 0.0)),
+            area,
             line_width: 0.0,
             point_radius: 0.0,
             show_convex_hull: false,

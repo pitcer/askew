@@ -79,12 +79,12 @@ impl ToPath for RationalBezier {
         match self.algorithm {
             RationalBezierAlgorithm::Generic => {
                 let path = path.map(|t| self.rational_bezier(t));
-                let path = CurvePath::from_iter(path);
+                let path = CurvePath::new(path);
                 path.into_skia_path()
             }
             RationalBezierAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::rational_chudy_wozny(&self.points.points, t));
-                let path = CurvePath::from_iter(path);
+                let path = CurvePath::new(path);
                 path.into_skia_path()
             }
         }

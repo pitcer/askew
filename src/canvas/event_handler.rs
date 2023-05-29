@@ -47,10 +47,8 @@ impl<'a, C> CurveEventHandler<'a, C> {
 }
 
 impl<'a> CurveEventHandler<'a, FormulaCurve> {
-    pub fn handle_event(&mut self, event: CanvasEvent) -> Result<()> {
-        match event {
-            _ => Ok(()),
-        }
+    pub fn handle_event(&mut self, _event: CanvasEvent) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -144,19 +142,19 @@ where
 }
 
 impl<'a> CurveEventHandler<'a, Bezier> {
-    pub fn change_weight(&mut self, change: f32) -> Result<()> {
+    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
         Ok(())
     }
 }
 
 impl<'a> CurveEventHandler<'a, Interpolation> {
-    pub fn change_weight(&mut self, change: f32) -> Result<()> {
+    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
         Ok(())
     }
 }
 
 impl<'a> CurveEventHandler<'a, Polyline> {
-    pub fn change_weight(&mut self, change: f32) -> Result<()> {
+    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
         Ok(())
     }
 }

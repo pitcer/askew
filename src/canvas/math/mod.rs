@@ -44,6 +44,7 @@ pub fn de_casteljau(points: &[CurvePoint], t: f32) -> CurvePoint {
     w[0]
 }
 
+#[allow(clippy::assign_op_pattern)]
 pub fn chudy_wozny(points: &[CurvePoint], t: f32) -> CurvePoint {
     let n = points.len();
     let mut h = 1.0;
@@ -75,6 +76,7 @@ pub fn chudy_wozny(points: &[CurvePoint], t: f32) -> CurvePoint {
     q
 }
 
+#[allow(clippy::assign_op_pattern)]
 pub fn rational_chudy_wozny(points: &[RationalBezierPoint], t: f32) -> CurvePoint {
     let n = points.len();
     let mut h = 1.0;

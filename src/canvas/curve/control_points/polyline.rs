@@ -19,7 +19,7 @@ impl Polyline {
 impl ToPath for Polyline {
     fn to_path(&self) -> Option<Path> {
         let path = self.points.iterator().copied();
-        let path = CurvePath::from_iter(path);
+        let path = CurvePath::new(path);
         path.into_skia_path()
     }
 }

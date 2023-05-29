@@ -18,7 +18,7 @@ impl<I> CurvePath<I>
 where
     I: ExactSizeIterator<Item = Point<f32>>,
 {
-    pub fn from_iter(points: I) -> Self {
+    pub fn new(points: I) -> Self {
         Self {
             points,
             closed: false,

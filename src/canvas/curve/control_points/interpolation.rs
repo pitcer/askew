@@ -50,7 +50,7 @@ impl ToPath for Interpolation {
             self.points.iterator().map(|point| (*point).into()).unzip();
         let path = curve_path::equally_spaced(first..=last, self.samples as usize)
             .map(move |t| Point::new(math::lagrange(t, &ts, &xs), math::lagrange(t, &ts, &ys)));
-        let path = CurvePath::from_iter(path);
+        let path = CurvePath::new(path);
         path.into_skia_path()
     }
 }

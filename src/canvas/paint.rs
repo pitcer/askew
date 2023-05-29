@@ -1,5 +1,6 @@
 use tiny_skia::{Color, Paint};
 
+#[derive(Debug, Default)]
 pub struct PaintBuilder<'a> {
     paint: Paint<'a>,
 }
