@@ -7,17 +7,32 @@ use crate::canvas::curve::curve_path;
 use crate::canvas::curve::curve_path::{CurvePath, ToPath};
 use crate::canvas::math;
 use crate::canvas::math::vector::Vector;
-use crate::event::handler::{AddPointHandler, ChangePointWeightHandler, MovePointHandler};
+use crate::event::handler::{ChangePointWeightHandler, MovePointHandler};
 
 #[derive(Debug)]
 pub struct RationalBezier {
     points: RationalBezierPoints,
     samples: u32,
+    algorithm: RationalBezierAlgorithm,
+}
+
+#[derive(Debug)]
+pub enum RationalBezierAlgorithm {
+    Generic,
+    ChudyWozny,
 }
 
 impl RationalBezier {
-    pub fn new(points: RationalBezierPoints, samples: u32) -> Self {
-        Self { points, samples }
+    pub fn new(
+        points: RationalBezierPoints,
+        samples: u32,
+        algorithm: RationalBezierAlgorithm,
+    ) -> Self {
+        Self {
+            points,
+            samples,
+            algorithm,
+        }
     }
 
     fn rational_bezier(&self, t: f32) -> CurvePoint {
@@ -54,22 +69,25 @@ pub type RationalBezierPoints = ControlPoints<RationalBezierPoint>;
 
 pub type RationalBezierPoint = WeightedPoint<f32, f32>;
 
-impl RationalBezierPoint {
-    pub fn new(point: CurvePoint, weight: f32) -> Self {
-        Self { point, weight }
-    }
-}
-
 impl ToPath for RationalBezier {
     fn to_path(&self) -> Option<Path> {
         if self.points.length() < 2 {
             return None;
         }
 
-        let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize)
-            .map(|t| self.rational_bezier(t));
-        let path = CurvePath::from_iter(path);
-        path.into_skia_path()
+        let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize);
+        match self.algorithm {
+            RationalBezierAlgorithm::Generic => {
+                let path = path.map(|t| self.rational_bezier(t));
+                let path = CurvePath::from_iter(path);
+                path.into_skia_path()
+            }
+            RationalBezierAlgorithm::ChudyWozny => {
+                let path = path.map(|t| math::rational_chudy_wozny(&self.points.points, t));
+                let path = CurvePath::from_iter(path);
+                path.into_skia_path()
+            }
+        }
     }
 }
 

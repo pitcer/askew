@@ -157,6 +157,20 @@ pub struct WeightedPoint<T, W> {
     weight: W,
 }
 
+impl<T, W> WeightedPoint<T, W> {
+    pub fn new(point: Point<T>, weight: W) -> Self {
+        Self { point, weight }
+    }
+
+    pub fn point(self) -> Point<T> {
+        self.point
+    }
+
+    pub fn weight(self) -> W {
+        self.weight
+    }
+}
+
 impl<T, W> AsRef<Point<T>> for WeightedPoint<T, W> {
     fn as_ref(&self) -> &Point<T> {
         &self.point

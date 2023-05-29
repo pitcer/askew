@@ -1,3 +1,4 @@
+use crate::canvas::curve::control_points::rational_bezier::RationalBezierPoint;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
 
@@ -53,8 +54,8 @@ pub fn chudy_wozny(points: &[CurvePoint], t: f32) -> CurvePoint {
     if t <= 0.5 {
         u = t / u;
         for (k, point) in points {
-            h = h * u * (n_1 - k) as f32 /* * w_k */;
-            h = h / (k as f32 /* * w_k-1 */ + h);
+            h = h * u * (n_1 - k) as f32;
+            h = h / (k as f32 + h);
             q = Point::new(
                 (1.0 - h) * q.horizontal() + h * point.horizontal(),
                 (1.0 - h) * q.vertical() + h * point.vertical(),
@@ -63,11 +64,41 @@ pub fn chudy_wozny(points: &[CurvePoint], t: f32) -> CurvePoint {
     } else {
         u = u / t;
         for (k, point) in points {
-            h = h * (n_1 - k) as f32 /* * w_k */;
-            h = h / (k as f32 * u /* * w_k-1 */ + h);
+            h = h * (n_1 - k) as f32;
+            h = h / (k as f32 * u + h);
             q = Point::new(
                 (1.0 - h) * q.horizontal() + h * point.horizontal(),
                 (1.0 - h) * q.vertical() + h * point.vertical(),
+            );
+        }
+    }
+    q
+}
+
+pub fn rational_chudy_wozny(points: &[RationalBezierPoint], t: f32) -> CurvePoint {
+    let n = points.len();
+    let mut h = 1.0;
+    let mut u = 1.0 - t;
+    let n_1 = n + 1;
+    let mut q = points[0].point();
+    if t <= 0.5 {
+        u = t / u;
+        for k in 1..points.len() {
+            h = h * u * (n_1 - k) as f32 * points[k].weight();
+            h = h / (k as f32 * points[k - 1].weight() + h);
+            q = Point::new(
+                (1.0 - h) * q.horizontal() + h * points[k].point().horizontal(),
+                (1.0 - h) * q.vertical() + h * points[k].point().vertical(),
+            );
+        }
+    } else {
+        u = u / t;
+        for k in 1..points.len() {
+            h = h * (n_1 - k) as f32 * points[k].weight();
+            h = h / (k as f32 * u * points[k - 1].weight() + h);
+            q = Point::new(
+                (1.0 - h) * q.horizontal() + h * points[k].point().horizontal(),
+                (1.0 - h) * q.vertical() + h * points[k].point().vertical(),
             );
         }
     }

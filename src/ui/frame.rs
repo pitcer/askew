@@ -11,7 +11,9 @@ use winit::window::{Window, WindowBuilder, WindowId};
 use crate::canvas::curve::control_points::bezier::{Bezier, BezierAlgorithm};
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
-use crate::canvas::curve::control_points::rational_bezier::{RationalBezier, RationalBezierPoint};
+use crate::canvas::curve::control_points::rational_bezier::{
+    RationalBezier, RationalBezierAlgorithm, RationalBezierPoint,
+};
 use crate::canvas::curve::control_points::{ControlPoints, ControlPointsCurve};
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurve;
@@ -119,7 +121,11 @@ impl Frame {
                 Canvas::new(
                     canvas_rectangle,
                     vec![Curve::ControlPoints(ControlPointsCurve::RationalBezier(
-                        RationalBezier::new(points, command.samples),
+                        RationalBezier::new(
+                            points,
+                            command.samples,
+                            RationalBezierAlgorithm::ChudyWozny,
+                        ),
                     ))],
                     command,
                 )
