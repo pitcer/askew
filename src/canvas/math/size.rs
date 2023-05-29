@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use tiny_skia_path::IntSize;
+use tiny_skia::IntSize;
 use winit::dpi::PhysicalSize;
 
 #[derive(Debug, Copy, Clone)]

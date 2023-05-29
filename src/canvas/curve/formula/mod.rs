@@ -1,6 +1,6 @@
 use crate::canvas::curve::curve_path::ToPath;
 use crate::canvas::curve::formula::trochoid::Trochoid;
-use tiny_skia_path::Path;
+use tiny_skia::Path;
 
 pub mod trochoid;
 

@@ -1,7 +1,7 @@
 use crate::canvas::curve::control_points::ControlPointsCurve;
 use crate::canvas::curve::curve_path::ToPath;
 use crate::canvas::curve::formula::FormulaCurve;
-use tiny_skia_path::Path;
+use tiny_skia::Path;
 
 pub mod control_points;
 pub mod curve_path;

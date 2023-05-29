@@ -1,4 +1,4 @@
-use tiny_skia_path::Path;
+use tiny_skia::Path;
 
 use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, CurvePoints, GetControlPoints,

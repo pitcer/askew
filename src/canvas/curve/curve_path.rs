@@ -1,7 +1,7 @@
 use std::ops::RangeInclusive;
 
 use num_traits::{Num, NumCast};
-use tiny_skia_path::{Path, PathBuilder};
+use tiny_skia::{Path, PathBuilder};
 
 use crate::canvas::math::point::Point;
 

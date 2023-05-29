@@ -1,6 +1,6 @@
 use anyhow::Result;
 use tiny_skia::FillRule;
-use tiny_skia_path::{Path, PathBuilder, Stroke};
+use tiny_skia::{Path, PathBuilder, Stroke};
 
 use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints, GetControlPoints};
 use crate::canvas::curve::curve_path::{CurvePath, ToPath};

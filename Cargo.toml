@@ -3,16 +3,16 @@ name = "askew"
 version = "0.1.0"
 authors = ["Piotr Dobiech"]
 edition = "2021"
+description = "Curves editor"
 
 [dependencies]
 anyhow = "1.0.71"
 bytemuck = "1.13.1"
 num-traits = "0.2.15"
 rand = "0.8.5"
-tiny-skia-path = "0.9.0"
 
 [dependencies.clap]
-version = "4.2.7"
+version = "4.3.0"
 features = ["derive"]
 
 [dependencies.image]
@@ -26,7 +26,7 @@ default-features = false
 features = ["x11"]
 
 [dependencies.tiny-skia]
-version = "0.9.0"
+version = "0.10.0"
 default-features = false
 features = ["std", "simd"]
 
