@@ -52,11 +52,8 @@ where
         stack.extend_from_slice(&self.points[0..3]);
 
         for point in &self.points[3..] {
-            while Self::orientation(
-                stack[stack.len() - 2],
-                stack[stack.len() - 1],
-                *point,
-            ) != Orientation::Counterclockwise
+            while Self::orientation(stack[stack.len() - 2], stack[stack.len() - 1], *point)
+                != Orientation::Counterclockwise
             {
                 stack.pop();
             }
