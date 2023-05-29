@@ -11,15 +11,22 @@ use crate::canvas::math;
 pub struct Bezier {
     points: CurvePoints,
     samples: u32,
-    de_casteljau: bool,
+    algorithm: BezierAlgorithm,
+}
+
+#[derive(Debug)]
+pub enum BezierAlgorithm {
+    Generic,
+    DeCasteljau,
+    ChudyWozny,
 }
 
 impl Bezier {
-    pub fn new(points: CurvePoints, samples: u32, de_casteljau: bool) -> Self {
+    pub fn new(points: CurvePoints, samples: u32, algorithm: BezierAlgorithm) -> Self {
         Self {
             points,
             samples,
-            de_casteljau,
+            algorithm,
         }
     }
 
@@ -48,17 +55,24 @@ impl ToPath for Bezier {
             return None;
         }
 
-        if self.de_casteljau {
-            let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize)
-                .map(|t| math::de_casteljau(&self.points.points, t));
-            let path = CurvePath::from_iter(path);
-            return path.into_skia_path();
+        let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize);
+        match self.algorithm {
+            BezierAlgorithm::Generic => {
+                let path = path.map(|t| self.bezier(t));
+                let path = CurvePath::from_iter(path);
+                path.into_skia_path()
+            }
+            BezierAlgorithm::DeCasteljau => {
+                let path = path.map(|t| math::de_casteljau(&self.points.points, t));
+                let path = CurvePath::from_iter(path);
+                path.into_skia_path()
+            }
+            BezierAlgorithm::ChudyWozny => {
+                let path = path.map(|t| math::chudy_wozny(&self.points.points, t));
+                let path = CurvePath::from_iter(path);
+                path.into_skia_path()
+            }
         }
-
-        let path =
-            curve_path::equally_spaced(0.0..=1.0, self.samples as usize).map(|t| self.bezier(t));
-        let path = CurvePath::from_iter(path);
-        path.into_skia_path()
     }
 }
 

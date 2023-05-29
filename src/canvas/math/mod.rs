@@ -42,3 +42,34 @@ pub fn de_casteljau(points: &[CurvePoint], t: f32) -> CurvePoint {
     }
     w[0]
 }
+
+pub fn chudy_wozny(points: &[CurvePoint], t: f32) -> CurvePoint {
+    let n = points.len();
+    let mut h = 1.0;
+    let mut u = 1.0 - t;
+    let n_1 = n + 1;
+    let mut points = points.iter().enumerate();
+    let mut q = *points.next().unwrap().1;
+    if t <= 0.5 {
+        u = t / u;
+        for (k, point) in points {
+            h = h * u * (n_1 - k) as f32 /* * w_k */;
+            h = h / (k as f32 /* * w_k-1 */ + h);
+            q = Point::new(
+                (1.0 - h) * q.horizontal() + h * point.horizontal(),
+                (1.0 - h) * q.vertical() + h * point.vertical(),
+            );
+        }
+    } else {
+        u = u / t;
+        for (k, point) in points {
+            h = h * (n_1 - k) as f32 /* * w_k */;
+            h = h / (k as f32 * u /* * w_k-1 */ + h);
+            q = Point::new(
+                (1.0 - h) * q.horizontal() + h * point.horizontal(),
+                (1.0 - h) * q.vertical() + h * point.vertical(),
+            );
+        }
+    }
+    q
+}
