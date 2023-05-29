@@ -34,3 +34,10 @@ features = ["std", "simd"]
 version = "0.28.6"
 default-features = false
 features = ["x11"]
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "convex_hull"
+harness = false

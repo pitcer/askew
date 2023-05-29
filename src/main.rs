@@ -2,14 +2,9 @@ use anyhow::Result;
 use clap::Parser;
 use winit::event_loop::EventLoop;
 
-use crate::command::Command;
-use crate::ui::event_handler::EventHandler;
-use crate::ui::frame::Frame;
-
-mod canvas;
-mod command;
-mod event;
-mod ui;
+use askew::command::Command;
+use askew::ui::event_handler::EventHandler;
+use askew::ui::frame::Frame;
 
 fn main() -> Result<()> {
     let command = Command::parse();
