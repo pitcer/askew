@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use num_traits::Num;
 
-use crate::canvas::geometry::point::Point;
+use crate::canvas::math::point::Point;
 
 #[derive(Debug)]
 pub struct GrahamScan<T> {
@@ -27,7 +27,7 @@ where
         Self { points }
     }
 
-    pub fn convex_hull(&mut self) -> Vec<Point<T>> {
+    pub fn convex_hull(mut self) -> Vec<Point<T>> {
         let (lowest_left_index, lowest_left) =
             self.find_lowest_left().expect("points should not be empty");
         self.points.swap(0, lowest_left_index);

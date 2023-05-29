@@ -1,8 +1,8 @@
 use std::num::NonZeroU32;
 use std::ops::{Add, Div};
 
-use crate::canvas::geometry::point::Point;
-use crate::canvas::geometry::size::Size;
+use crate::canvas::math::point::Point;
+use crate::canvas::math::size::Size;
 
 /// Rectangle represented by origin (left bottom point) and its size.
 #[derive(Debug, Copy, Clone)]

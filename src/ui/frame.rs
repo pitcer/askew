@@ -4,25 +4,26 @@ use rand::Rng;
 use softbuffer::GraphicsContext;
 use tiny_skia::Pixmap;
 use tiny_skia_path::IntSize;
-use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
-use crate::canvas::curve::bezier::Bezier;
-use crate::canvas::curve::convex_hull::ConvexHull;
-use crate::canvas::curve::interpolation::Interpolation;
-use crate::canvas::curve::polyline::Polyline;
-use crate::canvas::curve::rational_bezier::{RationalBezier, RationalBezierPoint};
-use crate::canvas::curve::trochoid::Trochoid;
+use crate::canvas::curve::control_points::bezier::Bezier;
+use crate::canvas::curve::control_points::interpolation::Interpolation;
+use crate::canvas::curve::control_points::polyline::Polyline;
+use crate::canvas::curve::control_points::rational_bezier::{RationalBezier, RationalBezierPoint};
+use crate::canvas::curve::control_points::{ControlPoints, ControlPointsCurve};
+use crate::canvas::curve::formula::trochoid::Trochoid;
+use crate::canvas::curve::formula::FormulaCurve;
 use crate::canvas::curve::Curve;
-use crate::canvas::geometry::point::Point;
-use crate::canvas::geometry::rectangle::Rectangle;
-use crate::canvas::geometry::size::Size;
 use crate::canvas::layout::Layout;
+use crate::canvas::math::point::Point;
+use crate::canvas::math::rectangle::Rectangle;
+use crate::canvas::math::size::Size;
 use crate::canvas::paint::BgraColor;
 use crate::canvas::Canvas;
-use crate::canvas::event::CanvasEvent;
 use crate::command::{Command, CurveType, SaveFormat};
+use crate::event::CanvasEvent;
 
 pub struct Frame {
     window: Window,
@@ -52,7 +53,7 @@ impl Frame {
                 buffer,
                 IntSize::from_wh(image.width(), image.height()).unwrap(),
             )
-                .unwrap();
+            .unwrap();
             Some(image_pixmap)
         } else {
             None
@@ -61,7 +62,7 @@ impl Frame {
         let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
         let layout = Layout::new(pixmap, window_rectangle);
         let mut rng = rand::thread_rng();
-        let points = (0..command.random_points)
+        let points_vec = (0..command.random_points)
             .map(|_| {
                 Point::new(
                     rng.gen_range(
@@ -73,24 +74,27 @@ impl Frame {
                 )
             })
             .collect::<Vec<_>>();
+        let points = ControlPoints::new(points_vec);
         let canvas = match command.curve_type {
             CurveType::Polyline => Canvas::new(
                 canvas_rectangle,
-                Curve::Polyline(Polyline::new(points)),
+                vec![Curve::ControlPoints(ControlPointsCurve::Polyline(
+                    Polyline::new(points),
+                ))],
                 command,
             ),
             CurveType::Interpolation => Canvas::new(
                 canvas_rectangle,
-                Curve::Interpolation(Interpolation::new(
-                    points,
-                    command.samples,
-                    command.chebyshev_nodes,
-                )),
+                vec![Curve::ControlPoints(ControlPointsCurve::Interpolation(
+                    Interpolation::new(points, command.samples, command.chebyshev_nodes),
+                ))],
                 command,
             ),
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
-                Curve::Bezier(Bezier::new(points, command.samples)),
+                vec![Curve::ControlPoints(ControlPointsCurve::Bezier(
+                    Bezier::new(points, command.samples),
+                ))],
                 command,
             ),
             CurveType::RationalBezier => {
@@ -111,27 +115,25 @@ impl Frame {
                         )
                     })
                     .collect::<Vec<_>>();
+                let points = ControlPoints::new(points);
                 Canvas::new(
                     canvas_rectangle,
-                    Curve::RationalBezier(RationalBezier::new(points, command.samples)),
+                    vec![Curve::ControlPoints(ControlPointsCurve::RationalBezier(
+                        RationalBezier::new(points, command.samples),
+                    ))],
                     command,
                 )
             }
-            CurveType::ConvexHull => Canvas::new(
-                canvas_rectangle,
-                Curve::ConvexHull(ConvexHull::new(points)),
-                command,
-            ),
             CurveType::Trochoid => Canvas::new(
                 Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
-                Curve::Trochoid(Trochoid::new(
+                vec![Curve::Formula(FormulaCurve::Trochoid(Trochoid::new(
                     5000,
                     (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
                     0.3,
                     0.8,
                     0.3,
                     0.7,
-                )),
+                )))],
                 command,
             ),
         };
@@ -174,12 +176,6 @@ impl Frame {
         Ok(())
     }
 
-    pub fn add_point(&mut self, position: PhysicalPosition<f64>) {
-        let point = self.scale_position(position);
-        self.canvas.add_point(point);
-        self.window.request_redraw();
-    }
-
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
         let rectangle = Self::size_rectangle(size);
@@ -211,9 +207,5 @@ impl Frame {
 
     pub fn has_id(&self, id: WindowId) -> bool {
         self.window.id() == id
-    }
-
-    fn scale_position(&self, position: PhysicalPosition<f64>) -> Point<f32> {
-        Point::new(position.x as f32, position.y as f32)
     }
 }

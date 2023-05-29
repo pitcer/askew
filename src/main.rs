@@ -8,6 +8,7 @@ use crate::ui::frame::Frame;
 
 mod canvas;
 mod command;
+mod event;
 mod ui;
 
 fn main() -> Result<()> {

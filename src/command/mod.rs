@@ -35,7 +35,6 @@ pub enum CurveType {
     Interpolation,
     Bezier,
     RationalBezier,
-    ConvexHull,
     Trochoid,
 }
 

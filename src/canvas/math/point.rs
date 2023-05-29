@@ -2,7 +2,7 @@ use num_traits::Num;
 use std::num::NonZeroU32;
 use std::ops::{Add, Sub};
 
-use crate::canvas::geometry::vector::Vector;
+use crate::canvas::math::vector::Vector;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Point<T> {
@@ -19,15 +19,12 @@ impl<T> Point<T> {
     }
 }
 
-impl<T> Point<T>
-where
-    T: Copy,
-{
-    pub fn horizontal(&self) -> T {
+impl<T> Point<T> {
+    pub fn horizontal(self) -> T {
         self.horizontal
     }
 
-    pub fn vertical(&self) -> T {
+    pub fn vertical(self) -> T {
         self.vertical
     }
 }

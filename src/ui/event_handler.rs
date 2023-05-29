@@ -1,8 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use crate::canvas::event::CanvasEvent;
-use crate::canvas::geometry::vector::Vector;
 use anyhow::Result;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
@@ -10,7 +5,9 @@ use winit::event::{
 };
 use winit::event_loop::ControlFlow;
 
+use crate::canvas::math::vector::Vector;
 use crate::command::{Command, SaveFormat};
+use crate::event::CanvasEvent;
 use crate::ui::frame::Frame;
 
 pub struct EventHandler {
@@ -72,7 +69,7 @@ impl EventHandler {
                 state,
                 button,
                 ..
-            } => self.handle_mouse_input(device_id, state, button),
+            } => return Ok(self.handle_mouse_input(device_id, state, button)),
             _ => {}
         }
         Ok(None)
@@ -91,10 +88,11 @@ impl EventHandler {
         _device_id: DeviceId,
         state: ElementState,
         button: MouseButton,
-    ) {
+    ) -> Option<CanvasEvent> {
         if state == ElementState::Pressed && button == MouseButton::Left {
-            self.frame.add_point(self.cursor_position)
+            return Some(CanvasEvent::AddPoint(self.cursor_position));
         }
+        None
     }
 
     fn handle_keyboard_input(

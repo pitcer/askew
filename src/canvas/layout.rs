@@ -1,7 +1,7 @@
 use tiny_skia::{FillRule, Paint, Pixmap, PixmapMut, PixmapPaint, PixmapRef};
 use tiny_skia_path::{Path, Stroke, Transform};
 
-use crate::canvas::geometry::rectangle::Rectangle;
+use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::paint::BgraColor;
 
 pub struct Layout {

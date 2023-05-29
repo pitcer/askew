@@ -15,15 +15,12 @@ impl<T> Vector<T> {
     }
 }
 
-impl<T> Vector<T>
-where
-    T: Copy,
-{
-    pub fn horizontal(&self) -> T {
+impl<T> Vector<T> {
+    pub fn horizontal(self) -> T {
         self.horizontal
     }
 
-    pub fn vertical(&self) -> T {
+    pub fn vertical(self) -> T {
         self.vertical
     }
 }
