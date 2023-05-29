@@ -5,7 +5,7 @@ use num_traits::Num;
 
 use crate::canvas::math::point::Point;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GrahamScan<T> {
     points: Vec<Point<T>>,
 }
@@ -22,15 +22,21 @@ where
     T: Copy + PartialOrd + Num,
 {
     pub fn new(points: Vec<Point<T>>) -> Self {
-        debug_assert!(points.len() >= 3);
-
         Self { points }
     }
 
     pub fn convex_hull(mut self) -> Vec<Point<T>> {
+        if self.points.len() <= 1 {
+            return self.points;
+        }
+
         let (lowest_left_index, lowest_left) =
             self.find_lowest_left().expect("points should not be empty");
         self.points.swap(0, lowest_left_index);
+
+        if self.points.len() == 2 {
+            return self.points;
+        }
 
         self.points[1..].sort_unstable_by(|first, second| {
             let orientation = Self::orientation(lowest_left, *first, *second);
@@ -47,21 +53,24 @@ where
             }
         });
 
-        // TODO: try to do this in place (without that additional stack)
-        let mut stack = Vec::with_capacity(self.points.len());
-        stack.extend_from_slice(&self.points[0..3]);
+        let (mut stack, mut points) = self.points.split_at_mut(3);
+        let mut stack_size = stack.len();
 
-        for point in &self.points[3..] {
-            while Self::orientation(stack[stack.len() - 2], stack[stack.len() - 1], *point)
+        while let Some(point) = points.first() {
+            while Self::orientation(stack[stack_size - 2], stack[stack_size - 1], *point)
                 != Orientation::Counterclockwise
             {
-                stack.pop();
+                stack_size -= 1;
             }
-            stack.push(*point)
+            let stack_len = stack.len();
+            (stack, points) = self.points.split_at_mut(stack_len + 1);
+            stack.swap(stack_size, stack_len);
+            stack_size += 1;
         }
 
-        stack.shrink_to_fit();
-        stack
+        self.points.truncate(stack_size);
+        self.points.shrink_to_fit();
+        self.points
     }
 
     /// Returns:
@@ -94,5 +103,33 @@ where
                 }
             },
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_1() {
+        let points = vec![
+            Point::new(1, 2),
+            Point::new(2, 0),
+            Point::new(3, 1),
+            Point::new(1, 1),
+            Point::new(0, 1),
+            Point::new(1, 0),
+            Point::new(3, 0),
+        ];
+        let convex_hull = vec![
+            Point::new(1, 0),
+            Point::new(2, 0),
+            Point::new(3, 0),
+            Point::new(3, 1),
+            Point::new(1, 2),
+            Point::new(0, 1),
+        ];
+        let scan = GrahamScan::new(points);
+        assert_eq!(convex_hull, scan.convex_hull())
     }
 }

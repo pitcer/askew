@@ -4,7 +4,7 @@ use std::ops::{Add, Sub};
 
 use crate::canvas::math::vector::Vector;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Point<T> {
     horizontal: T,
     vertical: T,
