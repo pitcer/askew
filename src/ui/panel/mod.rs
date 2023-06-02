@@ -41,12 +41,13 @@ impl Panel {
                 data.split_at_mut(tiny_skia::BYTES_PER_PIXEL * buffer_width as usize * height);
             data = remaining;
 
-            let pixmap = PixmapMut::from_bytes(split_data, buffer_width, height as u32).unwrap();
+            let pixmap = PixmapMut::from_bytes(split_data, buffer_width, height as u32)
+                .expect("size should be valid");
             let sub_panel = SubPanel::new(pixmap, self.area);
             panel.replace(sub_panel);
         }
 
-        panels.map(|panel| panel.unwrap())
+        panels.map(|panel| panel.expect("panel should be initialized in the loop"))
     }
 
     pub fn fill(&mut self, color: BgraColor) {
