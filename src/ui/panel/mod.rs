@@ -1,5 +1,3 @@
-use std::mem::MaybeUninit;
-
 use tiny_skia::{
     FillRule, Paint, Path, Pixmap, PixmapMut, PixmapPaint, PixmapRef, Stroke, Transform,
 };
@@ -25,10 +23,10 @@ impl Panel {
         SubPanel::new(pixmap, self.area)
     }
 
-    pub fn split_vertical<const LINES: usize>(
+    pub fn split_vertical<const HEIGHTS: usize>(
         &mut self,
-        heights: [usize; LINES],
-    ) -> [SubPanel<'_>; LINES] {
+        heights: [usize; HEIGHTS],
+    ) -> [SubPanel<'_>; HEIGHTS] {
         debug_assert_eq!(
             heights.into_iter().sum::<usize>(),
             self.buffer.height() as usize
@@ -36,10 +34,7 @@ impl Panel {
 
         let buffer_width = self.buffer.width();
         let mut data = self.buffer.data_mut();
-
-        let panels = MaybeUninit::<[MaybeUninit<SubPanel<'_>>; LINES]>::uninit();
-        // SAFETY: An uninitialized `[MaybeUninit<_>; LEN]` is valid.
-        let mut panels = unsafe { panels.assume_init() };
+        let mut panels = [(); HEIGHTS].map(|_| None);
 
         for (height, panel) in heights.into_iter().zip(panels.iter_mut()) {
             let (split_data, remaining) =
@@ -48,11 +43,10 @@ impl Panel {
 
             let pixmap = PixmapMut::from_bytes(split_data, buffer_width, height as u32).unwrap();
             let sub_panel = SubPanel::new(pixmap, self.area);
-            panel.write(sub_panel);
+            panel.replace(sub_panel);
         }
 
-        // SAFETY: All panels were initialized in the previous loop.
-        panels.map(|panel| unsafe { panel.assume_init() })
+        panels.map(|panel| panel.unwrap())
     }
 
     pub fn fill(&mut self, color: BgraColor) {
