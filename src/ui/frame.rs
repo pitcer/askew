@@ -18,19 +18,19 @@ use crate::canvas::curve::control_points::{ControlPoints, ControlPointsCurve};
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurve;
 use crate::canvas::curve::Curve;
-use crate::canvas::layout::Layout;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
-use crate::canvas::paint::BgraColor;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 use crate::event::CanvasEvent;
+use crate::ui::paint::BgraColor;
+use crate::ui::panel::Panel;
 
 pub struct Frame {
     window: Window,
     context: GraphicsContext,
-    layout: Layout,
+    panel: Panel,
     canvas: Canvas,
     background: Option<Pixmap>,
 }
@@ -62,7 +62,7 @@ impl Frame {
         };
         let window_rectangle = Self::size_rectangle(size);
         let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
-        let layout = Layout::new(pixmap, window_rectangle);
+        let panel = Panel::new(pixmap, window_rectangle);
         let mut rng = rand::thread_rng();
         let points_vec = (0..command.random_points)
             .map(|_| {
@@ -146,7 +146,7 @@ impl Frame {
         Ok(Self {
             window,
             context,
-            layout,
+            panel,
             canvas,
             background,
         })
@@ -167,16 +167,17 @@ impl Frame {
     }
 
     pub fn draw(&mut self) -> Result<()> {
-        self.layout.fill(BgraColor::from_rgba(32, 32, 32, 255));
+        self.panel.fill(BgraColor::from_rgba(32, 32, 32, 255));
         if let Some(background) = &self.background {
-            self.layout.draw_pixmap(0, 0, background.as_ref());
+            self.panel.draw_pixmap(0, 0, background.as_ref());
         }
-        let panel = self.layout.panel();
+        let size = self.panel.area().size();
+        let split_layout = [size.height() as usize - 64, 32, 32];
+        let [panel, _, _] = self.panel.split_vertical(split_layout);
         self.canvas.rasterize(panel)?;
-        let buffer = self.layout.buffer();
+        let buffer = self.panel.buffer();
         let buffer = buffer.data();
         let buffer = bytemuck::cast_slice(buffer);
-        let size = self.layout.area().size();
         self.context
             .set_buffer(buffer, size.width() as u16, size.height() as u16);
         Ok(())
@@ -185,16 +186,16 @@ impl Frame {
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
         let rectangle = Self::size_rectangle(size);
-        let layout = Layout::new(pixmap, rectangle);
-        self.layout = layout
+        let panel = Panel::new(pixmap, rectangle);
+        self.panel = panel
     }
 
     pub fn save(&mut self, format: SaveFormat) -> Result<()> {
         match format {
             SaveFormat::Png => {
-                let panel = self.layout.panel();
+                let panel = self.panel.as_sub_panel();
                 self.canvas.rasterize(panel)?;
-                let buffer = self.layout.buffer();
+                let buffer = self.panel.buffer();
                 let buffer = buffer.data();
                 let buffer: &[[u8; 4]] = bytemuck::cast_slice(buffer);
                 let buffer = buffer
@@ -202,7 +203,7 @@ impl Frame {
                     .copied()
                     .flat_map(|[b, g, r, _a]| [r, g, b])
                     .collect::<Vec<_>>();
-                let size = self.layout.area().size();
+                let size = self.panel.area().size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
                     .ok_or_else(|| anyhow!("Image should fit"))?;
                 image.save_with_format("curve.png", ImageFormat::Png)?;

@@ -2,18 +2,16 @@ use anyhow::Result;
 
 use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::EventHandler;
-use crate::canvas::layout::Panel;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::{CanvasProperties, CanvasPropertiesBuilder};
 use crate::canvas::rasterizer::Rasterizer;
 use crate::command::Command;
 use crate::event::CanvasEvent;
+use crate::ui::panel::SubPanel;
 
 pub mod curve;
 mod event_handler;
-pub mod layout;
 pub mod math;
-pub mod paint;
 mod properties;
 mod rasterizer;
 
@@ -45,7 +43,7 @@ impl Canvas {
         )
     }
 
-    pub fn rasterize(&self, panel: Panel<'_>) -> Result<()> {
+    pub fn rasterize(&self, panel: SubPanel<'_>) -> Result<()> {
         self.rasterizer.rasterize(
             &self.curves[self.properties.current_curve],
             &self.properties,

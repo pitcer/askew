@@ -5,11 +5,11 @@ use tiny_skia::{Path, PathBuilder, Stroke};
 use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints, GetControlPoints};
 use crate::canvas::curve::curve_path::{CurvePath, ToPath};
 use crate::canvas::curve::Curve;
-use crate::canvas::layout::Panel;
 use crate::canvas::math::convex_hull::GrahamScan;
-use crate::canvas::paint::{BgraColor, PaintBuilder};
 use crate::canvas::properties::CanvasProperties;
 use crate::enum_apply;
+use crate::ui::paint::{BgraColor, PaintBuilder};
+use crate::ui::panel::SubPanel;
 
 pub struct Rasterizer {}
 
@@ -18,7 +18,7 @@ impl Rasterizer {
         &self,
         curve: &Curve,
         properties: &CanvasProperties,
-        panel: Panel<'_>,
+        panel: SubPanel<'_>,
     ) -> Result<()> {
         match curve {
             Curve::ControlPoints(curve) => {
@@ -45,11 +45,11 @@ impl Rasterizer {
 struct CurveRasterizer<'a, T> {
     curve: &'a T,
     properties: &'a CanvasProperties,
-    panel: Panel<'a>,
+    panel: SubPanel<'a>,
 }
 
 impl<'a, T> CurveRasterizer<'a, T> {
-    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: Panel<'a>) -> Self {
+    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: SubPanel<'a>) -> Self {
         Self {
             curve,
             properties,
