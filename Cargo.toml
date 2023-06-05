@@ -8,6 +8,7 @@ description = "Curves editor"
 [dependencies]
 anyhow = "1.0.71"
 bytemuck = "1.13.1"
+fontdue = "0.7.3"
 num-traits = "0.2.15"
 rand = "0.8.5"
 uninit = "0.5.1"
@@ -20,6 +21,10 @@ features = ["derive"]
 version = "0.24.6"
 default-features = false
 features = ["png"]
+
+[dependencies.lru]
+version = "0.10.0"
+default-features = false
 
 [dependencies.softbuffer]
 version = "0.2.1"

@@ -12,7 +12,7 @@ impl<'a> PaintBuilder<'a> {
         }
     }
 
-    pub fn bgra_color(mut self, color: BgraColor) -> PaintBuilder<'a> {
+    pub fn bgra_color(mut self, color: PaintColor) -> PaintBuilder<'a> {
         self.paint.set_color(color.0);
         self
     }
@@ -22,9 +22,9 @@ impl<'a> PaintBuilder<'a> {
     }
 }
 
-pub struct BgraColor(Color);
+pub struct PaintColor(Color);
 
-impl BgraColor {
+impl PaintColor {
     pub fn from_rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Self {
         // Color format in display is 0RGB in [u8], but we store colors using u32, so after
         // bytemuck::cast bytes would get flipped, since we are on little endian.
@@ -33,8 +33,8 @@ impl BgraColor {
     }
 }
 
-impl From<BgraColor> for Color {
-    fn from(value: BgraColor) -> Self {
+impl From<PaintColor> for Color {
+    fn from(value: PaintColor) -> Self {
         value.0
     }
 }

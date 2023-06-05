@@ -1,13 +1,14 @@
 use tiny_skia::{
-    FillRule, Paint, Path, Pixmap, PixmapMut, PixmapPaint, PixmapRef, Stroke, Transform,
+    FillRule, Paint, Path, Pixmap, PixmapMut, PixmapPaint, PixmapRef, PremultipliedColorU8, Stroke,
+    Transform,
 };
 
+use crate::bar::color::{Rgb, Rgba};
+use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
-use crate::ui::paint::BgraColor;
+use crate::ui::paint::PaintColor;
 
-pub mod command;
-pub mod status;
-
+#[derive(Debug)]
 pub struct Panel {
     buffer: Pixmap,
     area: Rectangle<u32>,
@@ -50,8 +51,28 @@ impl Panel {
         panels.map(|panel| panel.expect("panel should be initialized in the loop"))
     }
 
-    pub fn fill(&mut self, color: BgraColor) {
-        self.buffer.fill(color.into());
+    pub fn buffer(&self) -> PixmapRef<'_> {
+        self.buffer.as_ref()
+    }
+
+    pub fn area(&self) -> Rectangle<u32> {
+        self.area
+    }
+}
+
+#[derive(Debug)]
+pub struct SubPanel<'a> {
+    buffer: PixmapMut<'a>,
+    area: Rectangle<u32>,
+}
+
+impl<'a> SubPanel<'a> {
+    pub fn new(buffer: PixmapMut<'a>, area: Rectangle<u32>) -> Self {
+        Self { buffer, area }
+    }
+
+    pub fn fill(&mut self, color: PaintColor) {
+        self.buffer.fill(color.into())
     }
 
     pub fn draw_pixmap(&mut self, x: i32, y: i32, pixmap: PixmapRef) {
@@ -65,29 +86,6 @@ impl Panel {
         )
     }
 
-    pub fn buffer(&self) -> PixmapRef<'_> {
-        self.buffer.as_ref()
-    }
-
-    pub fn area(&self) -> Rectangle<u32> {
-        self.area
-    }
-}
-
-pub struct SubPanel<'a> {
-    buffer: PixmapMut<'a>,
-    area: Rectangle<u32>,
-}
-
-impl<'a> SubPanel<'a> {
-    pub fn new(buffer: PixmapMut<'a>, area: Rectangle<u32>) -> Self {
-        Self { buffer, area }
-    }
-
-    pub fn fill(&mut self, color: BgraColor) {
-        self.buffer.fill(color.into())
-    }
-
     pub fn draw_stroke_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
         self.buffer
             .stroke_path(path, paint, stroke, Transform::identity(), None)
@@ -96,6 +94,21 @@ impl<'a> SubPanel<'a> {
     pub fn draw_fill_path(&mut self, path: &Path, paint: &Paint<'_>, fill_rule: FillRule) {
         self.buffer
             .fill_path(path, paint, fill_rule, Transform::identity(), None)
+    }
+
+    pub fn blend_pixel(&mut self, pixel: Point<usize>, foreground: Rgba) {
+        let width = self.buffer.width() as usize;
+        let index = pixel.horizontal() + pixel.vertical() * width;
+        let pixels = self.buffer.pixels_mut();
+        let pixel = &mut pixels[index];
+        let blend = foreground.blend(Rgb::new(pixel.blue(), pixel.green(), pixel.red()));
+        *pixel = PremultipliedColorU8::from_rgba(
+            blend.blue(),
+            blend.green(),
+            blend.red(),
+            pixel.alpha(),
+        )
+        .unwrap();
     }
 
     pub fn area(&self) -> Rectangle<u32> {

@@ -8,6 +8,7 @@ use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder, WindowId};
 
+use crate::bar::Bar;
 use crate::canvas::curve::control_points::bezier::{Bezier, BezierAlgorithm};
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
@@ -24,7 +25,7 @@ use crate::canvas::math::size::Size;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 use crate::event::CanvasEvent;
-use crate::ui::paint::BgraColor;
+use crate::ui::paint::PaintColor;
 use crate::ui::panel::Panel;
 
 pub struct Frame {
@@ -167,13 +168,16 @@ impl Frame {
     }
 
     pub fn draw(&mut self) -> Result<()> {
-        self.panel.fill(BgraColor::from_rgba(32, 32, 32, 255));
+        let mut panel = self.panel.as_sub_panel();
+        panel.fill(PaintColor::from_rgba(32, 32, 32, 255));
         if let Some(background) = &self.background {
-            self.panel.draw_pixmap(0, 0, background.as_ref());
+            panel.draw_pixmap(0, 0, background.as_ref());
         }
         let size = self.panel.area().size();
-        let split_layout = [size.height() as usize - 64, 32, 32];
-        let [panel, _, _] = self.panel.split_vertical(split_layout);
+        let split_layout = [size.height() as usize - 44, 22, 22];
+        let [panel, status, command] = self.panel.split_vertical(split_layout);
+        let _status_bar = Bar::new(status, "status")?;
+        let _command_bar = Bar::new(command, ":command")?;
         self.canvas.rasterize(panel)?;
         let buffer = self.panel.buffer();
         let buffer = buffer.data();

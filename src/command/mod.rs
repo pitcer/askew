@@ -27,6 +27,9 @@ pub struct Command {
 
     #[arg(short = 'n', long, default_value_t = 0)]
     pub random_points: u32,
+
+    #[arg(long, default_value_t = 16)]
+    pub font_size: u32,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy)]
