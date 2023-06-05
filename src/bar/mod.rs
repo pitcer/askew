@@ -1,12 +1,11 @@
 use anyhow::Result;
 
-use crate::bar::color::Rgb;
 use crate::bar::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::canvas::math::point::Point;
-use crate::ui::paint::PaintColor;
-use crate::ui::panel::SubPanel;
+use crate::ui::color::Rgb;
+use crate::ui::panel::Panel;
+use crate::ui::pixel::Pixel;
 
-pub mod color;
 pub mod command;
 pub mod font;
 pub mod status;
@@ -17,13 +16,8 @@ const FONT_COLOR: Rgb = Rgb::new(249, 250, 244);
 pub struct Bar {}
 
 impl Bar {
-    pub fn new(mut panel: SubPanel<'_>, text: &str) -> Result<Self> {
-        panel.fill(PaintColor::from_rgba(
-            BACKGROUND_COLOR.red(),
-            BACKGROUND_COLOR.green(),
-            BACKGROUND_COLOR.blue(),
-            255,
-        ));
+    pub fn new(mut panel: Panel<'_>, text: &str) -> Result<Self> {
+        panel.fill(Pixel::from_rgba(BACKGROUND_COLOR, 255));
         let font = FontLoader::new("JetBrainsMonoNL-Regular.ttf")?;
         let mut rasterizer = GlyphRasterizer::new(&font);
         let mut layout = FontLayout::new(&font, 16);
@@ -37,7 +31,7 @@ impl Bar {
                     let alpha = raster[x + y * metrics.width];
                     panel.blend_pixel(
                         Point::new(glyph.x as usize + x, glyph.y as usize + y),
-                        FONT_COLOR.with_alpha(alpha),
+                        Pixel::from_rgba(FONT_COLOR, alpha),
                     );
                 }
             }

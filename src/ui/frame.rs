@@ -1,7 +1,9 @@
+use std::num::NonZeroU32;
+
 use anyhow::{anyhow, Result};
 use image::{EncodableLayout, ImageFormat, RgbImage};
 use rand::Rng;
-use softbuffer::GraphicsContext;
+use softbuffer::{Context, Surface};
 use tiny_skia::IntSize;
 use tiny_skia::Pixmap;
 use winit::dpi::PhysicalSize;
@@ -25,13 +27,14 @@ use crate::canvas::math::size::Size;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 use crate::event::CanvasEvent;
-use crate::ui::paint::PaintColor;
+use crate::ui::color::Rgb;
 use crate::ui::panel::Panel;
+use crate::ui::pixel::Pixel;
 
 pub struct Frame {
     window: Window,
-    context: GraphicsContext,
-    panel: Panel,
+    _context: Context,
+    surface: Surface,
     canvas: Canvas,
     background: Option<Pixmap>,
 }
@@ -39,10 +42,16 @@ pub struct Frame {
 impl Frame {
     pub fn new(event_loop: &EventLoop<()>, command: &Command) -> Result<Self> {
         let window = WindowBuilder::new().with_title("askew").build(event_loop)?;
-        let context =
-            unsafe { GraphicsContext::new(&window, &window) }.expect("Platform is not supported");
+        let context = unsafe { Context::new(&window) }.expect("platform should be supported");
+        let mut surface =
+            unsafe { Surface::new(&context, &window) }.expect("platform should be supported");
         let size = window.inner_size();
-        let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
+        surface
+            .resize(
+                NonZeroU32::new(size.width).expect("size width should be non zero"),
+                NonZeroU32::new(size.height).expect("size height should be non zero"),
+            )
+            .map_err(|error| anyhow!(error.to_string()))?;
         let background = if let Some(path) = &command.background_path {
             let image = image::open(path)?;
             let image = image.into_rgb8();
@@ -63,7 +72,6 @@ impl Frame {
         };
         let window_rectangle = Self::size_rectangle(size);
         let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
-        let panel = Panel::new(pixmap, window_rectangle);
         let mut rng = rand::thread_rng();
         let points_vec = (0..command.random_points)
             .map(|_| {
@@ -146,8 +154,8 @@ impl Frame {
         };
         Ok(Self {
             window,
-            context,
-            panel,
+            _context: context,
+            surface,
             canvas,
             background,
         })
@@ -168,48 +176,54 @@ impl Frame {
     }
 
     pub fn draw(&mut self) -> Result<()> {
-        let mut panel = self.panel.as_sub_panel();
-        panel.fill(PaintColor::from_rgba(32, 32, 32, 255));
+        let mut buffer = self
+            .surface
+            .buffer_mut()
+            .map_err(|error| anyhow!(error.to_string()))?;
+        let area = Self::size_rectangle(self.window.inner_size());
+        let mut panel = Panel::from_buffer(&mut buffer, area);
+
+        panel.fill(Pixel::from_rgba(Rgb::new(32, 32, 32), 255));
         if let Some(background) = &self.background {
             panel.draw_pixmap(0, 0, background.as_ref());
         }
-        let size = self.panel.area().size();
+        let size = area.size();
         let split_layout = [size.height() as usize - 44, 22, 22];
-        let [panel, status, command] = self.panel.split_vertical(split_layout);
+        let [panel, status, command] = panel.split_vertical(split_layout);
         let _status_bar = Bar::new(status, "status")?;
         let _command_bar = Bar::new(command, ":command")?;
         self.canvas.rasterize(panel)?;
-        let buffer = self.panel.buffer();
-        let buffer = buffer.data();
-        let buffer = bytemuck::cast_slice(buffer);
-        self.context
-            .set_buffer(buffer, size.width() as u16, size.height() as u16);
+
+        buffer
+            .present()
+            .map_err(|error| anyhow!(error.to_string()))?;
         Ok(())
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        let pixmap = Pixmap::new(size.width, size.height).expect("Size should be valid");
-        let rectangle = Self::size_rectangle(size);
-        let panel = Panel::new(pixmap, rectangle);
-        self.panel = panel
+    pub fn resize(&mut self, size: PhysicalSize<u32>) -> Result<()> {
+        self.surface
+            .resize(
+                NonZeroU32::new(size.width).expect("size width should be non zero"),
+                NonZeroU32::new(size.height).expect("size height should be non zero"),
+            )
+            .map_err(|error| anyhow!(error.to_string()))
     }
 
     pub fn save(&mut self, format: SaveFormat) -> Result<()> {
         match format {
             SaveFormat::Png => {
-                let panel = self.panel.as_sub_panel();
+                const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), 0);
+                let area = Self::size_rectangle(self.window.inner_size());
+                let mut buffer = vec![EMPTY_PIXEL; area.area() as usize];
+                let panel = Panel::new(&mut buffer, area);
                 self.canvas.rasterize(panel)?;
-                let buffer = self.panel.buffer();
-                let buffer = buffer.data();
-                let buffer: &[[u8; 4]] = bytemuck::cast_slice(buffer);
                 let buffer = buffer
                     .iter()
-                    .copied()
-                    .flat_map(|[b, g, r, _a]| [r, g, b])
+                    .flat_map(|pixel| pixel.into_rgb_array())
                     .collect::<Vec<_>>();
-                let size = self.panel.area().size();
+                let size = area.size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
-                    .ok_or_else(|| anyhow!("Image should fit"))?;
+                    .ok_or_else(|| anyhow!("image should fit"))?;
                 image.save_with_format("curve.png", ImageFormat::Png)?;
             }
         }

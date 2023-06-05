@@ -7,7 +7,7 @@ use crate::canvas::properties::{CanvasProperties, CanvasPropertiesBuilder};
 use crate::canvas::rasterizer::Rasterizer;
 use crate::command::Command;
 use crate::event::CanvasEvent;
-use crate::ui::panel::SubPanel;
+use crate::ui::panel::Panel;
 
 pub mod curve;
 mod event_handler;
@@ -43,7 +43,7 @@ impl Canvas {
         )
     }
 
-    pub fn rasterize(&self, panel: SubPanel<'_>) -> Result<()> {
+    pub fn rasterize(&self, panel: Panel<'_>) -> Result<()> {
         self.rasterizer.rasterize(
             &self.curves[self.properties.current_curve],
             &self.properties,

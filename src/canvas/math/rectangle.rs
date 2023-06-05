@@ -1,5 +1,6 @@
 use std::num::NonZeroU32;
-use std::ops::{Add, Div};
+
+use num_traits::Num;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::size::Size;
@@ -32,17 +33,20 @@ where
 
 impl<T> Rectangle<T>
 where
-    T: Copy + Div<Output = T>,
+    T: Copy + Num,
 {
     pub fn sides_ratio(&self) -> T {
         self.size.width() / self.size.height()
+    }
+
+    pub fn area(&self) -> T {
+        self.size.width() * self.size.height()
     }
 }
 
 impl<T> Rectangle<T>
 where
-    T: Copy + Add + PartialOrd,
-    <T as Add>::Output: PartialOrd<T>,
+    T: Copy + Num + PartialOrd,
 {
     pub fn contains(&self, point: Point<T>) -> bool {
         self.origin.horizontal() <= point.horizontal()

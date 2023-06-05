@@ -8,8 +8,9 @@ use crate::canvas::curve::Curve;
 use crate::canvas::math::convex_hull::GrahamScan;
 use crate::canvas::properties::CanvasProperties;
 use crate::enum_apply;
-use crate::ui::paint::{PaintColor, PaintBuilder};
-use crate::ui::panel::SubPanel;
+use crate::ui::color::Rgb;
+use crate::ui::paint::{PaintBuilder, PaintColor};
+use crate::ui::panel::Panel;
 
 pub struct Rasterizer {}
 
@@ -18,7 +19,7 @@ impl Rasterizer {
         &self,
         curve: &Curve,
         properties: &CanvasProperties,
-        panel: SubPanel<'_>,
+        panel: Panel<'_>,
     ) -> Result<()> {
         match curve {
             Curve::ControlPoints(curve) => {
@@ -45,11 +46,11 @@ impl Rasterizer {
 struct CurveRasterizer<'a, T> {
     curve: &'a T,
     properties: &'a CanvasProperties,
-    panel: SubPanel<'a>,
+    panel: Panel<'a>,
 }
 
 impl<'a, T> CurveRasterizer<'a, T> {
-    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: SubPanel<'a>) -> Self {
+    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: Panel<'a>) -> Self {
         Self {
             curve,
             properties,
@@ -65,7 +66,7 @@ where
     fn draw_curve(&mut self) {
         if let Some(path) = self.curve.to_path() {
             let paint = PaintBuilder::new()
-                .bgra_color(PaintColor::from_rgba(255, 255, 0, 255))
+                .color(PaintColor::from_rgba(Rgb::new(255, 255, 0), 255))
                 .build();
             let stroke = Stroke {
                 width: self.properties.line_width,
@@ -84,7 +85,7 @@ where
         if self.properties.show_convex_hull && self.curve.control_points().length() >= 3 {
             if let Some(path) = self.create_convex_hull_path() {
                 let paint = PaintBuilder::new()
-                    .bgra_color(PaintColor::from_rgba(0, 255, 255, 255))
+                    .color(PaintColor::from_rgba(Rgb::new(0, 255, 255), 255))
                     .build();
                 let stroke = Stroke {
                     width: self.properties.line_width,
@@ -98,7 +99,7 @@ where
     fn draw_control_points(&mut self) {
         if let Some(points_path) = self.create_points_path(self.properties) {
             let points_paint = PaintBuilder::new()
-                .bgra_color(PaintColor::from_rgba(255, 0, 255, 255))
+                .color(PaintColor::from_rgba(Rgb::new(255, 0, 255), 255))
                 .build();
             self.panel
                 .draw_fill_path(&points_path, &points_paint, FillRule::Winding);
@@ -113,7 +114,7 @@ where
         {
             let point = point.as_ref();
             let points_paint = PaintBuilder::new()
-                .bgra_color(PaintColor::from_rgba(255, 255, 255, 255))
+                .color(PaintColor::from_rgba(Rgb::new(255, 255, 255), 255))
                 .build();
             let mut path = PathBuilder::new();
             path.push_circle(

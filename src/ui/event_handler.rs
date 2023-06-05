@@ -49,7 +49,9 @@ impl EventHandler {
         control_flow: &mut ControlFlow,
     ) -> Result<Option<CanvasEvent>> {
         match event {
-            WindowEvent::Resized(size) => self.handle_resized(size),
+            WindowEvent::Resized(size) => {
+                self.handle_resized(size)?;
+            }
             WindowEvent::CloseRequested => {
                 if let Some(format) = self.save_format {
                     self.frame.save(format)?;
@@ -75,7 +77,7 @@ impl EventHandler {
         Ok(None)
     }
 
-    fn handle_resized(&mut self, size: PhysicalSize<u32>) {
+    fn handle_resized(&mut self, size: PhysicalSize<u32>) -> Result<()> {
         self.frame.resize(size)
     }
 
