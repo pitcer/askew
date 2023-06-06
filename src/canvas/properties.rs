@@ -1,8 +1,11 @@
 use crate::canvas::math::rectangle::Rectangle;
+use crate::canvas::mode::Mode;
 use crate::command::Command;
 
 pub struct CanvasProperties {
     pub area: Rectangle<f32>,
+    pub mode: Mode,
+    pub command_mode: bool,
     pub line_width: f32,
     pub point_radius: f32,
     pub show_convex_hull: bool,
@@ -11,20 +14,12 @@ pub struct CanvasProperties {
     pub default_weight: f32,
 }
 
-pub struct CanvasPropertiesBuilder {
-    area: Rectangle<f32>,
-    line_width: f32,
-    point_radius: f32,
-    show_convex_hull: bool,
-    current_point_index: usize,
-    current_curve: usize,
-    default_weight: f32,
-}
-
-impl CanvasPropertiesBuilder {
+impl CanvasProperties {
     pub fn new(area: Rectangle<f32>) -> Self {
         Self {
             area,
+            mode: Mode::PointSelect,
+            command_mode: false,
             line_width: 0.0,
             point_radius: 0.0,
             show_convex_hull: false,
@@ -34,22 +29,9 @@ impl CanvasPropertiesBuilder {
         }
     }
 
-    pub fn include_command(mut self, command: &Command) -> Self {
+    pub fn include_command(&mut self, command: &Command) {
         self.line_width = command.line_width;
         self.point_radius = command.point_radius;
         self.show_convex_hull = command.show_convex_hull;
-        self
-    }
-
-    pub fn build(self) -> CanvasProperties {
-        CanvasProperties {
-            area: self.area,
-            line_width: self.line_width,
-            point_radius: self.point_radius,
-            show_convex_hull: self.show_convex_hull,
-            current_point_index: self.current_point_index,
-            current_curve: self.current_curve,
-            default_weight: self.default_weight,
-        }
     }
 }

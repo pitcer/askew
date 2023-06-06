@@ -24,7 +24,7 @@ use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
-use crate::event::CanvasEvent;
+use crate::event::{CanvasEvent, Event, FrameEvent};
 use crate::ui::bar::TextPanel;
 use crate::ui::color::{Alpha, Rgb};
 use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
@@ -41,6 +41,7 @@ pub struct Frame {
     glyph_rasterizer: GlyphRasterizer,
     status_layout: FontLayout,
     command_layout: FontLayout,
+    command_buffer: Option<String>,
 }
 
 impl Frame {
@@ -159,6 +160,7 @@ impl Frame {
         let glyph_rasterizer = GlyphRasterizer::new();
         let status_layout = FontLayout::new(command.font_size);
         let command_layout = FontLayout::new(command.font_size);
+        let command_buffer = None;
         Ok(Self {
             window,
             _context: context,
@@ -169,6 +171,7 @@ impl Frame {
             glyph_rasterizer,
             status_layout,
             command_layout,
+            command_buffer,
         })
     }
 
@@ -178,12 +181,51 @@ impl Frame {
         Rectangle::new(origin, size)
     }
 
-    pub fn handle_event(&mut self, event: Option<CanvasEvent>) -> Result<()> {
-        if let Some(event) = event {
-            self.canvas.handle_event(event)?;
-            self.window.request_redraw();
+    pub fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
+        let Some(event) = event else { return Ok(()) };
+        match event {
+            Event::Frame(event) => {
+                let event = self.handle_frame_event(event)?;
+                if let Some(event) = event {
+                    self.canvas.handle_event(event)?;
+                }
+                self.window.request_redraw();
+            }
+            Event::Canvas(event) if self.command_buffer.is_none() => {
+                self.canvas.handle_event(event)?;
+                self.window.request_redraw();
+            }
+            _ => {}
         }
         Ok(())
+    }
+
+    fn handle_frame_event(&mut self, event: FrameEvent) -> Result<Option<CanvasEvent>> {
+        match event {
+            FrameEvent::EnterCommand => self.command_buffer = Some(String::new()),
+            FrameEvent::ReceiveCharacter(character) => {
+                if let Some(buffer) = &mut self.command_buffer {
+                    if !character.is_control() {
+                        buffer.push(character);
+                    }
+                }
+            }
+            FrameEvent::ExitCommand => self.command_buffer = None,
+            FrameEvent::ExecuteCommand => {
+                if let Some(buffer) = self.command_buffer.take() {
+                    let event = Self::parse_command(buffer);
+                    return Ok(event);
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    fn parse_command(command: String) -> Option<CanvasEvent> {
+        match &command[1..] {
+            "conv" => Some(CanvasEvent::ToggleConvexHull),
+            _ => None,
+        }
     }
 
     pub fn draw(&mut self) -> Result<()> {
@@ -207,7 +249,8 @@ impl Frame {
         self.status_layout
             .setup(&self.font_loader)
             .append_text(&format!(
-                "{} {}/{}",
+                "{} {} {}/{}",
+                self.canvas.properties().mode,
                 name,
                 self.canvas.properties().current_curve + 1,
                 self.canvas.curves().len()
@@ -220,9 +263,15 @@ impl Frame {
             &mut self.glyph_rasterizer,
         );
 
-        self.command_layout
-            .setup(&self.font_loader)
-            .append_text(":command");
+        if let Some(buffer) = &self.command_buffer {
+            self.command_layout
+                .setup(&self.font_loader)
+                .append_text(buffer);
+        } else {
+            self.command_layout
+                .setup(&self.font_loader)
+                .append_text(" ");
+        }
         let mut command_bar =
             TextPanel::new(command, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
         command_bar.fill();

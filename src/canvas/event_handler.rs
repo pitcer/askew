@@ -71,6 +71,7 @@ impl<'a> CurveEventHandler<'a, ControlPointsCurve> {
                     handler.add_point(point)
                 }
                 CanvasEvent::Resize { area } => {self.properties.area = area; Ok(())},
+                CanvasEvent::ChangeMode(mode) => { self.properties.mode = mode; Ok(())}
             }
         })
     }

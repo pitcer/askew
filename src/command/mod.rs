@@ -1,4 +1,4 @@
-#[derive(clap::Parser)]
+#[derive(Debug, clap::Parser)]
 #[command(version)]
 pub struct Command {
     #[arg(short, long, value_enum, default_value_t = CurveType::Polyline)]
@@ -35,7 +35,7 @@ pub struct Command {
     pub font_path: String,
 }
 
-#[derive(clap::ValueEnum, Clone, Copy)]
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum CurveType {
     Polyline,
     Interpolation,
@@ -44,7 +44,7 @@ pub enum CurveType {
     Trochoid,
 }
 
-#[derive(clap::ValueEnum, Clone, Copy)]
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum SaveFormat {
     Png,
 }

@@ -1,39 +1,44 @@
 use anyhow::Result;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
-    DeviceId, ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent,
+    DeviceId, ElementState, Event as WinitEvent, KeyboardInput, ModifiersState, MouseButton,
+    VirtualKeyCode, WindowEvent,
 };
 use winit::event_loop::ControlFlow;
 
 use crate::canvas::math::vector::Vector;
+use crate::canvas::mode::Mode;
 use crate::command::{Command, SaveFormat};
-use crate::event::CanvasEvent;
+use crate::event::{CanvasEvent, Event, FrameEvent};
 use crate::ui::frame::Frame;
 
 pub struct EventHandler {
     frame: Frame,
     cursor_position: PhysicalPosition<f64>,
+    modifiers: ModifiersState,
     save_format: Option<SaveFormat>,
 }
 
 impl EventHandler {
     pub fn new(frame: Frame, command: &Command) -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
+        let modifiers = ModifiersState::empty();
         Self {
             frame,
             cursor_position,
+            modifiers,
             save_format: command.save_format,
         }
     }
 
-    pub fn run(&mut self, event: Event<()>, control_flow: &mut ControlFlow) -> Result<()> {
+    pub fn run(&mut self, event: WinitEvent<()>, control_flow: &mut ControlFlow) -> Result<()> {
         control_flow.set_wait();
 
         match event {
-            Event::RedrawRequested(window_id) if self.frame.has_id(window_id) => {
+            WinitEvent::RedrawRequested(window_id) if self.frame.has_id(window_id) => {
                 self.frame.draw()?;
             }
-            Event::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
+            WinitEvent::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
                 let event = self.handle_window_event(event, control_flow)?;
                 self.frame.handle_event(event)?;
             }
@@ -47,7 +52,7 @@ impl EventHandler {
         &mut self,
         event: WindowEvent,
         control_flow: &mut ControlFlow,
-    ) -> Result<Option<CanvasEvent>> {
+    ) -> Result<Option<Event>> {
         match event {
             WindowEvent::Resized(size) => {
                 self.handle_resized(size)?;
@@ -58,9 +63,15 @@ impl EventHandler {
                 }
                 control_flow.set_exit()
             }
+            WindowEvent::ReceivedCharacter(character) => {
+                return Ok(Some(Event::Frame(FrameEvent::ReceiveCharacter(character))));
+            }
             WindowEvent::KeyboardInput {
                 device_id, input, ..
             } => return Ok(self.handle_keyboard_input(device_id, input)),
+            WindowEvent::ModifiersChanged(modifiers) => {
+                self.modifiers = modifiers;
+            }
             WindowEvent::CursorMoved {
                 device_id,
                 position,
@@ -90,9 +101,9 @@ impl EventHandler {
         _device_id: DeviceId,
         state: ElementState,
         button: MouseButton,
-    ) -> Option<CanvasEvent> {
+    ) -> Option<Event> {
         if state == ElementState::Pressed && button == MouseButton::Left {
-            return Some(CanvasEvent::AddPoint(self.cursor_position));
+            return Some(Event::Canvas(CanvasEvent::AddPoint(self.cursor_position)));
         }
         None
     }
@@ -101,27 +112,46 @@ impl EventHandler {
         &mut self,
         _device_id: DeviceId,
         input: KeyboardInput,
-    ) -> Option<CanvasEvent> {
+    ) -> Option<Event> {
         if input.state != ElementState::Pressed {
             return None;
         }
         match input.virtual_keycode {
-            Some(VirtualKeyCode::J) => Some(CanvasEvent::ChangeCurrentIndex(-1)),
-            Some(VirtualKeyCode::K) => Some(CanvasEvent::ChangeCurrentIndex(1)),
-            Some(VirtualKeyCode::I) => Some(CanvasEvent::ChangeWeight(1.5)),
-            Some(VirtualKeyCode::O) => Some(CanvasEvent::ChangeWeight(-1.5)),
-            Some(VirtualKeyCode::H) => Some(CanvasEvent::ToggleConvexHull),
-            Some(VirtualKeyCode::D) => Some(CanvasEvent::DeleteCurrentPoint),
-            Some(VirtualKeyCode::Up) => Some(CanvasEvent::MoveCurrentPoint(Vector::new(0.0, -4.0))),
-            Some(VirtualKeyCode::Down) => {
-                Some(CanvasEvent::MoveCurrentPoint(Vector::new(0.0, 4.0)))
+            Some(VirtualKeyCode::Colon) => Some(Event::Frame(FrameEvent::EnterCommand)),
+            Some(VirtualKeyCode::Escape) => Some(Event::Frame(FrameEvent::ExitCommand)),
+            Some(VirtualKeyCode::Return) => Some(Event::Frame(FrameEvent::ExecuteCommand)),
+
+            Some(VirtualKeyCode::J) => Some(Event::Canvas(CanvasEvent::ChangeCurrentIndex(-1))),
+            Some(VirtualKeyCode::K) => Some(Event::Canvas(CanvasEvent::ChangeCurrentIndex(1))),
+
+            Some(VirtualKeyCode::W) => {
+                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::PointSelect)))
             }
-            Some(VirtualKeyCode::Left) => {
-                Some(CanvasEvent::MoveCurrentPoint(Vector::new(-4.0, 0.0)))
+            Some(VirtualKeyCode::E) => {
+                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::CurveSelect)))
             }
-            Some(VirtualKeyCode::Right) => {
-                Some(CanvasEvent::MoveCurrentPoint(Vector::new(4.0, 0.0)))
+            Some(VirtualKeyCode::R) => {
+                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::TypeChange)))
             }
+
+            Some(VirtualKeyCode::I) => Some(Event::Canvas(CanvasEvent::ChangeWeight(1.5))),
+            Some(VirtualKeyCode::O) => Some(Event::Canvas(CanvasEvent::ChangeWeight(-1.5))),
+
+            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::ToggleConvexHull)),
+            Some(VirtualKeyCode::D) => Some(Event::Canvas(CanvasEvent::DeleteCurrentPoint)),
+
+            Some(VirtualKeyCode::Up) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
+                Vector::new(0.0, -4.0),
+            ))),
+            Some(VirtualKeyCode::Down) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
+                Vector::new(0.0, 4.0),
+            ))),
+            Some(VirtualKeyCode::Left) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
+                Vector::new(-4.0, 0.0),
+            ))),
+            Some(VirtualKeyCode::Right) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
+                Vector::new(4.0, 0.0),
+            ))),
             _ => None,
         }
     }

@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::EventHandler;
 use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::properties::{CanvasProperties, CanvasPropertiesBuilder};
+use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
 use crate::command::Command;
 use crate::event::CanvasEvent;
@@ -12,6 +12,7 @@ use crate::ui::panel::Panel;
 pub mod curve;
 mod event_handler;
 pub mod math;
+pub mod mode;
 mod properties;
 mod rasterizer;
 
@@ -24,9 +25,8 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(area: Rectangle<f32>, curves: Vec<Curve>, command: &Command) -> Self {
-        let properties = CanvasPropertiesBuilder::new(area)
-            .include_command(command)
-            .build();
+        let mut properties = CanvasProperties::new(area);
+        properties.include_command(command);
         Self {
             rasterizer: Rasterizer {},
             event_handler: EventHandler {},
