@@ -17,7 +17,7 @@ use crate::enum_apply;
 use crate::event::handler::{
     AddPointHandler, ChangePointWeightHandler, DeletePointHandler, MovePointHandler,
 };
-use crate::event::CanvasEvent;
+use crate::event::CurveEvent;
 
 pub struct EventHandler {}
 
@@ -26,7 +26,7 @@ impl EventHandler {
         &self,
         curve: &mut Curve,
         properties: &mut CanvasProperties,
-        event: CanvasEvent,
+        event: CurveEvent,
     ) -> Result<()> {
         enum_apply!(curve, Curve::ControlPoints | Curve::Formula => |curve| {
             let mut handler = CurveEventHandler::new(curve, properties);
@@ -47,31 +47,31 @@ impl<'a, C> CurveEventHandler<'a, C> {
 }
 
 impl<'a> CurveEventHandler<'a, FormulaCurve> {
-    pub fn handle_event(&mut self, _event: CanvasEvent) -> Result<()> {
+    pub fn handle_event(&mut self, _event: CurveEvent) -> Result<()> {
         Ok(())
     }
 }
 
 impl<'a> CurveEventHandler<'a, ControlPointsCurve> {
-    pub fn handle_event(&mut self, event: CanvasEvent) -> Result<()> {
+    pub fn handle_event(&mut self, event: CurveEvent) -> Result<()> {
         enum_apply!(self.curve, ControlPointsCurve::Polyline | ControlPointsCurve::Bezier | ControlPointsCurve::Interpolation | ControlPointsCurve::RationalBezier=> |curve| {
             let mut handler = CurveEventHandler::new(curve, self.properties);
             match event {
-                CanvasEvent::ChangeCurrentIndex(change) => handler.change_current_index(change as isize),
-                CanvasEvent::ChangeWeight(weight) => handler.change_weight(weight),
-                CanvasEvent::ToggleConvexHull => {
+                CurveEvent::ChangeCurrentIndex(change) => handler.change_current_index(change as isize),
+                CurveEvent::ChangeWeight(weight) => handler.change_weight(weight),
+                CurveEvent::ToggleConvexHull => {
                     handler.properties.show_convex_hull = !handler.properties.show_convex_hull;
                     Ok(())
                 }
-                CanvasEvent::DeleteCurrentPoint => handler.delete_point(),
-                CanvasEvent::MoveCurrentPoint(vector) => handler.move_point(vector),
-                CanvasEvent::AddPoint(point) => {
+                CurveEvent::DeleteCurrentPoint => handler.delete_point(),
+                CurveEvent::MoveCurrentPoint(vector) => handler.move_point(vector),
+                CurveEvent::AddPoint(point) => {
                     let point = Self::scale_position(point);
 
                     handler.add_point(point)
                 }
-                CanvasEvent::Resize { area } => {self.properties.area = area; Ok(())},
-                CanvasEvent::ChangeMode(mode) => { self.properties.mode = mode; Ok(())}
+                CurveEvent::Resize { area } => {self.properties.area = area; Ok(())},
+
             }
         })
     }

@@ -14,11 +14,19 @@ pub enum Event {
 pub enum FrameEvent {
     EnterCommand,
     ReceiveCharacter(char),
-    ExitCommand,
     ExecuteCommand,
+    ExitMode,
 }
 
 pub enum CanvasEvent {
+    ChangeMode(Mode),
+    ChangeIndex(i32),
+    Add,
+    Delete,
+    Curve(CurveEvent),
+}
+
+pub enum CurveEvent {
     ChangeCurrentIndex(i32),
     ChangeWeight(f32),
     ToggleConvexHull,
@@ -26,5 +34,4 @@ pub enum CanvasEvent {
     MoveCurrentPoint(Vector<f32>),
     AddPoint(PhysicalPosition<f64>),
     Resize { area: Rectangle<f32> },
-    ChangeMode(Mode),
 }

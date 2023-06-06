@@ -18,7 +18,7 @@ impl CanvasProperties {
     pub fn new(area: Rectangle<f32>) -> Self {
         Self {
             area,
-            mode: Mode::PointSelect,
+            mode: Mode::Normal,
             command_mode: false,
             line_width: 0.0,
             point_radius: 0.0,

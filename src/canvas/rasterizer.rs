@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::ops::DerefMut;
+use std::rc::Rc;
 use anyhow::Result;
 use tiny_skia::FillRule;
 use tiny_skia::{Path, PathBuilder, Stroke};
@@ -15,11 +18,11 @@ use crate::ui::panel::Panel;
 pub struct Rasterizer {}
 
 impl Rasterizer {
-    pub fn rasterize(
-        &self,
-        curve: &Curve,
-        properties: &CanvasProperties,
-        panel: Panel<'_>,
+    pub fn rasterize<'a>(
+        &'a self,
+        curve: &'a Curve,
+        properties: &'a CanvasProperties,
+        panel: Rc<RefCell< Panel<'a>>>,
     ) -> Result<()> {
         match curve {
             Curve::ControlPoints(curve) => {
@@ -46,11 +49,11 @@ impl Rasterizer {
 struct CurveRasterizer<'a, T> {
     curve: &'a T,
     properties: &'a CanvasProperties,
-    panel: Panel<'a>,
+    panel: Rc<RefCell< Panel<'a>>>,
 }
 
 impl<'a, T> CurveRasterizer<'a, T> {
-    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: Panel<'a>) -> Self {
+    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: Rc<RefCell< Panel<'a>>>) -> Self {
         Self {
             curve,
             properties,
@@ -72,7 +75,7 @@ where
                 width: self.properties.line_width,
                 ..Stroke::default()
             };
-            self.panel.draw_stroke_path(&path, &paint, &stroke);
+            self.panel.borrow_mut().draw_stroke_path(&path, &paint, &stroke);
         }
     }
 }
@@ -91,7 +94,7 @@ where
                     width: self.properties.line_width,
                     ..Stroke::default()
                 };
-                self.panel.draw_stroke_path(&path, &paint, &stroke);
+                self.panel.borrow_mut().draw_stroke_path(&path, &paint, &stroke);
             }
         }
     }
@@ -101,7 +104,7 @@ where
             let points_paint = PaintBuilder::new()
                 .color(PaintColor::from_rgb(Rgb::new(255, 0, 255)))
                 .build();
-            self.panel
+            self.panel.borrow_mut()
                 .draw_fill_path(&points_path, &points_paint, FillRule::Winding);
         }
     }
@@ -124,7 +127,7 @@ where
             );
             let path = path.finish();
             if let Some(path) = path {
-                self.panel
+                self.panel.borrow_mut()
                     .draw_fill_path(&path, &points_paint, FillRule::Winding);
             }
         }

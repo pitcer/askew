@@ -1,17 +1,16 @@
 use std::fmt::{Display, Formatter};
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum Mode {
-    PointSelect,
-    TypeChange,
-    CurveSelect,
+    Normal,
+    Curve,
 }
 
 impl Display for Mode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Mode::PointSelect => write!(f, "PointSelect"),
-            Mode::TypeChange => write!(f, "TypeSelect"),
-            Mode::CurveSelect => write!(f, "CurveSelect"),
+            Mode::Normal => write!(f, "Normal"),
+            Mode::Curve => write!(f, "Curve"),
         }
     }
 }

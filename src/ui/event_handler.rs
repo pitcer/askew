@@ -9,7 +9,7 @@ use winit::event_loop::ControlFlow;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::mode::Mode;
 use crate::command::{Command, SaveFormat};
-use crate::event::{CanvasEvent, Event, FrameEvent};
+use crate::event::{CanvasEvent, CurveEvent, Event, FrameEvent};
 use crate::ui::frame::Frame;
 
 pub struct EventHandler {
@@ -103,7 +103,9 @@ impl EventHandler {
         button: MouseButton,
     ) -> Option<Event> {
         if state == ElementState::Pressed && button == MouseButton::Left {
-            return Some(Event::Canvas(CanvasEvent::AddPoint(self.cursor_position)));
+            return Some(Event::Canvas(CanvasEvent::Curve(CurveEvent::AddPoint(
+                self.cursor_position,
+            ))));
         }
         None
     }
@@ -118,39 +120,38 @@ impl EventHandler {
         }
         match input.virtual_keycode {
             Some(VirtualKeyCode::Colon) => Some(Event::Frame(FrameEvent::EnterCommand)),
-            Some(VirtualKeyCode::Escape) => Some(Event::Frame(FrameEvent::ExitCommand)),
             Some(VirtualKeyCode::Return) => Some(Event::Frame(FrameEvent::ExecuteCommand)),
+            Some(VirtualKeyCode::Escape) => Some(Event::Frame(FrameEvent::ExitMode)),
 
-            Some(VirtualKeyCode::J) => Some(Event::Canvas(CanvasEvent::ChangeCurrentIndex(-1))),
-            Some(VirtualKeyCode::K) => Some(Event::Canvas(CanvasEvent::ChangeCurrentIndex(1))),
+            Some(VirtualKeyCode::C) => Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Curve))),
+            Some(VirtualKeyCode::A) => Some(Event::Canvas(CanvasEvent::Add)),
+            Some(VirtualKeyCode::D) => Some(Event::Canvas(CanvasEvent::Delete)),
 
-            Some(VirtualKeyCode::W) => {
-                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::PointSelect)))
-            }
-            Some(VirtualKeyCode::E) => {
-                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::CurveSelect)))
-            }
-            Some(VirtualKeyCode::R) => {
-                Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::TypeChange)))
-            }
+            Some(VirtualKeyCode::J) => Some(Event::Canvas(CanvasEvent::ChangeIndex(-1))),
+            Some(VirtualKeyCode::K) => Some(Event::Canvas(CanvasEvent::ChangeIndex(1))),
 
-            Some(VirtualKeyCode::I) => Some(Event::Canvas(CanvasEvent::ChangeWeight(1.5))),
-            Some(VirtualKeyCode::O) => Some(Event::Canvas(CanvasEvent::ChangeWeight(-1.5))),
-
-            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::ToggleConvexHull)),
-            Some(VirtualKeyCode::D) => Some(Event::Canvas(CanvasEvent::DeleteCurrentPoint)),
-
-            Some(VirtualKeyCode::Up) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
-                Vector::new(0.0, -4.0),
+            Some(VirtualKeyCode::I) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::ChangeWeight(1.5),
             ))),
-            Some(VirtualKeyCode::Down) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
-                Vector::new(0.0, 4.0),
+            Some(VirtualKeyCode::O) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::ChangeWeight(-1.5),
             ))),
-            Some(VirtualKeyCode::Left) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
-                Vector::new(-4.0, 0.0),
+
+            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::ToggleConvexHull,
             ))),
-            Some(VirtualKeyCode::Right) => Some(Event::Canvas(CanvasEvent::MoveCurrentPoint(
-                Vector::new(4.0, 0.0),
+
+            Some(VirtualKeyCode::Up) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::MoveCurrentPoint(Vector::new(0.0, -4.0)),
+            ))),
+            Some(VirtualKeyCode::Down) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::MoveCurrentPoint(Vector::new(0.0, 4.0)),
+            ))),
+            Some(VirtualKeyCode::Left) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::MoveCurrentPoint(Vector::new(-4.0, 0.0)),
+            ))),
+            Some(VirtualKeyCode::Right) => Some(Event::Canvas(CanvasEvent::Curve(
+                CurveEvent::MoveCurrentPoint(Vector::new(4.0, 0.0)),
             ))),
             _ => None,
         }

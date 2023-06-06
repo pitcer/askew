@@ -22,9 +22,10 @@ use crate::canvas::curve::Curve;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
+use crate::canvas::mode::Mode;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
-use crate::event::{CanvasEvent, Event, FrameEvent};
+use crate::event::{CanvasEvent, CurveEvent, Event, FrameEvent};
 use crate::ui::bar::TextPanel;
 use crate::ui::color::{Alpha, Rgb};
 use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
@@ -202,7 +203,11 @@ impl Frame {
 
     fn handle_frame_event(&mut self, event: FrameEvent) -> Result<Option<CanvasEvent>> {
         match event {
-            FrameEvent::EnterCommand => self.command_buffer = Some(String::new()),
+            FrameEvent::EnterCommand => {
+                if self.command_buffer.is_none() {
+                    self.command_buffer = Some(String::new())
+                }
+            }
             FrameEvent::ReceiveCharacter(character) => {
                 if let Some(buffer) = &mut self.command_buffer {
                     if !character.is_control() {
@@ -210,7 +215,13 @@ impl Frame {
                     }
                 }
             }
-            FrameEvent::ExitCommand => self.command_buffer = None,
+            FrameEvent::ExitMode => {
+                if self.command_buffer.is_some() {
+                    self.command_buffer = None
+                } else {
+                    return Ok(Some(CanvasEvent::ChangeMode(Mode::Normal)));
+                }
+            }
             FrameEvent::ExecuteCommand => {
                 if let Some(buffer) = self.command_buffer.take() {
                     let event = Self::parse_command(buffer);
@@ -223,7 +234,7 @@ impl Frame {
 
     fn parse_command(command: String) -> Option<CanvasEvent> {
         match &command[1..] {
-            "conv" => Some(CanvasEvent::ToggleConvexHull),
+            "conv" => Some(CanvasEvent::Curve(CurveEvent::ToggleConvexHull)),
             _ => None,
         }
     }
@@ -249,11 +260,12 @@ impl Frame {
         self.status_layout
             .setup(&self.font_loader)
             .append_text(&format!(
-                "{} {} {}/{}",
+                "{} {} {}/{} {}",
                 self.canvas.properties().mode,
                 name,
                 self.canvas.properties().current_curve + 1,
-                self.canvas.curves().len()
+                self.canvas.curves().len(),
+                self.canvas.properties().current_point_index
             ));
         let mut status_bar = TextPanel::new(status, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
         status_bar.fill();
