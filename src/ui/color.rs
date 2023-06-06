@@ -22,3 +22,24 @@ impl Rgb {
         self.blue
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub struct Alpha(u8);
+
+impl Alpha {
+    pub const fn new(alpha: u8) -> Self {
+        Self(alpha)
+    }
+
+    pub const fn max() -> Self {
+        Self(255)
+    }
+
+    pub const fn min() -> Self {
+        Self(0)
+    }
+
+    pub const fn alpha(self) -> u8 {
+        self.0
+    }
+}

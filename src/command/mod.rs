@@ -30,6 +30,9 @@ pub struct Command {
 
     #[arg(long, default_value_t = 16)]
     pub font_size: u32,
+
+    #[arg(long, default_value = "JetBrainsMonoNL-Regular.ttf")]
+    pub font_path: String,
 }
 
 #[derive(clap::ValueEnum, Clone, Copy)]

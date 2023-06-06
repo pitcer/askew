@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use num_traits::Num;
 
 use crate::canvas::curve::control_points::bezier::Bezier;
@@ -31,6 +33,17 @@ pub enum ControlPointsCurve {
     Interpolation(Interpolation),
     Bezier(Bezier),
     RationalBezier(RationalBezier),
+}
+
+impl Display for ControlPointsCurve {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ControlPointsCurve::Polyline(_) => write!(f, "polyline"),
+            ControlPointsCurve::Interpolation(_) => write!(f, "interpolation"),
+            ControlPointsCurve::Bezier(_) => write!(f, "bezier"),
+            ControlPointsCurve::RationalBezier(_) => write!(f, "rational_bezier"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

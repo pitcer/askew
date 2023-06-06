@@ -50,4 +50,12 @@ impl Canvas {
             panel,
         )
     }
+
+    pub fn curves(&self) -> &Vec<Curve> {
+        &self.curves
+    }
+
+    pub fn properties(&self) -> &CanvasProperties {
+        &self.properties
+    }
 }

@@ -7,10 +7,8 @@ use softbuffer::{Context, Surface};
 use tiny_skia::IntSize;
 use tiny_skia::Pixmap;
 use winit::dpi::PhysicalSize;
-use winit::event_loop::EventLoop;
-use winit::window::{Window, WindowBuilder, WindowId};
+use winit::window::{Window, WindowId};
 
-use crate::bar::Bar;
 use crate::canvas::curve::control_points::bezier::{Bezier, BezierAlgorithm};
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
@@ -27,7 +25,9 @@ use crate::canvas::math::size::Size;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
 use crate::event::CanvasEvent;
-use crate::ui::color::Rgb;
+use crate::ui::bar::TextPanel;
+use crate::ui::color::{Alpha, Rgb};
+use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::panel::Panel;
 use crate::ui::pixel::Pixel;
 
@@ -37,11 +37,14 @@ pub struct Frame {
     surface: Surface,
     canvas: Canvas,
     background: Option<Pixmap>,
+    font_loader: FontLoader,
+    glyph_rasterizer: GlyphRasterizer,
+    status_layout: FontLayout,
+    command_layout: FontLayout,
 }
 
 impl Frame {
-    pub fn new(event_loop: &EventLoop<()>, command: &Command) -> Result<Self> {
-        let window = WindowBuilder::new().with_title("askew").build(event_loop)?;
+    pub fn new(window: Window, command: &Command) -> Result<Self> {
         let context = unsafe { Context::new(&window) }.expect("platform should be supported");
         let mut surface =
             unsafe { Surface::new(&context, &window) }.expect("platform should be supported");
@@ -152,12 +155,20 @@ impl Frame {
                 command,
             ),
         };
+        let font_loader = FontLoader::new(&command.font_path)?;
+        let glyph_rasterizer = GlyphRasterizer::new();
+        let status_layout = FontLayout::new(command.font_size);
+        let command_layout = FontLayout::new(command.font_size);
         Ok(Self {
             window,
             _context: context,
             surface,
             canvas,
             background,
+            font_loader,
+            glyph_rasterizer,
+            status_layout,
+            command_layout,
         })
     }
 
@@ -183,15 +194,44 @@ impl Frame {
         let area = Self::size_rectangle(self.window.inner_size());
         let mut panel = Panel::from_buffer(&mut buffer, area);
 
-        panel.fill(Pixel::from_rgba(Rgb::new(32, 32, 32), 255));
+        panel.fill(Pixel::from_rgba(Rgb::new(32, 32, 32), Alpha::max()));
         if let Some(background) = &self.background {
             panel.draw_pixmap(0, 0, background.as_ref());
         }
         let size = area.size();
         let split_layout = [size.height() as usize - 44, 22, 22];
         let [panel, status, command] = panel.split_vertical(split_layout);
-        let _status_bar = Bar::new(status, "status")?;
-        let _command_bar = Bar::new(command, ":command")?;
+
+        let mut name = self.canvas.curves()[self.canvas.properties().current_curve].to_string();
+        name.truncate(4);
+        self.status_layout
+            .setup(&self.font_loader)
+            .append_text(&format!(
+                "{} {}/{}",
+                name,
+                self.canvas.properties().current_curve + 1,
+                self.canvas.curves().len()
+            ));
+        let mut status_bar = TextPanel::new(status, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
+        status_bar.fill();
+        status_bar.draw_layout(
+            &self.font_loader,
+            &self.status_layout,
+            &mut self.glyph_rasterizer,
+        );
+
+        self.command_layout
+            .setup(&self.font_loader)
+            .append_text(":command");
+        let mut command_bar =
+            TextPanel::new(command, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
+        command_bar.fill();
+        command_bar.draw_layout(
+            &self.font_loader,
+            &self.command_layout,
+            &mut self.glyph_rasterizer,
+        );
+
         self.canvas.rasterize(panel)?;
 
         buffer
@@ -212,7 +252,7 @@ impl Frame {
     pub fn save(&mut self, format: SaveFormat) -> Result<()> {
         match format {
             SaveFormat::Png => {
-                const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), 0);
+                const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), Alpha::min());
                 let area = Self::size_rectangle(self.window.inner_size());
                 let mut buffer = vec![EMPTY_PIXEL; area.area() as usize];
                 let panel = Panel::new(&mut buffer, area);

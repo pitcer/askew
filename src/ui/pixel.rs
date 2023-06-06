@@ -1,12 +1,12 @@
-use crate::ui::color::Rgb;
+use crate::ui::color::{Alpha, Rgb};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Pixel([u8; 4]);
 
 impl Pixel {
-    pub const fn from_rgba(rgb: Rgb, alpha: u8) -> Self {
-        Self([rgb.blue(), rgb.green(), rgb.red(), alpha])
+    pub const fn from_rgba(rgb: Rgb, alpha: Alpha) -> Self {
+        Self([rgb.blue(), rgb.green(), rgb.red(), alpha.alpha()])
     }
 
     pub fn blend(&mut self, foreground: Self) {

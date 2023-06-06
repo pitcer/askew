@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display, Formatter};
+
 use crate::canvas::curve::control_points::ControlPointsCurve;
 use crate::canvas::curve::formula::FormulaCurve;
 
@@ -22,4 +24,13 @@ macro_rules! enum_apply {
 pub enum Curve {
     ControlPoints(ControlPointsCurve),
     Formula(FormulaCurve),
+}
+
+impl Display for Curve {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Curve::ControlPoints(curve) => Display::fmt(curve, f),
+            Curve::Formula(curve) => Display::fmt(curve, f),
+        }
+    }
 }
