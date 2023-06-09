@@ -16,6 +16,7 @@ pub struct Interpolation {
 }
 
 impl Interpolation {
+    #[must_use]
     pub fn new(points: CurvePoints, samples: u32, chebyshev_nodes: bool) -> Self {
         Self {
             points,

@@ -42,6 +42,7 @@ pub struct GlyphRasterizer {
 }
 
 impl GlyphRasterizer {
+    #[must_use]
     pub fn new() -> Self {
         let cache = LruCache::new(CACHE_CAPACITY);
         Self { cache }
@@ -72,6 +73,7 @@ pub struct FontLayout {
 }
 
 impl FontLayout {
+    #[must_use]
     pub fn new(default_font_size: u32) -> Self {
         let layout = Layout::new(CoordinateSystem::PositiveYDown);
         let default_font_size = default_font_size as f32;
@@ -86,10 +88,12 @@ impl FontLayout {
         LayoutSetup::new(font.font(), &mut self.layout, self.default_font_size)
     }
 
+    #[must_use]
     pub fn height(&self) -> u32 {
         self.layout.height().ceil() as u32
     }
 
+    #[must_use]
     pub fn glyph_positions(&self) -> &[GlyphPosition] {
         self.layout.glyphs()
     }
@@ -104,9 +108,9 @@ pub struct LayoutSetup<'a> {
 impl<'a> LayoutSetup<'a> {
     fn new(font: &'a Font, layout: &'a mut Layout, default_font_size: f32) -> Self {
         Self {
-            font,
             layout,
             default_font_size,
+            font,
         }
     }
 
@@ -130,6 +134,7 @@ impl<'a> LayoutSetup<'a> {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct GlyphRaster<'a> {
     position: &'a GlyphPosition,
     metrics: &'a Metrics,
@@ -137,6 +142,7 @@ pub struct GlyphRaster<'a> {
 }
 
 impl<'a> GlyphRaster<'a> {
+    #[must_use]
     pub fn new(position: &'a GlyphPosition, metrics: &'a Metrics, raster: &'a [u8]) -> Self {
         Self {
             position,

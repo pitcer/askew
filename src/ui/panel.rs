@@ -22,6 +22,7 @@ impl<'a> Panel<'a> {
         Self::new(buffer, area)
     }
 
+    #[must_use]
     pub fn split_vertical<const HEIGHTS: usize>(
         self,
         heights: [usize; HEIGHTS],
@@ -46,10 +47,10 @@ impl<'a> Panel<'a> {
     }
 
     pub fn fill(&mut self, pixel: Pixel) {
-        self.buffer.fill(pixel)
+        self.buffer.fill(pixel);
     }
 
-    pub fn draw_pixmap(&mut self, x: i32, y: i32, pixmap: PixmapRef) {
+    pub fn draw_pixmap(&mut self, x: i32, y: i32, pixmap: PixmapRef<'_>) {
         self.as_pixmap_mut().draw_pixmap(
             x,
             y,
@@ -57,17 +58,17 @@ impl<'a> Panel<'a> {
             &PixmapPaint::default(),
             Transform::identity(),
             None,
-        )
+        );
     }
 
     pub fn draw_stroke_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
         self.as_pixmap_mut()
-            .stroke_path(path, paint, stroke, Transform::identity(), None)
+            .stroke_path(path, paint, stroke, Transform::identity(), None);
     }
 
     pub fn draw_fill_path(&mut self, path: &Path, paint: &Paint<'_>, fill_rule: FillRule) {
         self.as_pixmap_mut()
-            .fill_path(path, paint, fill_rule, Transform::identity(), None)
+            .fill_path(path, paint, fill_rule, Transform::identity(), None);
     }
 
     pub fn blend_pixel(&mut self, pixel: Point<usize>, foreground: Pixel) {
@@ -84,6 +85,7 @@ impl<'a> Panel<'a> {
             .expect("panel area size is invalid")
     }
 
+    #[must_use]
     pub fn area(&self) -> Rectangle<u32> {
         self.area
     }

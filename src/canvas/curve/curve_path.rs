@@ -41,7 +41,7 @@ where
         }
 
         if self.closed {
-            path.close()
+            path.close();
         }
 
         path.finish()

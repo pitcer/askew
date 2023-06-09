@@ -52,12 +52,13 @@ pub struct ControlPoints<T> {
 }
 
 impl<T> ControlPoints<T> {
+    #[must_use]
     pub fn new(points: Vec<T>) -> Self {
         Self { points }
     }
 
     pub fn add(&mut self, point: T) {
-        self.points.push(point)
+        self.points.push(point);
     }
 
     pub fn remove(&mut self, index: usize) -> Option<T> {
@@ -68,6 +69,7 @@ impl<T> ControlPoints<T> {
         }
     }
 
+    #[must_use]
     pub fn get(&self, index: usize) -> Option<&T> {
         self.points.get(index)
     }
@@ -76,14 +78,17 @@ impl<T> ControlPoints<T> {
         self.points.get_mut(index)
     }
 
+    #[must_use]
     pub fn length(&self) -> usize {
         self.points.len()
     }
 
+    #[must_use]
     pub fn iterator(&self) -> impl ExactSizeIterator<Item = &T> {
         self.points.iter()
     }
 
+    #[must_use]
     pub fn into_inner(self) -> Vec<T> {
         self.points
     }
@@ -95,10 +100,11 @@ where
 {
     pub fn shift(&mut self, index: usize, vector: Vector<T>) {
         if let Some(point) = self.points.get_mut(index) {
-            *point = *point + vector
+            *point = *point + vector;
         }
     }
 
+    #[must_use]
     pub fn points_iter(&self) -> impl ExactSizeIterator<Item = &Point<T>> {
         self.points.iter()
     }
@@ -111,7 +117,7 @@ where
 {
     pub fn shift(&mut self, index: usize, vector: Vector<T>) {
         if let Some(point) = self.points.get_mut(index) {
-            point.point = point.point + vector
+            point.point = point.point + vector;
         }
     }
 
@@ -121,7 +127,8 @@ where
         }
     }
 
-    pub fn points_iter<U>(&self) -> impl ExactSizeIterator<Item = Point<T>> + '_ {
+    #[must_use]
+    pub fn points_iter(&self) -> impl ExactSizeIterator<Item = Point<T>> + '_ {
         self.points.iter().map(|point| point.point)
     }
 }

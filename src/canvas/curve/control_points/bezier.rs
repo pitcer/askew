@@ -22,6 +22,7 @@ pub enum BezierAlgorithm {
 }
 
 impl Bezier {
+    #[must_use]
     pub fn new(points: CurvePoints, samples: u32, algorithm: BezierAlgorithm) -> Self {
         Self {
             points,

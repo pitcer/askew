@@ -33,6 +33,9 @@ use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::panel::Panel;
 use crate::ui::pixel::Pixel;
 
+const TEXT_COLOR: Rgb = Rgb::new(249, 250, 244);
+const ERROR_COLOR: Rgb = Rgb::new(179, 26, 64);
+
 pub struct Frame {
     window: Window,
     _context: Context,
@@ -47,6 +50,7 @@ pub struct Frame {
 }
 
 impl Frame {
+    #[allow(clippy::too_many_lines)]
     pub fn new(window: Window, command: &Command) -> Result<Self> {
         let context = unsafe { Context::new(&window) }.expect("platform should be supported");
         let mut surface =
@@ -243,9 +247,6 @@ impl Frame {
         let split_layout = [size.height() as usize - 44, 22, 22];
         let [panel, status, command] = panel.split_vertical(split_layout);
 
-        const TEXT_COLOR: Rgb = Rgb::new(249, 250, 244);
-        const ERROR_COLOR: Rgb = Rgb::new(179, 26, 64);
-
         let mut name = self.canvas.curves()[self.canvas.properties().current_curve].to_string();
         name.truncate(4);
         self.status_layout
@@ -326,6 +327,7 @@ impl Frame {
         Ok(())
     }
 
+    #[must_use]
     pub fn has_id(&self, id: WindowId) -> bool {
         self.window.id() == id
     }

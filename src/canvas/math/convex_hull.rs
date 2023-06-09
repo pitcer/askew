@@ -21,10 +21,12 @@ impl<T> GrahamScan<T>
 where
     T: Copy + PartialOrd + Num,
 {
+    #[must_use]
     pub fn new(points: Vec<Point<T>>) -> Self {
         Self { points }
     }
 
+    #[must_use]
     pub fn convex_hull(mut self) -> Vec<Point<T>> {
         if self.points.len() <= 1 {
             return self.points;
@@ -130,6 +132,6 @@ mod tests {
             Point::new(0, 1),
         ];
         let scan = GrahamScan::new(points);
-        assert_eq!(convex_hull, scan.convex_hull())
+        assert_eq!(convex_hull, scan.convex_hull());
     }
 }

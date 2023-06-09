@@ -30,6 +30,7 @@ pub struct Canvas {
 }
 
 impl Canvas {
+    #[must_use]
     pub fn new(area: Rectangle<f32>, curves: Vec<Curve>, command: &Command) -> Self {
         let mut properties = CanvasProperties::new(area);
         properties.include_command(command);
@@ -105,15 +106,17 @@ impl Canvas {
         let rc = Rc::new(RefCell::new(panel));
         for curve in &self.curves {
             self.rasterizer
-                .rasterize(curve, &self.properties, rc.clone())?;
+                .rasterize(curve, &self.properties, Rc::clone(&rc))?;
         }
         Ok(())
     }
 
+    #[must_use]
     pub fn curves(&self) -> &Vec<Curve> {
         &self.curves
     }
 
+    #[must_use]
     pub fn properties(&self) -> &CanvasProperties {
         &self.properties
     }

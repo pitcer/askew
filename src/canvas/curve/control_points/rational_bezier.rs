@@ -23,6 +23,7 @@ pub enum RationalBezierAlgorithm {
 }
 
 impl RationalBezier {
+    #[must_use]
     pub fn new(
         points: RationalBezierPoints,
         samples: u32,

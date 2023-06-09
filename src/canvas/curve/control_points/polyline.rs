@@ -11,6 +11,7 @@ pub struct Polyline {
 }
 
 impl Polyline {
+    #[must_use]
     pub fn new(points: CurvePoints) -> Self {
         Self { points }
     }

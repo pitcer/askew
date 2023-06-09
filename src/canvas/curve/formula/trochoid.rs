@@ -15,6 +15,7 @@ pub struct Trochoid {
 }
 
 impl Trochoid {
+    #[must_use]
     pub fn new(samples: u32, range: (f32, f32), r_1: f32, r_2: f32, w_1: f32, w_2: f32) -> Self {
         Self {
             samples,

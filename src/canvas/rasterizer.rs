@@ -148,7 +148,7 @@ where
             .curve
             .control_points()
             .iterator()
-            .map(|y| y.as_ref())
+            .map(AsRef::as_ref)
             .copied();
         let graham_scan = GrahamScan::new(points.collect());
         let hull = graham_scan.convex_hull();
@@ -160,7 +160,7 @@ where
     fn create_points_path(&self, properties: &CanvasProperties) -> Option<Path> {
         let mut path = PathBuilder::new();
 
-        for point in self.curve.control_points().iterator().map(|y| y.as_ref()) {
+        for point in self.curve.control_points().iterator().map(AsRef::as_ref) {
             path.push_circle(
                 point.horizontal(),
                 point.vertical(),

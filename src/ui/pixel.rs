@@ -5,6 +5,7 @@ use crate::ui::color::{Alpha, Rgb};
 pub struct Pixel([u8; 4]);
 
 impl Pixel {
+    #[must_use]
     pub const fn from_rgba(rgb: Rgb, alpha: Alpha) -> Self {
         Self([rgb.blue(), rgb.green(), rgb.red(), alpha.alpha()])
     }
@@ -17,8 +18,8 @@ impl Pixel {
 
     fn blend_primary(&mut self, Self(foreground): Self, index: usize) {
         let Self(pixel) = self;
-        let alpha = foreground[3] as u32;
-        pixel[index] = Self::mix(foreground[index] as u32, pixel[index] as u32, alpha)
+        let alpha = u32::from(foreground[3]);
+        pixel[index] = Self::mix(u32::from(foreground[index]), u32::from(pixel[index]), alpha);
     }
 
     fn mix(foreground: u32, background: u32, foreground_alpha: u32) -> u8 {
@@ -27,6 +28,7 @@ impl Pixel {
         result as u8
     }
 
+    #[must_use]
     pub fn into_rgb_array(self) -> [u8; 3] {
         let Self([blue, green, red, _]) = self;
         [red, green, blue]

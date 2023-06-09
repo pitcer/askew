@@ -17,6 +17,7 @@ pub enum CommandState {
 }
 
 impl CommandState {
+    #[must_use]
     pub fn initial() -> Self {
         CommandState::Closed(Command::new(String::new()))
     }
@@ -45,10 +46,12 @@ impl CommandState {
         })
     }
 
+    #[must_use]
     pub fn is_closed(&self) -> bool {
         matches!(self, CommandState::Closed(_))
     }
 
+    #[must_use]
     pub fn is_open(&self) -> bool {
         matches!(self, CommandState::Open(_))
     }
@@ -67,6 +70,7 @@ pub struct Command<State> {
 }
 
 impl<State> Command<State> {
+    #[must_use]
     pub fn new(buffer: String) -> Self {
         Self {
             buffer,
@@ -76,6 +80,7 @@ impl<State> Command<State> {
 }
 
 impl Command<Closed> {
+    #[must_use]
     pub fn open(mut self) -> Command<Open> {
         self.buffer.clear();
         Command::new(self.buffer)
@@ -85,6 +90,7 @@ impl Command<Closed> {
         self.buffer.clear();
     }
 
+    #[must_use]
     pub fn message(&self) -> &str {
         &self.buffer
     }
@@ -95,6 +101,7 @@ impl Command<Open> {
         self.buffer.push(character);
     }
 
+    #[must_use]
     pub fn execute(mut self) -> (Option<Event>, Command<Closed>) {
         let result: Result<Option<Event>> = (|| {
             let mut parser = CommandParser::new(&self.buffer);
@@ -114,11 +121,13 @@ impl Command<Open> {
         (event, closed)
     }
 
+    #[must_use]
     pub fn close(mut self) -> Command<Closed> {
         self.buffer.clear();
         Command::new(self.buffer)
     }
 
+    #[must_use]
     pub fn input(&self) -> &str {
         &self.buffer
     }

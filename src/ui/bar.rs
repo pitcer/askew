@@ -10,6 +10,7 @@ pub struct TextPanel<'a> {
 }
 
 impl<'a> TextPanel<'a> {
+    #[must_use]
     pub fn new(panel: Panel<'a>, text_color: Rgb, background_color: Rgb) -> Self {
         Self {
             panel,
@@ -20,7 +21,7 @@ impl<'a> TextPanel<'a> {
 
     pub fn fill(&mut self) {
         let pixel = Pixel::from_rgba(self.background_color, Alpha::max());
-        self.panel.fill(pixel)
+        self.panel.fill(pixel);
     }
 
     pub fn draw_layout(

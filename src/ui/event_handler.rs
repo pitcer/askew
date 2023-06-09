@@ -20,6 +20,7 @@ pub struct EventHandler {
 }
 
 impl EventHandler {
+    #[must_use]
     pub fn new(frame: Frame, command: &Command) -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
         let modifiers = ModifiersState::empty();
@@ -31,7 +32,7 @@ impl EventHandler {
         }
     }
 
-    pub fn run(&mut self, event: WinitEvent<()>, control_flow: &mut ControlFlow) -> Result<()> {
+    pub fn run(&mut self, event: WinitEvent<'_, ()>, control_flow: &mut ControlFlow) -> Result<()> {
         control_flow.set_wait();
 
         match event {
@@ -50,7 +51,7 @@ impl EventHandler {
 
     fn handle_window_event(
         &mut self,
-        event: WindowEvent,
+        event: WindowEvent<'_>,
         control_flow: &mut ControlFlow,
     ) -> Result<Option<Event>> {
         match event {
@@ -61,7 +62,7 @@ impl EventHandler {
                 if let Some(format) = self.save_format {
                     self.frame.save(format)?;
                 }
-                control_flow.set_exit()
+                control_flow.set_exit();
             }
             WindowEvent::ReceivedCharacter(character) => {
                 return Ok(Some(Event::Frame(FrameEvent::ReceiveCharacter(character))));
