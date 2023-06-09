@@ -44,6 +44,8 @@
 
 use anyhow::Result;
 use clap::Parser;
+use log::LevelFilter;
+use simplelog::{ConfigBuilder, SimpleLogger};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 
@@ -57,6 +59,9 @@ mod event;
 mod ui;
 
 pub fn main() -> Result<()> {
+    let logger_config = ConfigBuilder::new().set_time_format_rfc3339().build();
+    SimpleLogger::init(LevelFilter::Debug, logger_config)?;
+
     let event_loop = EventLoop::new();
     let command = Command::parse();
     let window = WindowBuilder::new()

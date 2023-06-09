@@ -189,9 +189,11 @@ impl Frame {
 
     pub fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
         let Some(event) = event else { return Ok(()) };
+        log::debug!("Event received from input: {event:?}");
         match event {
             Event::Frame(event) => {
                 let event = self.handle_frame_event(event);
+                log::debug!("Event received from command: {event:?}");
                 if let Some(Event::Canvas(event)) = event {
                     self.canvas.handle_event(event)?;
                 }
@@ -215,18 +217,18 @@ impl Frame {
             FrameEvent::ReceiveCharacter(character) => {
                 if let CommandState::Open(command) = &mut self.command {
                     command.receive_character(character);
-                    None
-                } else {
-                    Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Normal)))
                 }
+                None
             }
             FrameEvent::ExecuteCommand => self.command.execute(),
             FrameEvent::ExitMode => {
                 if let CommandState::Closed(command) = &mut self.command {
                     command.clear_message();
+                    Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Normal)))
+                } else {
+                    self.command.close();
+                    None
                 }
-                self.command.close();
-                None
             }
         }
     }

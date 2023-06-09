@@ -6,11 +6,13 @@ use crate::canvas::mode::Mode;
 
 pub mod handler;
 
+#[derive(Debug)]
 pub enum Event {
     Frame(FrameEvent),
     Canvas(CanvasEvent),
 }
 
+#[derive(Debug)]
 pub enum FrameEvent {
     EnterCommand,
     ReceiveCharacter(char),
@@ -18,6 +20,7 @@ pub enum FrameEvent {
     ExitMode,
 }
 
+#[derive(Debug)]
 pub enum CanvasEvent {
     ChangeMode(Mode),
     ChangeIndex(i32),
@@ -26,6 +29,7 @@ pub enum CanvasEvent {
     Curve(CurveEvent),
 }
 
+#[derive(Debug)]
 pub enum CurveEvent {
     ChangeCurrentIndex(i32),
     ChangeWeight(f32),
