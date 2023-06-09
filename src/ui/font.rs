@@ -3,12 +3,12 @@ use std::num::NonZeroUsize;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
-use fontdue::layout::{CoordinateSystem, GlyphPosition, GlyphRasterConfig, Layout, TextStyle};
+use fontdue::layout::{CoordinateSystem, GlyphRasterConfig, TextStyle};
 use fontdue::{Font, FontSettings, Metrics};
 use lru::LruCache;
 
 use crate::canvas::math::point::Point;
-use crate::ui::color::Alpha;
+use crate::ui::color::{Alpha, Rgb};
 
 #[derive(Debug)]
 pub struct FontLoader {
@@ -31,7 +31,10 @@ impl FontLoader {
 // SAFETY: 95 is not equal to 0
 const CACHE_CAPACITY: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(95) };
 
+pub type GlyphColor = Option<Rgb>;
 type GlyphCache = LruCache<GlyphRasterConfig, (Metrics, Vec<u8>)>;
+pub type GlyphPosition = fontdue::layout::GlyphPosition<GlyphColor>;
+pub type Layout = fontdue::layout::Layout<GlyphColor>;
 
 #[derive(Debug)]
 pub struct GlyphRasterizer {
@@ -107,19 +110,23 @@ impl<'a> LayoutSetup<'a> {
         }
     }
 
-    pub fn append_text(self, text: &str) -> Self {
+    pub fn append_color_text(&mut self, text: &str, color: Rgb) {
         let default_font_size = self.default_font_size;
-        self.append_style(text, default_font_size)
+        self.append_style(text, default_font_size, Some(color));
     }
 
-    pub fn append_sized_text(self, text: &str, size: u32) -> Self {
-        self.append_style(text, size as f32)
+    pub fn append_text(&mut self, text: &str) {
+        let default_font_size = self.default_font_size;
+        self.append_style(text, default_font_size, None);
     }
 
-    fn append_style(self, text: &str, size: f32) -> Self {
-        let style = TextStyle::new(text, size, 0);
+    pub fn append_sized_text(&mut self, text: &str, size: u32) {
+        self.append_style(text, size as f32, None);
+    }
+
+    fn append_style(&mut self, text: &str, size: f32, color: Option<Rgb>) {
+        let style = TextStyle::with_user_data(text, size, 0, color);
         self.layout.append(&[self.font], &style);
-        self
     }
 }
 

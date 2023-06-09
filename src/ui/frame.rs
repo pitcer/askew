@@ -25,9 +25,10 @@ use crate::canvas::math::size::Size;
 use crate::canvas::mode::Mode;
 use crate::canvas::Canvas;
 use crate::command::{Command, CurveType, SaveFormat};
-use crate::event::{CanvasEvent, CurveEvent, Event, FrameEvent};
+use crate::event::{CanvasEvent, Event, FrameEvent};
 use crate::ui::bar::TextPanel;
 use crate::ui::color::{Alpha, Rgb};
+use crate::ui::command::CommandState;
 use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::panel::Panel;
 use crate::ui::pixel::Pixel;
@@ -42,7 +43,7 @@ pub struct Frame {
     glyph_rasterizer: GlyphRasterizer,
     status_layout: FontLayout,
     command_layout: FontLayout,
-    command_buffer: Option<String>,
+    command: CommandState,
 }
 
 impl Frame {
@@ -161,7 +162,7 @@ impl Frame {
         let glyph_rasterizer = GlyphRasterizer::new();
         let status_layout = FontLayout::new(command.font_size);
         let command_layout = FontLayout::new(command.font_size);
-        let command_buffer = None;
+        let command = CommandState::initial();
         Ok(Self {
             window,
             _context: context,
@@ -172,7 +173,7 @@ impl Frame {
             glyph_rasterizer,
             status_layout,
             command_layout,
-            command_buffer,
+            command,
         })
     }
 
@@ -186,13 +187,13 @@ impl Frame {
         let Some(event) = event else { return Ok(()) };
         match event {
             Event::Frame(event) => {
-                let event = self.handle_frame_event(event)?;
-                if let Some(event) = event {
+                let event = self.handle_frame_event(event);
+                if let Some(Event::Canvas(event)) = event {
                     self.canvas.handle_event(event)?;
                 }
                 self.window.request_redraw();
             }
-            Event::Canvas(event) if self.command_buffer.is_none() => {
+            Event::Canvas(event) if self.command.is_closed() => {
                 self.canvas.handle_event(event)?;
                 self.window.request_redraw();
             }
@@ -201,41 +202,28 @@ impl Frame {
         Ok(())
     }
 
-    fn handle_frame_event(&mut self, event: FrameEvent) -> Result<Option<CanvasEvent>> {
+    fn handle_frame_event(&mut self, event: FrameEvent) -> Option<Event> {
         match event {
             FrameEvent::EnterCommand => {
-                if self.command_buffer.is_none() {
-                    self.command_buffer = Some(String::new())
-                }
+                self.command.open();
+                None
             }
             FrameEvent::ReceiveCharacter(character) => {
-                if let Some(buffer) = &mut self.command_buffer {
-                    if !character.is_control() {
-                        buffer.push(character);
-                    }
-                }
-            }
-            FrameEvent::ExitMode => {
-                if self.command_buffer.is_some() {
-                    self.command_buffer = None
+                if let CommandState::Open(command) = &mut self.command {
+                    command.receive_character(character);
+                    None
                 } else {
-                    return Ok(Some(CanvasEvent::ChangeMode(Mode::Normal)));
+                    Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Normal)))
                 }
             }
-            FrameEvent::ExecuteCommand => {
-                if let Some(buffer) = self.command_buffer.take() {
-                    let event = Self::parse_command(buffer);
-                    return Ok(event);
+            FrameEvent::ExecuteCommand => self.command.execute(),
+            FrameEvent::ExitMode => {
+                if let CommandState::Closed(command) = &mut self.command {
+                    command.clear_message();
                 }
+                self.command.close();
+                None
             }
-        }
-        Ok(None)
-    }
-
-    fn parse_command(command: String) -> Option<CanvasEvent> {
-        match &command[1..] {
-            "conv" => Some(CanvasEvent::Curve(CurveEvent::ToggleConvexHull)),
-            _ => None,
         }
     }
 
@@ -255,6 +243,9 @@ impl Frame {
         let split_layout = [size.height() as usize - 44, 22, 22];
         let [panel, status, command] = panel.split_vertical(split_layout);
 
+        const TEXT_COLOR: Rgb = Rgb::new(249, 250, 244);
+        const ERROR_COLOR: Rgb = Rgb::new(179, 26, 64);
+
         let mut name = self.canvas.curves()[self.canvas.properties().current_curve].to_string();
         name.truncate(4);
         self.status_layout
@@ -267,7 +258,7 @@ impl Frame {
                 self.canvas.curves().len(),
                 self.canvas.properties().current_point_index
             ));
-        let mut status_bar = TextPanel::new(status, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
+        let mut status_bar = TextPanel::new(status, TEXT_COLOR, Rgb::new(42, 42, 42));
         status_bar.fill();
         status_bar.draw_layout(
             &self.font_loader,
@@ -275,17 +266,21 @@ impl Frame {
             &mut self.glyph_rasterizer,
         );
 
-        if let Some(buffer) = &self.command_buffer {
-            self.command_layout
-                .setup(&self.font_loader)
-                .append_text(buffer);
-        } else {
-            self.command_layout
-                .setup(&self.font_loader)
-                .append_text(" ");
+        let mut setup = self.command_layout.setup(&self.font_loader);
+        match &self.command {
+            CommandState::Closed(command) if command.message().is_empty() => {
+                setup.append_text(" ");
+            }
+            CommandState::Closed(command) => {
+                let message = command.message();
+                setup.append_color_text(message, ERROR_COLOR);
+            }
+            CommandState::Open(command) => {
+                let buffer = command.input();
+                setup.append_color_text(buffer, TEXT_COLOR);
+            }
         }
-        let mut command_bar =
-            TextPanel::new(command, Rgb::new(249, 250, 244), Rgb::new(48, 48, 48));
+        let mut command_bar = TextPanel::new(command, TEXT_COLOR, Rgb::new(42, 42, 42));
         command_bar.fill();
         command_bar.draw_layout(
             &self.font_loader,

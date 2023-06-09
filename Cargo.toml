@@ -10,6 +10,8 @@ anyhow = "1.0.71"
 fontdue = "0.7.3"
 num-traits = "0.2.15"
 rand = "0.8.5"
+replace_with = "0.1.7"
+thiserror = "1.0.40"
 
 [dependencies.bytemuck]
 version = "1.13.1"

@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::canvas::curve::control_points::polyline::Polyline;
-use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints};
+
 use anyhow::Result;
 
+use crate::canvas::curve::control_points::polyline::Polyline;
+use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints};
 use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::EventHandler;
 use crate::canvas::math::rectangle::Rectangle;
@@ -103,7 +104,8 @@ impl Canvas {
     pub fn rasterize(&self, panel: Panel<'_>) -> Result<()> {
         let rc = Rc::new(RefCell::new(panel));
         for curve in &self.curves {
-            self.rasterizer.rasterize(curve, &self.properties, rc.clone())?;
+            self.rasterizer
+                .rasterize(curve, &self.properties, rc.clone())?;
         }
         Ok(())
     }

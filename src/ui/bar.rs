@@ -31,7 +31,8 @@ impl<'a> TextPanel<'a> {
     ) {
         for position in layout.glyph_positions() {
             let glyph = rasterizer.rasterize(font, position);
-            Self::draw_glyph(glyph, &mut self.panel, self.text_color);
+            let color = position.user_data.unwrap_or(self.text_color);
+            Self::draw_glyph(glyph, &mut self.panel, color);
         }
     }
 
