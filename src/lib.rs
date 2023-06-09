@@ -45,7 +45,7 @@
 use anyhow::Result;
 use clap::Parser;
 use log::LevelFilter;
-use simplelog::{ConfigBuilder, SimpleLogger};
+use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 
@@ -59,8 +59,7 @@ mod event;
 mod ui;
 
 pub fn main() -> Result<()> {
-    let logger_config = ConfigBuilder::new().set_time_format_rfc3339().build();
-    SimpleLogger::init(LevelFilter::Debug, logger_config)?;
+    initialize_logger()?;
 
     let event_loop = EventLoop::new();
     let command = Command::parse();
@@ -73,4 +72,19 @@ pub fn main() -> Result<()> {
         let result = handler.run(event, control_flow);
         result.expect("Error in event loop");
     });
+}
+
+fn initialize_logger() -> Result<()> {
+    let logger_config = ConfigBuilder::new()
+        .set_time_format_custom(simplelog::format_description!(
+            "[hour]:[minute]:[second].[subsecond digits:3]"
+        ))
+        .build();
+    TermLogger::init(
+        LevelFilter::Debug,
+        logger_config,
+        TerminalMode::Stdout,
+        ColorChoice::Auto,
+    )?;
+    Ok(())
 }
