@@ -28,8 +28,11 @@ impl FontLoader {
     }
 }
 
+const ASCII_PRINTABLE_CHARACTERS: usize = 95;
+
 // SAFETY: 95 is not equal to 0
-const CACHE_CAPACITY: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(95) };
+const CACHE_CAPACITY: NonZeroUsize =
+    unsafe { NonZeroUsize::new_unchecked(ASCII_PRINTABLE_CHARACTERS) };
 
 pub type GlyphColor = Option<Rgb>;
 type GlyphCache = LruCache<GlyphRasterConfig, (Metrics, Vec<u8>)>;
