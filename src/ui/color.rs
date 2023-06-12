@@ -27,6 +27,12 @@ impl Rgb {
     }
 }
 
+impl Default for Rgb {
+    fn default() -> Self {
+        Self::new(0, 0, 0)
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Alpha(u8);
 
