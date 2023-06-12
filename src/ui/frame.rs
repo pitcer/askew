@@ -38,7 +38,6 @@ const ERROR_COLOR: Rgb = Rgb::new(179, 26, 64);
 
 pub struct Frame {
     window: Window,
-    _context: Context,
     surface: Surface,
     canvas: Canvas,
     background: Option<Pixmap>,
@@ -169,7 +168,6 @@ impl Frame {
         let command = CommandState::initial();
         Ok(Self {
             window,
-            _context: context,
             surface,
             canvas,
             background,
