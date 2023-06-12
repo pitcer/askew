@@ -6,7 +6,6 @@ edition = "2021"
 description = "Curves editor"
 
 [features]
-default = ["wayland"]
 x11 = ["softbuffer/x11", "winit/x11"]
 wayland = ["softbuffer/wayland", "winit/wayland"]
 
