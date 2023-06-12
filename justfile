@@ -1,5 +1,7 @@
-run-wayland *flags:
-    cargo run --features wayland {{flags}}
+set positional-arguments
 
-run-x11 *flags:
-    cargo run --features x11 {{flags}}
+run-wayland *arguments:
+    cargo run --features wayland $@
+
+run-x11 *arguments:
+    cargo run --features x11 $@
