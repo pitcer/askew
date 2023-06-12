@@ -1,6 +1,8 @@
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::mode::Mode;
-use crate::command::Command;
+use crate::config::Config;
+use crate::ui::color::Rgb;
+use crate::ui::paint::PaintColor;
 
 pub struct CanvasProperties {
     pub area: Rectangle<f32>,
@@ -12,6 +14,10 @@ pub struct CanvasProperties {
     pub current_point_index: usize,
     pub current_curve: usize,
     pub default_weight: f32,
+    pub line_color: PaintColor,
+    pub convex_hull_color: PaintColor,
+    pub control_points_color: PaintColor,
+    pub current_control_point_color: PaintColor,
 }
 
 impl CanvasProperties {
@@ -26,12 +32,20 @@ impl CanvasProperties {
             current_point_index: 0,
             current_curve: 0,
             default_weight: 1.0,
+            line_color: PaintColor::from_rgb(Rgb::new(0, 0, 0)),
+            convex_hull_color: PaintColor::from_rgb(Rgb::new(0, 0, 0)),
+            control_points_color: PaintColor::from_rgb(Rgb::new(0, 0, 0)),
+            current_control_point_color: PaintColor::from_rgb(Rgb::new(0, 0, 0)),
         }
     }
 
-    pub fn include_command(&mut self, command: &Command) {
-        self.line_width = command.line_width;
-        self.point_radius = command.point_radius;
-        self.show_convex_hull = command.show_convex_hull;
+    pub fn include_config(&mut self, config: &Config) {
+        self.line_width = config.line_width;
+        self.point_radius = config.point_radius;
+        self.show_convex_hull = config.show_convex_hull;
+        self.line_color = PaintColor::from_rgb(config.line_color);
+        self.convex_hull_color = PaintColor::from_rgb(config.convex_hull_color);
+        self.control_points_color = PaintColor::from_rgb(config.control_points_color);
+        self.current_control_point_color = PaintColor::from_rgb(config.current_control_point_color);
     }
 }

@@ -24,7 +24,7 @@ use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
 use crate::canvas::mode::Mode;
 use crate::canvas::Canvas;
-use crate::command::{Command, CurveType, SaveFormat};
+use crate::config::{Config, CurveType, SaveFormat};
 use crate::event::{CanvasEvent, Event, FrameEvent};
 use crate::ui::bar::TextPanel;
 use crate::ui::color::{Alpha, Rgb};
@@ -51,7 +51,7 @@ pub struct Frame {
 
 impl Frame {
     #[allow(clippy::too_many_lines)]
-    pub fn new(window: Window, command: &Command) -> Result<Self> {
+    pub fn new(window: Window, config: &Config) -> Result<Self> {
         let context = unsafe { Context::new(&window) }.expect("platform should be supported");
         let mut surface =
             unsafe { Surface::new(&context, &window) }.expect("platform should be supported");
@@ -62,7 +62,7 @@ impl Frame {
                 NonZeroU32::new(size.height).expect("size height should be non zero"),
             )
             .map_err(|error| anyhow!(error.to_string()))?;
-        let background = if let Some(path) = &command.background_path {
+        let background = if let Some(path) = &config.background_path {
             let image = image::open(path)?;
             let image = image.into_rgb8();
             let buffer: &[[u8; 3]] = bytemuck::cast_slice(image.as_bytes());
@@ -83,7 +83,7 @@ impl Frame {
         let window_rectangle = Self::size_rectangle(size);
         let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
         let mut rng = rand::thread_rng();
-        let points_vec = (0..command.random_points)
+        let points_vec = (0..config.random_points)
             .map(|_| {
                 Point::new(
                     rng.gen_range(
@@ -96,30 +96,30 @@ impl Frame {
             })
             .collect::<Vec<_>>();
         let points = ControlPoints::new(points_vec);
-        let canvas = match command.curve_type {
+        let canvas = match config.curve_type {
             CurveType::Polyline => Canvas::new(
                 canvas_rectangle,
                 vec![Curve::ControlPoints(ControlPointsCurve::Polyline(
                     Polyline::new(points),
                 ))],
-                command,
+                config,
             ),
             CurveType::Interpolation => Canvas::new(
                 canvas_rectangle,
                 vec![Curve::ControlPoints(ControlPointsCurve::Interpolation(
-                    Interpolation::new(points, command.samples, command.chebyshev_nodes),
+                    Interpolation::new(points, config.samples, config.chebyshev_nodes),
                 ))],
-                command,
+                config,
             ),
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
                 vec![Curve::ControlPoints(ControlPointsCurve::Bezier(
-                    Bezier::new(points, command.samples, BezierAlgorithm::ChudyWozny),
+                    Bezier::new(points, config.samples, BezierAlgorithm::ChudyWozny),
                 ))],
-                command,
+                config,
             ),
             CurveType::RationalBezier => {
-                let points = (0..command.random_points)
+                let points = (0..config.random_points)
                     .map(|_| {
                         RationalBezierPoint::new(
                             Point::new(
@@ -142,11 +142,11 @@ impl Frame {
                     vec![Curve::ControlPoints(ControlPointsCurve::RationalBezier(
                         RationalBezier::new(
                             points,
-                            command.samples,
+                            config.samples,
                             RationalBezierAlgorithm::ChudyWozny,
                         ),
                     ))],
-                    command,
+                    config,
                 )
             }
             CurveType::Trochoid => Canvas::new(
@@ -159,13 +159,13 @@ impl Frame {
                     0.3,
                     0.7,
                 )))],
-                command,
+                config,
             ),
         };
-        let font_loader = FontLoader::new(&command.font_path)?;
+        let font_loader = FontLoader::new(&config.font_path)?;
         let glyph_rasterizer = GlyphRasterizer::new();
-        let status_layout = FontLayout::new(command.font_size);
-        let command_layout = FontLayout::new(command.font_size);
+        let status_layout = FontLayout::new(config.font_size);
+        let command_layout = FontLayout::new(config.font_size);
         let command = CommandState::initial();
         Ok(Self {
             window,

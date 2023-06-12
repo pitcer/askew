@@ -73,7 +73,7 @@ where
     fn draw_curve(&mut self) {
         if let Some(path) = self.curve.to_path() {
             let paint = PaintBuilder::new()
-                .color(PaintColor::from_rgb(Rgb::new(255, 255, 0)))
+                .color(self.properties.line_color)
                 .build();
             let stroke = Stroke {
                 width: self.properties.line_width,
@@ -94,7 +94,7 @@ where
         if self.properties.show_convex_hull && self.curve.control_points().length() >= 3 {
             if let Some(path) = self.create_convex_hull_path() {
                 let paint = PaintBuilder::new()
-                    .color(PaintColor::from_rgb(Rgb::new(0, 255, 255)))
+                    .color(self.properties.convex_hull_color)
                     .build();
                 let stroke = Stroke {
                     width: self.properties.line_width,
@@ -110,7 +110,7 @@ where
     fn draw_control_points(&mut self) {
         if let Some(points_path) = self.create_points_path(self.properties) {
             let points_paint = PaintBuilder::new()
-                .color(PaintColor::from_rgb(Rgb::new(255, 0, 255)))
+                .color(self.properties.control_points_color)
                 .build();
             self.panel
                 .borrow_mut()
@@ -126,7 +126,7 @@ where
         {
             let point = point.as_ref();
             let points_paint = PaintBuilder::new()
-                .color(PaintColor::from_rgb(Rgb::new(255, 255, 255)))
+                .color(self.properties.current_control_point_color)
                 .build();
             let mut path = PathBuilder::new();
             path.push_circle(

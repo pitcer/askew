@@ -42,6 +42,8 @@
     clippy::unnecessary_wraps
 )]
 
+use std::convert;
+
 use anyhow::Result;
 use clap::Parser;
 use log::LevelFilter;
@@ -49,25 +51,25 @@ use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 
-use crate::command::Command;
+use crate::config::Config;
 use crate::ui::event_handler::EventHandler;
 use crate::ui::frame::Frame;
 
 mod canvas;
-mod command;
+mod config;
 mod event;
 mod ui;
 
 pub fn main() -> Result<()> {
     initialize_logger()?;
 
+    let config = Config::parse();
     let event_loop = EventLoop::new();
-    let command = Command::parse();
     let window = WindowBuilder::new()
         .with_title("askew")
         .build(&event_loop)?;
-    let frame = Frame::new(window, &command)?;
-    let mut handler = EventHandler::new(frame, &command);
+    let frame = Frame::new(window, &config)?;
+    let mut handler = EventHandler::new(frame, &config);
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);
         result.expect("Error in event loop");
@@ -79,6 +81,8 @@ fn initialize_logger() -> Result<()> {
         .set_time_format_custom(simplelog::format_description!(
             "[hour]:[minute]:[second].[subsecond digits:3]"
         ))
+        .set_time_offset_to_local()
+        .unwrap_or_else(convert::identity)
         .build();
     TermLogger::init(
         LevelFilter::Debug,

@@ -8,7 +8,7 @@ use winit::event_loop::ControlFlow;
 
 use crate::canvas::math::vector::Vector;
 use crate::canvas::mode::Mode;
-use crate::command::{Command, SaveFormat};
+use crate::config::{Config, SaveFormat};
 use crate::event::{CanvasEvent, CurveEvent, Event, FrameEvent};
 use crate::ui::frame::Frame;
 
@@ -21,14 +21,14 @@ pub struct EventHandler {
 
 impl EventHandler {
     #[must_use]
-    pub fn new(frame: Frame, command: &Command) -> Self {
+    pub fn new(frame: Frame, config: &Config) -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
         let modifiers = ModifiersState::empty();
         Self {
             frame,
             cursor_position,
             modifiers,
-            save_format: command.save_format,
+            save_format: config.save_format,
         }
     }
 

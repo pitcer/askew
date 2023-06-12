@@ -1,6 +1,12 @@
+use std::path::PathBuf;
+
+use crate::ui::color::Rgb;
+
+pub mod rgb_parser;
+
 #[derive(Debug, clap::Parser)]
 #[command(version)]
-pub struct Command {
+pub struct Config {
     #[arg(short, long, value_enum, default_value_t = CurveType::Polyline)]
     pub curve_type: CurveType,
 
@@ -32,7 +38,19 @@ pub struct Command {
     pub font_size: u32,
 
     #[arg(long, default_value = "JetBrainsMonoNL-Regular.ttf")]
-    pub font_path: String,
+    pub font_path: PathBuf,
+
+    #[arg(long, default_value = "#ffff00", value_parser = rgb_parser::parse_rgb)]
+    pub line_color: Rgb,
+
+    #[arg(long, default_value = "#00ffff", value_parser = rgb_parser::parse_rgb)]
+    pub convex_hull_color: Rgb,
+
+    #[arg(long, default_value = "#ff00ff", value_parser = rgb_parser::parse_rgb)]
+    pub control_points_color: Rgb,
+
+    #[arg(long, default_value = "#ffffff", value_parser = rgb_parser::parse_rgb)]
+    pub current_control_point_color: Rgb,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]

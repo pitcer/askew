@@ -11,7 +11,7 @@ use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::mode::Mode;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
-use crate::command::Command;
+use crate::config::Config;
 use crate::event::{CanvasEvent, CurveEvent};
 use crate::ui::panel::Panel;
 
@@ -31,9 +31,9 @@ pub struct Canvas {
 
 impl Canvas {
     #[must_use]
-    pub fn new(area: Rectangle<f32>, curves: Vec<Curve>, command: &Command) -> Self {
+    pub fn new(area: Rectangle<f32>, curves: Vec<Curve>, config: &Config) -> Self {
         let mut properties = CanvasProperties::new(area);
-        properties.include_command(command);
+        properties.include_config(config);
         Self {
             rasterizer: Rasterizer {},
             event_handler: EventHandler {},
