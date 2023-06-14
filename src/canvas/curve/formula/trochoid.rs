@@ -1,7 +1,5 @@
-use tiny_skia::Path;
-
-use crate::canvas::curve::curve_path;
-use crate::canvas::curve::curve_path::{CurvePath, ToPath};
+use crate::canvas::curve;
+use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
 use crate::canvas::math::point::Point;
 
 #[derive(Debug)]
@@ -29,12 +27,12 @@ impl Trochoid {
 }
 
 impl ToPath for Trochoid {
-    fn to_path(&self) -> Option<Path> {
+    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         let x = move |t| self.r_1 * f32::cos(self.w_1 * t) + self.r_2 * f32::cos(self.w_2 * t);
         let y = move |t| self.r_1 * f32::sin(self.w_1 * t) + self.r_2 * f32::sin(self.w_2 * t);
-        let path = curve_path::equally_spaced(self.range.0..=self.range.1, self.samples as usize)
+        let path = curve::equally_spaced(self.range.0..=self.range.1, self.samples as usize)
             .map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0));
-        let path = CurvePath::new(path);
-        path.into_skia_path()
+        let path = CurvePath::new_open(path);
+        converter.to_path(path)
     }
 }

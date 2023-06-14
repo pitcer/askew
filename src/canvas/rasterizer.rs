@@ -1,41 +1,42 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use anyhow::Result;
 use tiny_skia::FillRule;
 use tiny_skia::{Path, PathBuilder, Stroke};
 
+use crate::canvas::curve::control_points::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints, GetControlPoints};
-use crate::canvas::curve::curve_path::{CurvePath, ToPath};
+use crate::canvas::curve::converter::{TinySkiaPathConverter, ToPath};
 use crate::canvas::curve::Curve;
-use crate::canvas::math::convex_hull::GrahamScan;
 use crate::canvas::properties::CanvasProperties;
-use crate::enum_apply;
-use crate::ui::color::Rgb;
-use crate::ui::paint::{PaintBuilder, PaintColor};
+use crate::ui::paint::PaintBuilder;
 use crate::ui::panel::Panel;
 
 pub struct Rasterizer {}
 
 impl Rasterizer {
     pub fn rasterize<'a>(
-        &'a self,
+        &self,
         curve: &'a Curve,
         properties: &'a CanvasProperties,
-        panel: Rc<RefCell<Panel<'a>>>,
+        panel: &'a mut Panel<'_>,
     ) -> Result<()> {
         match curve {
-            Curve::ControlPoints(curve) => {
-                enum_apply!(curve,
-                ControlPointsCurve::Polyline | ControlPointsCurve::Interpolation |
-                ControlPointsCurve::Bezier | ControlPointsCurve::RationalBezier => |curve| {
-                    let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
-                    rasterizer.draw_convex_hull();
-                    rasterizer.draw_curve();
-                    rasterizer.draw_control_points();
-                    rasterizer.draw_current_control_point();
-                });
-            }
+            Curve::ControlPoints(curve) => match curve {
+                ControlPointsCurve::Polyline(curve) => {
+                    self.draw_control_points_curve(curve, properties, panel);
+                }
+                ControlPointsCurve::Interpolation(curve) => {
+                    self.draw_control_points_curve(curve, properties, panel);
+                }
+                ControlPointsCurve::Bezier(curve) => {
+                    self.draw_control_points_curve(curve, properties, panel);
+                }
+                ControlPointsCurve::RationalBezier(curve) => {
+                    self.draw_control_points_curve(curve, properties, panel);
+                }
+                ControlPointsCurve::ConvexHull(curve) => {
+                    self.draw_control_points_curve(curve, properties, panel);
+                }
+            },
             Curve::Formula(curve) => {
                 let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
                 rasterizer.draw_curve();
@@ -44,20 +45,31 @@ impl Rasterizer {
 
         Ok(())
     }
+
+    fn draw_control_points_curve<'a, C>(
+        &self,
+        curve: &C,
+        properties: &'a CanvasProperties,
+        panel: &'a mut Panel<'_>,
+    ) where
+        C: ToPath + GetControlPoints,
+    {
+        let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
+        rasterizer.draw_convex_hull();
+        rasterizer.draw_curve();
+        rasterizer.draw_control_points();
+        rasterizer.draw_current_control_point();
+    }
 }
 
-struct CurveRasterizer<'a, T> {
+struct CurveRasterizer<'a, 'b, T> {
     curve: &'a T,
     properties: &'a CanvasProperties,
-    panel: Rc<RefCell<Panel<'a>>>,
+    panel: &'a mut Panel<'b>,
 }
 
-impl<'a, T> CurveRasterizer<'a, T> {
-    pub fn new(
-        curve: &'a T,
-        properties: &'a CanvasProperties,
-        panel: Rc<RefCell<Panel<'a>>>,
-    ) -> Self {
+impl<'a, 'b, T> CurveRasterizer<'a, 'b, T> {
+    pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: &'a mut Panel<'b>) -> Self {
         Self {
             curve,
             properties,
@@ -66,12 +78,12 @@ impl<'a, T> CurveRasterizer<'a, T> {
     }
 }
 
-impl<'a, T> CurveRasterizer<'a, T>
+impl<'a, 'b, T> CurveRasterizer<'a, 'b, T>
 where
     T: ToPath,
 {
     fn draw_curve(&mut self) {
-        if let Some(path) = self.curve.to_path() {
+        if let Some(path) = self.curve.to_path(TinySkiaPathConverter) {
             let paint = PaintBuilder::new()
                 .color(self.properties.line_color)
                 .build();
@@ -79,14 +91,12 @@ where
                 width: self.properties.line_width,
                 ..Stroke::default()
             };
-            self.panel
-                .borrow_mut()
-                .draw_stroke_path(&path, &paint, &stroke);
+            self.panel.draw_stroke_path(&path, &paint, &stroke);
         }
     }
 }
 
-impl<'a, T> CurveRasterizer<'a, T>
+impl<'a, 'b, T> CurveRasterizer<'a, 'b, T>
 where
     T: ToPath + GetControlPoints,
 {
@@ -100,9 +110,7 @@ where
                     width: self.properties.line_width,
                     ..Stroke::default()
                 };
-                self.panel
-                    .borrow_mut()
-                    .draw_stroke_path(&path, &paint, &stroke);
+                self.panel.draw_stroke_path(&path, &paint, &stroke);
             }
         }
     }
@@ -113,7 +121,6 @@ where
                 .color(self.properties.control_points_color)
                 .build();
             self.panel
-                .borrow_mut()
                 .draw_fill_path(&points_path, &points_paint, FillRule::Winding);
         }
     }
@@ -137,7 +144,6 @@ where
             let path = path.finish();
             if let Some(path) = path {
                 self.panel
-                    .borrow_mut()
                     .draw_fill_path(&path, &points_paint, FillRule::Winding);
             }
         }
@@ -149,12 +155,9 @@ where
             .control_points()
             .iterator()
             .map(AsRef::as_ref)
-            .copied();
-        let graham_scan = GrahamScan::new(points.collect());
-        let hull = graham_scan.convex_hull();
-        let mut path = CurvePath::new(hull.into_iter());
-        path.close();
-        path.into_skia_path()
+            .copied()
+            .collect();
+        ConvexHull::points_to_convex_hull_path(points, TinySkiaPathConverter)
     }
 
     fn create_points_path(&self, properties: &CanvasProperties) -> Option<Path> {
@@ -173,4 +176,4 @@ where
     }
 }
 
-impl<'a> CurveRasterizer<'a, CurvePoints> {}
+impl<'a, 'b> CurveRasterizer<'a, 'b, CurvePoints> {}

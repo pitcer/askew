@@ -1,8 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use tiny_skia::Path;
-
-use crate::canvas::curve::curve_path::ToPath;
+use crate::canvas::curve::converter::{PathConverter, ToPath};
 use crate::canvas::curve::formula::trochoid::Trochoid;
 
 pub mod trochoid;
@@ -13,9 +11,9 @@ pub enum FormulaCurve {
 }
 
 impl ToPath for FormulaCurve {
-    fn to_path(&self) -> Option<Path> {
+    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         match self {
-            FormulaCurve::Trochoid(trochoid) => trochoid.to_path(),
+            FormulaCurve::Trochoid(trochoid) => trochoid.to_path(converter),
         }
     }
 }

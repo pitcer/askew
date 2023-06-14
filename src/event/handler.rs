@@ -26,3 +26,9 @@ pub trait AddPointHandler {
 
     fn handle_add_point(&mut self, point: Self::Point) -> Result<()>;
 }
+
+trait SpecPointHandler: AddPointHandler {
+    fn handle_point(&mut self, point: Self::Point) -> Result<()> {
+        self.handle_add_point(point)
+    }
+}

@@ -1,11 +1,8 @@
-use tiny_skia::Path;
-
 use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, GetControlPoints, WeightedPoint,
 };
-use crate::canvas::curve::curve_path;
-use crate::canvas::curve::curve_path::{CurvePath, ToPath};
-use crate::canvas::math;
+use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
+use crate::canvas::{curve, math};
 use crate::canvas::math::vector::Vector;
 use crate::event::handler::{ChangePointWeightHandler, MovePointHandler};
 
@@ -71,22 +68,22 @@ pub type RationalBezierPoints = ControlPoints<RationalBezierPoint>;
 pub type RationalBezierPoint = WeightedPoint<f32, f32>;
 
 impl ToPath for RationalBezier {
-    fn to_path(&self) -> Option<Path> {
+    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         if self.points.length() < 2 {
             return None;
         }
 
-        let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize);
+        let path = curve::equally_spaced(0.0..=1.0, self.samples as usize);
         match self.algorithm {
             RationalBezierAlgorithm::Generic => {
                 let path = path.map(|t| self.rational_bezier(t));
-                let path = CurvePath::new(path);
-                path.into_skia_path()
+                let path = CurvePath::new_open(path);
+                converter.to_path(path)
             }
             RationalBezierAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::rational_chudy_wozny(&self.points.points, t));
-                let path = CurvePath::new(path);
-                path.into_skia_path()
+                let path = CurvePath::new_open(path);
+                converter.to_path(path)
             }
         }
     }

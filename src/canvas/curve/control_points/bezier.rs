@@ -1,11 +1,8 @@
-use tiny_skia::Path;
-
 use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, CurvePoints, GetControlPoints,
 };
-use crate::canvas::curve::curve_path;
-use crate::canvas::curve::curve_path::{CurvePath, ToPath};
-use crate::canvas::math;
+use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
+use crate::canvas::{curve, math};
 
 #[derive(Debug)]
 pub struct Bezier {
@@ -51,27 +48,27 @@ impl Bezier {
 }
 
 impl ToPath for Bezier {
-    fn to_path(&self) -> Option<Path> {
+    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         if self.points.length() < 2 {
             return None;
         }
 
-        let path = curve_path::equally_spaced(0.0..=1.0, self.samples as usize);
+        let path = curve::equally_spaced(0.0..=1.0, self.samples as usize);
         match self.algorithm {
             BezierAlgorithm::Generic => {
                 let path = path.map(|t| self.bezier(t));
-                let path = CurvePath::new(path);
-                path.into_skia_path()
+                let path = CurvePath::new_closed(path);
+                converter.to_path(path)
             }
             BezierAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::de_casteljau(&self.points.points, t));
-                let path = CurvePath::new(path);
-                path.into_skia_path()
+                let path = CurvePath::new_closed(path);
+                converter.to_path(path)
             }
             BezierAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::chudy_wozny(&self.points.points, t));
-                let path = CurvePath::new(path);
-                path.into_skia_path()
+                let path = CurvePath::new_closed(path);
+                converter.to_path(path)
             }
         }
     }

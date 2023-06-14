@@ -1,11 +1,8 @@
-use tiny_skia::Path;
-
 use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, CurvePoints, GetControlPoints,
 };
-use crate::canvas::curve::curve_path;
-use crate::canvas::curve::curve_path::{CurvePath, ToPath};
-use crate::canvas::math;
+use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
+use crate::canvas::{curve, math};
 use crate::canvas::math::point::Point;
 
 #[derive(Debug)]
@@ -27,7 +24,7 @@ impl Interpolation {
 }
 
 impl ToPath for Interpolation {
-    fn to_path(&self) -> Option<Path> {
+    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         let length = self.points.length();
         if length < 2 {
             return None;
@@ -49,10 +46,10 @@ impl ToPath for Interpolation {
 
         let (xs, ys): (Vec<_>, Vec<_>) =
             self.points.iterator().map(|point| (*point).into()).unzip();
-        let path = curve_path::equally_spaced(first..=last, self.samples as usize)
+        let path = curve::equally_spaced(first..=last, self.samples as usize)
             .map(move |t| Point::new(math::lagrange(t, &ts, &xs), math::lagrange(t, &ts, &ys)));
-        let path = CurvePath::new(path);
-        path.into_skia_path()
+        let path = CurvePath::new_closed(path);
+        converter.to_path(path)
     }
 }
 

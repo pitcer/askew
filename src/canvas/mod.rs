@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use anyhow::Result;
 
 use crate::canvas::curve::control_points::polyline::Polyline;
@@ -102,11 +99,10 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn rasterize(&self, panel: Panel<'_>) -> Result<()> {
-        let rc = Rc::new(RefCell::new(panel));
+    pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
         for curve in &self.curves {
             self.rasterizer
-                .rasterize(curve, &self.properties, Rc::clone(&rc))?;
+                .rasterize(curve, &self.properties, &mut panel)?;
         }
         Ok(())
     }

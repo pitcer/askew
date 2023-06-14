@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 use num_traits::Num;
 
 use crate::canvas::curve::control_points::bezier::Bezier;
+use crate::canvas::curve::control_points::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
 use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
@@ -11,6 +12,7 @@ use crate::canvas::math::vector::Vector;
 use crate::event::handler::{AddPointHandler, DeletePointHandler, MovePointHandler};
 
 pub mod bezier;
+pub mod convex_hull;
 pub mod interpolation;
 pub mod polyline;
 pub mod rational_bezier;
@@ -30,6 +32,7 @@ pub trait GetControlPoints {
 #[derive(Debug)]
 pub enum ControlPointsCurve {
     Polyline(Polyline),
+    ConvexHull(ConvexHull),
     Interpolation(Interpolation),
     Bezier(Bezier),
     RationalBezier(RationalBezier),
@@ -42,6 +45,7 @@ impl Display for ControlPointsCurve {
             ControlPointsCurve::Interpolation(_) => write!(f, "interpolation"),
             ControlPointsCurve::Bezier(_) => write!(f, "bezier"),
             ControlPointsCurve::RationalBezier(_) => write!(f, "rational_bezier"),
+            ControlPointsCurve::ConvexHull(_) => write!(f, "convex_hull"),
         }
     }
 }

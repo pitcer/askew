@@ -2,6 +2,7 @@ use anyhow::Result;
 use winit::dpi::PhysicalPosition;
 
 use crate::canvas::curve::control_points::bezier::Bezier;
+use crate::canvas::curve::control_points::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
 use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
@@ -54,10 +55,15 @@ impl<'a> CurveEventHandler<'a, FormulaCurve> {
 
 impl<'a> CurveEventHandler<'a, ControlPointsCurve> {
     pub fn handle_event(&mut self, event: CurveEvent) -> Result<()> {
-        enum_apply!(self.curve, ControlPointsCurve::Polyline | ControlPointsCurve::Bezier | ControlPointsCurve::Interpolation | ControlPointsCurve::RationalBezier=> |curve| {
+        enum_apply!(self.curve,
+            ControlPointsCurve::Polyline | ControlPointsCurve::ConvexHull |
+            ControlPointsCurve::Bezier | ControlPointsCurve::Interpolation |
+            ControlPointsCurve::RationalBezier => |curve| {
             let mut handler = CurveEventHandler::new(curve, self.properties);
             match event {
-                CurveEvent::ChangeCurrentIndex(change) => handler.change_current_index(change as isize),
+                CurveEvent::ChangeCurrentIndex(change) => {
+                    handler.change_current_index(change as isize)
+                },
                 CurveEvent::ChangeWeight(weight) => handler.change_weight(weight),
                 CurveEvent::ToggleConvexHull => {
                     handler.properties.show_convex_hull = !handler.properties.show_convex_hull;
@@ -155,6 +161,12 @@ impl<'a> CurveEventHandler<'a, Interpolation> {
 }
 
 impl<'a> CurveEventHandler<'a, Polyline> {
+    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl<'a> CurveEventHandler<'a, ConvexHull> {
     pub fn change_weight(&mut self, _change: f32) -> Result<()> {
         Ok(())
     }
