@@ -2,8 +2,8 @@ use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, CurvePoints, GetControlPoints,
 };
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::{curve, math};
 use crate::canvas::math::point::Point;
+use crate::canvas::{curve, math};
 
 #[derive(Debug)]
 pub struct Interpolation {

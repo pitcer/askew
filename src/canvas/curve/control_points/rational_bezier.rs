@@ -2,8 +2,8 @@ use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, GetControlPoints, WeightedPoint,
 };
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::{curve, math};
 use crate::canvas::math::vector::Vector;
+use crate::canvas::{curve, math};
 use crate::event::handler::{ChangePointWeightHandler, MovePointHandler};
 
 #[derive(Debug)]
