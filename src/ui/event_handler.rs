@@ -138,9 +138,7 @@ impl EventHandler {
                 CurveEvent::ChangeWeight(-1.5),
             ))),
 
-            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::ToggleConvexHull,
-            ))),
+            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::ToggleConvexHull)),
 
             Some(VirtualKeyCode::Up) => Some(Event::Canvas(CanvasEvent::Curve(
                 CurveEvent::MoveCurrentPoint(Vector::new(0.0, -4.0)),

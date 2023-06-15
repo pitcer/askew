@@ -9,7 +9,10 @@ use crate::canvas::curve::control_points::polyline::Polyline;
 use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
-use crate::event::handler::{AddPointHandler, DeletePointHandler, MovePointHandler};
+use crate::event::handler::{
+    AddPointHandler, ChangePointWeightHandler, CurveEventError, DeletePointHandler,
+    MovePointHandler,
+};
 
 pub mod bezier;
 pub mod convex_hull;
@@ -137,12 +140,12 @@ where
     }
 }
 
-impl<T, U> AddPointHandler for T
+impl<T> AddPointHandler for T
 where
-    T: GetControlPoints<Point = U>,
-    U: AsRef<Point<f32>>,
+    T: GetControlPoints<Point = Point<f32>>,
+    // U: AsRef<Point<f32>>,
 {
-    type Point = U;
+    type Point = Point<f32>;
 
     fn handle_add_point(&mut self, point: Self::Point) -> anyhow::Result<()> {
         self.control_points_mut().add(point);
@@ -172,6 +175,19 @@ where
     fn handle_delete_point(&mut self, point_index: usize) -> anyhow::Result<()> {
         self.control_points_mut().remove(point_index);
         Ok(())
+    }
+}
+
+impl<T> ChangePointWeightHandler for T
+where
+    T: GetControlPoints<Point = Point<f32>>,
+{
+    fn handle_change_point_weight(
+        &mut self,
+        _point_index: usize,
+        _weight_change: impl Fn(f32) -> f32,
+    ) -> Result<(), CurveEventError> {
+        Err(CurveEventError::Unimplemented)
     }
 }
 

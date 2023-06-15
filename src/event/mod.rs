@@ -27,15 +27,15 @@ pub enum CanvasEvent {
     Add,
     Delete,
     Curve(CurveEvent),
+    ToggleConvexHull,
+    Resize { area: Rectangle<f32> },
 }
 
 #[derive(Debug)]
 pub enum CurveEvent {
-    ChangeCurrentIndex(i32),
     ChangeWeight(f32),
-    ToggleConvexHull,
     DeleteCurrentPoint,
     MoveCurrentPoint(Vector<f32>),
     AddPoint(PhysicalPosition<f64>),
-    Resize { area: Rectangle<f32> },
+    ChangeCurrentIndex(i32),
 }

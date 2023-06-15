@@ -80,6 +80,14 @@ impl Canvas {
                 }
                 Ok(())
             }
+            CanvasEvent::ToggleConvexHull => {
+                self.properties.show_convex_hull = !self.properties.show_convex_hull;
+                Ok(())
+            }
+            CanvasEvent::Resize { area } => {
+                self.properties.area = area;
+                Ok(())
+            }
         }
     }
 

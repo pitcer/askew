@@ -10,19 +10,6 @@ pub mod control_points;
 pub mod converter;
 pub mod formula;
 
-#[macro_export]
-macro_rules! enum_apply {
-    ($self:expr,
-        $($variant:path)|+ => |$variant_name:ident| $function:expr
-        $(,$other:pat => $other_expr:expr)*) => {{
-
-        match $self {
-            $($variant($variant_name) => $function,)+
-            $($other => $other_expr,)*
-        }
-    }};
-}
-
 #[derive(Debug)]
 pub enum Curve {
     ControlPoints(ControlPointsCurve),

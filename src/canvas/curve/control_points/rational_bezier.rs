@@ -1,10 +1,14 @@
+use anyhow::Result;
+
 use crate::canvas::curve::control_points::{
     ControlPoints, CurvePoint, GetControlPoints, WeightedPoint,
 };
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
 use crate::canvas::math::vector::Vector;
 use crate::canvas::{curve, math};
-use crate::event::handler::{ChangePointWeightHandler, MovePointHandler};
+use crate::event::handler::{
+    AddPointHandler, ChangePointWeightHandler, CurveEventError, MovePointHandler,
+};
 
 #[derive(Debug)]
 pub struct RationalBezier {
@@ -106,7 +110,7 @@ impl ChangePointWeightHandler for RationalBezier {
         &mut self,
         point_index: usize,
         weight_change: impl Fn(f32) -> f32,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), CurveEventError> {
         self.points.map_weight(point_index, weight_change);
         Ok(())
     }
@@ -117,9 +121,18 @@ impl MovePointHandler for RationalBezier {
         &mut self,
         point_index: usize,
         position_change: Vector<f32>,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         self.control_points_mut()
             .shift(point_index, position_change);
+        Ok(())
+    }
+}
+
+impl AddPointHandler for RationalBezier {
+    type Point = RationalBezierPoint;
+
+    fn handle_add_point(&mut self, point: Self::Point) -> Result<()> {
+        self.control_points_mut().add(point);
         Ok(())
     }
 }

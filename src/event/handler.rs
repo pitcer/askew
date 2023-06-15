@@ -7,10 +7,8 @@ pub trait ChangePointWeightHandler {
         &mut self,
         point_index: usize,
         weight_change: impl Fn(f32) -> f32,
-    ) -> Result<()>;
+    ) -> Result<(), CurveEventError>;
 }
-
-pub trait PointHandler: AddPointHandler + MovePointHandler + DeletePointHandler {}
 
 pub trait DeletePointHandler {
     fn handle_delete_point(&mut self, point_index: usize) -> Result<()>;
@@ -27,8 +25,8 @@ pub trait AddPointHandler {
     fn handle_add_point(&mut self, point: Self::Point) -> Result<()>;
 }
 
-trait SpecPointHandler: AddPointHandler {
-    fn handle_point(&mut self, point: Self::Point) -> Result<()> {
-        self.handle_add_point(point)
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum CurveEventError {
+    #[error("unimplemented handler")]
+    Unimplemented,
 }

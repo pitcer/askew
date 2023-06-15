@@ -1,10 +1,6 @@
 use anyhow::Result;
 use winit::dpi::PhysicalPosition;
 
-use crate::canvas::curve::control_points::bezier::Bezier;
-use crate::canvas::curve::control_points::convex_hull::ConvexHull;
-use crate::canvas::curve::control_points::interpolation::Interpolation;
-use crate::canvas::curve::control_points::polyline::Polyline;
 use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
 use crate::canvas::curve::control_points::{
     ControlPointsCurve, CurvePoint, GetControlPoints, WeightedPoint,
@@ -14,9 +10,9 @@ use crate::canvas::curve::Curve;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::properties::CanvasProperties;
-use crate::enum_apply;
 use crate::event::handler::{
-    AddPointHandler, ChangePointWeightHandler, DeletePointHandler, MovePointHandler,
+    AddPointHandler, ChangePointWeightHandler, CurveEventError, DeletePointHandler,
+    MovePointHandler,
 };
 use crate::event::CurveEvent;
 
@@ -29,10 +25,16 @@ impl EventHandler {
         properties: &mut CanvasProperties,
         event: CurveEvent,
     ) -> Result<()> {
-        enum_apply!(curve, Curve::ControlPoints | Curve::Formula => |curve| {
-            let mut handler = CurveEventHandler::new(curve, properties);
-            handler.handle_event(event)
-        })
+        match curve {
+            Curve::ControlPoints(curve) => {
+                let mut handler = CurveEventHandler::new(curve, properties);
+                handler.handle_event(event)
+            }
+            Curve::Formula(curve) => {
+                let mut handler = CurveEventHandler::new(curve, properties);
+                handler.handle_event(event)
+            }
+        }
     }
 }
 
@@ -53,38 +55,58 @@ impl<'a> CurveEventHandler<'a, FormulaCurve> {
     }
 }
 
+macro_rules! match_event {
+    ($event:ident, $handler:ident) => {
+        match $event {
+            CurveEvent::ChangeCurrentIndex(change) => {
+                $handler.change_current_index(change as isize)
+            }
+            CurveEvent::ChangeWeight(weight) => {
+                $handler.change_weight(weight)?;
+                Ok(())
+            }
+            CurveEvent::DeleteCurrentPoint => $handler.delete_point(),
+            CurveEvent::MoveCurrentPoint(vector) => $handler.move_point(vector),
+            CurveEvent::AddPoint(point) => $handler.add_point(point),
+        }
+    };
+}
+
 impl<'a> CurveEventHandler<'a, ControlPointsCurve> {
     pub fn handle_event(&mut self, event: CurveEvent) -> Result<()> {
-        enum_apply!(self.curve,
-            ControlPointsCurve::Polyline | ControlPointsCurve::ConvexHull |
-            ControlPointsCurve::Bezier | ControlPointsCurve::Interpolation |
-            ControlPointsCurve::RationalBezier => |curve| {
-            let mut handler = CurveEventHandler::new(curve, self.properties);
-            match event {
-                CurveEvent::ChangeCurrentIndex(change) => {
-                    handler.change_current_index(change as isize)
-                },
-                CurveEvent::ChangeWeight(weight) => handler.change_weight(weight),
-                CurveEvent::ToggleConvexHull => {
-                    handler.properties.show_convex_hull = !handler.properties.show_convex_hull;
-                    Ok(())
-                }
-                CurveEvent::DeleteCurrentPoint => handler.delete_point(),
-                CurveEvent::MoveCurrentPoint(vector) => handler.move_point(vector),
-                CurveEvent::AddPoint(point) => {
-                    let point = Self::scale_position(point);
-
-                    handler.add_point(point)
-                }
-                CurveEvent::Resize { area } => {self.properties.area = area; Ok(())},
-
+        match self.curve {
+            ControlPointsCurve::Polyline(curve) => {
+                let mut handler = CurveEventHandler::new(curve, self.properties);
+                match_event!(event, handler)
             }
-        })
+            ControlPointsCurve::ConvexHull(curve) => {
+                let mut handler = CurveEventHandler::new(curve, self.properties);
+                match_event!(event, handler)
+            }
+            ControlPointsCurve::Interpolation(curve) => {
+                let mut handler = CurveEventHandler::new(curve, self.properties);
+                match_event!(event, handler)
+            }
+            ControlPointsCurve::Bezier(curve) => {
+                let mut handler = CurveEventHandler::new(curve, self.properties);
+                match_event!(event, handler)
+            }
+            ControlPointsCurve::RationalBezier(curve) => {
+                let mut handler = CurveEventHandler::new(curve, self.properties);
+                match_event!(event, handler)
+            }
+        }
+        // TODO: change error type in other handlers and uncomment
+        // if let Err(CurveEventError::Unimplemented) = result {
+        //     log::debug!("Unimplemented change weight");
+        //     return Ok(());
+        // }
+        // result
     }
+}
 
-    fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
-        Point::new(position.x as f32, position.y as f32)
-    }
+fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
+    Point::new(position.x as f32, position.y as f32)
 }
 
 impl<'a, C> CurveEventHandler<'a, C>
@@ -127,48 +149,17 @@ impl<'a, C> CurveEventHandler<'a, C>
 where
     C: AddPointHandler<Point = CurvePoint>,
 {
-    pub fn add_point(&mut self, pt: Point<f32>) -> Result<()> {
-        self.curve.handle_add_point(pt)
-    }
-}
-
-impl<'a> CurveEventHandler<'a, RationalBezier> {
-    pub fn add_point(&mut self, pt: Point<f32>) -> Result<()> {
-        self.add_point_weighted(pt)
-    }
-}
-
-impl<'a, C> CurveEventHandler<'a, C>
-where
-    C: AddPointHandler<Point = WeightedPoint<f32, f32>>,
-{
-    pub fn add_point_weighted(&mut self, point: Point<f32>) -> Result<()> {
-        let point = WeightedPoint::new(point, self.properties.default_weight);
+    pub fn add_point(&mut self, pt: PhysicalPosition<f64>) -> Result<()> {
+        let point = scale_position(pt);
         self.curve.handle_add_point(point)
     }
 }
 
-impl<'a> CurveEventHandler<'a, Bezier> {
-    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
-        Ok(())
-    }
-}
-
-impl<'a> CurveEventHandler<'a, Interpolation> {
-    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
-        Ok(())
-    }
-}
-
-impl<'a> CurveEventHandler<'a, Polyline> {
-    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
-        Ok(())
-    }
-}
-
-impl<'a> CurveEventHandler<'a, ConvexHull> {
-    pub fn change_weight(&mut self, _change: f32) -> Result<()> {
-        Ok(())
+impl<'a> CurveEventHandler<'a, RationalBezier> {
+    pub fn add_point(&mut self, pt: PhysicalPosition<f64>) -> Result<()> {
+        let point = scale_position(pt);
+        let point = WeightedPoint::new(point, self.properties.default_weight);
+        self.curve.handle_add_point(point)
     }
 }
 
@@ -176,7 +167,7 @@ impl<'a, C> CurveEventHandler<'a, C>
 where
     C: ChangePointWeightHandler,
 {
-    pub fn change_weight(&mut self, change: f32) -> Result<()> {
+    pub fn change_weight(&mut self, change: f32) -> Result<(), CurveEventError> {
         self.curve
             .handle_change_point_weight(self.properties.current_point_index, |current| {
                 if change < 0.0 {
