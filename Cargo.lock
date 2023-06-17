@@ -305,9 +305,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.3.3"
+version = "4.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8f255e4b8027970e78db75e78831229c9815fdbfa67eb1a1b777a62e24b4a0"
+checksum = "80672091db20273a15cf9fdd4e47ed43b5091ec9841bf4c6145c9dfbbcae09ed"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -316,9 +316,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.3.3"
+version = "4.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acd4f3c17c83b0ba34ffbc4f8bbd74f079413f747f84a6f89292f138057e36ab"
+checksum = "c1458a1df40e1e2afebb7ab60ce55c1fa8f431146205aa5f4887e0b111c27636"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1565,9 +1565,9 @@ dependencies = [
 
 [[package]]
 name = "tiny-skia"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9906f9f9a01b3f260d82b5f9edba0ecd3512223c70c5fbc5fb54651c2dc89282"
+checksum = "f4e37fdc219ee3d551882d24dc5e4df5f72fd9723cbca1ffaa57f7348bf7a47d"
 dependencies = [
  "arrayref",
  "arrayvec",
@@ -1579,9 +1579,9 @@ dependencies = [
 
 [[package]]
 name = "tiny-skia-path"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d8f3ffa4f42f609a86008566fdc08d66f5ccd008f9f413e6ec4bd72395048f5"
+checksum = "93a323d1de20dad9bc8b32daf57702c585ce76e80792d8151de1fc9dfc8d1ca7"
 dependencies = [
  "arrayref",
  "bytemuck",

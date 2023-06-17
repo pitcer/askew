@@ -32,7 +32,7 @@ default-features = false
 features = ["std"]
 
 [dependencies.clap]
-version = "4.3.3"
+version = "4.3.4"
 features = ["derive"]
 
 [dependencies.image]
@@ -54,7 +54,7 @@ version = "0.3.0"
 default-features = false
 
 [dependencies.tiny-skia]
-version = "0.11.0"
+version = "0.11.1"
 default-features = false
 features = ["std", "simd"]
 
