@@ -6,9 +6,9 @@ use crate::canvas::curve::control_points::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{TinySkiaPathConverter, ToPath};
 use crate::canvas::curve::Curve;
+use crate::canvas::paint::PaintBuilder;
 use crate::canvas::properties::CanvasProperties;
-use crate::ui::paint::PaintBuilder;
-use crate::ui::panel::Panel;
+use crate::ui::frame::panel::Panel;
 
 #[derive(Debug)]
 pub struct Rasterizer {}

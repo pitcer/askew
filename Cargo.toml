@@ -6,6 +6,7 @@ edition = "2021"
 description = "Curves editor"
 
 [features]
+default = ["x11"]
 x11 = ["softbuffer/x11", "winit/x11"]
 wayland = ["softbuffer/wayland", "winit/wayland"]
 
@@ -17,6 +18,7 @@ log = "0.4.19"
 num-traits = "0.2.15"
 rand = "0.8.5"
 replace_with = "0.1.7"
+static_assertions = "1.1.0"
 thiserror = "1.0.40"
 time = "0.3.22"
 

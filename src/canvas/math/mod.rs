@@ -1,12 +1,18 @@
 use crate::canvas::curve::control_points::rational_bezier::RationalBezierPoint;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
+use num_traits::Euclid;
 
 pub mod convex_hull;
 pub mod point;
 pub mod rectangle;
 pub mod size;
 pub mod vector;
+
+#[must_use]
+pub fn rem_euclid(n: isize, v: isize) -> usize {
+    Euclid::rem_euclid(&n, &v) as usize
+}
 
 #[must_use]
 pub fn binomial_coefficient(n: u32, k: u32) -> u32 {

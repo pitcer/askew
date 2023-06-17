@@ -4,6 +4,7 @@ use num_traits::Num;
 
 use crate::canvas::curve::control_points::bezier::Bezier;
 use crate::canvas::curve::control_points::convex_hull::ConvexHull;
+use crate::canvas::curve::control_points::event_handler::CurveEventHandler;
 use crate::canvas::curve::control_points::interpolation::Interpolation;
 use crate::canvas::curve::control_points::polyline::Polyline;
 use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
@@ -16,6 +17,7 @@ use crate::event::handler::{
 
 pub mod bezier;
 pub mod convex_hull;
+pub mod event_handler;
 pub mod interpolation;
 pub mod polyline;
 pub mod rational_bezier;
@@ -42,6 +44,10 @@ pub enum ControlPointsCurve {
 }
 
 impl ControlPointsCurve {
+    pub fn event_handler(&mut self) -> CurveEventHandler<'_> {
+        CurveEventHandler::new(self)
+    }
+
     pub fn samples_mut(&mut self) -> Option<&mut u32> {
         match self {
             ControlPointsCurve::Polyline(_) | ControlPointsCurve::ConvexHull(_) => None,
@@ -143,6 +149,10 @@ where
         if let Some(point) = self.points.get_mut(index) {
             point.weight = weight_change(point.weight);
         }
+    }
+
+    pub fn point_mut(&mut self, index: usize) -> Option<&mut WeightedPoint<T, W>> {
+        self.points.get_mut(index)
     }
 
     #[must_use]

@@ -1,6 +1,6 @@
 use tiny_skia::{Color, Paint};
 
-use crate::ui::color::{Alpha, Rgb};
+use crate::config::rgb::{Alpha, Rgb};
 
 #[derive(Debug, Default)]
 pub struct PaintBuilder<'a> {

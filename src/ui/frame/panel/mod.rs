@@ -4,7 +4,10 @@ use tiny_skia::{FillRule, Paint, Path, PixmapMut, PixmapPaint, PixmapRef, Stroke
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
-use crate::ui::pixel::Pixel;
+use pixel::Pixel;
+
+pub mod bar;
+pub mod pixel;
 
 #[derive(Debug)]
 pub struct Panel<'a> {

@@ -3,7 +3,7 @@ use std::fmt::{Debug, Write};
 use anyhow::Result;
 
 use crate::canvas::Canvas;
-use crate::event::Event;
+use crate::event::FrameEvent;
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::parser::CommandParser;
 
@@ -36,7 +36,7 @@ impl CommandState {
         });
     }
 
-    pub fn execute(&mut self, properties: &mut Canvas) -> Option<Event> {
+    pub fn execute(&mut self, properties: &mut Canvas) -> Option<FrameEvent> {
         replace_with::replace_with_or_abort_and_return(self, |state| match state {
             CommandState::Open(command) => {
                 let (event, command) = command.execute(properties);
@@ -134,8 +134,8 @@ impl CommandOpen {
     }
 
     #[must_use]
-    pub fn execute(mut self, properties: &mut Canvas) -> (Option<Event>, CommandClosed) {
-        let result: Result<(Option<Event>, Option<Message>)> = (|| {
+    pub fn execute(mut self, properties: &mut Canvas) -> (Option<FrameEvent>, CommandClosed) {
+        let result: Result<(Option<FrameEvent>, Option<Message>)> = (|| {
             let mut parser = CommandParser::new(&self.buffer);
             let result = parser.parse()?;
             let mut interpreter = CommandInterpreter::new(properties);

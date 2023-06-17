@@ -6,20 +6,20 @@ use winit::event::{
 };
 use winit::event_loop::ControlFlow;
 
-use crate::canvas::math::vector::Vector;
-use crate::canvas::mode::Mode;
 use crate::config::{Config, SaveFormat};
-use crate::event::{CanvasEvent, CurveEvent, Event, FrameEvent};
+use crate::event::input::command;
+use crate::event::{canvas, input, Change, Direction, FrameEvent};
+use crate::ui::frame::mode::Mode;
 use crate::ui::frame::Frame;
 
-pub struct EventHandler {
+pub struct WindowEventHandler {
     frame: Frame,
     cursor_position: PhysicalPosition<f64>,
     modifiers: ModifiersState,
     save_format: Option<SaveFormat>,
 }
 
-impl EventHandler {
+impl WindowEventHandler {
     #[must_use]
     pub fn new(frame: Frame, config: &Config) -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
@@ -41,7 +41,9 @@ impl EventHandler {
             }
             WinitEvent::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
                 let event = self.handle_window_event(event, control_flow)?;
-                self.frame.handle_event(event)?;
+                if let Some(event) = event {
+                    self.frame.receive_event(event)?;
+                }
             }
             _ => {}
         }
@@ -53,7 +55,7 @@ impl EventHandler {
         &mut self,
         event: WindowEvent<'_>,
         control_flow: &mut ControlFlow,
-    ) -> Result<Option<Event>> {
+    ) -> Result<Option<FrameEvent>> {
         match event {
             WindowEvent::Resized(size) => {
                 self.handle_resized(size)?;
@@ -65,7 +67,9 @@ impl EventHandler {
                 control_flow.set_exit();
             }
             WindowEvent::ReceivedCharacter(character) => {
-                return Ok(Some(Event::Frame(FrameEvent::ReceiveCharacter(character))));
+                return Ok(Some(FrameEvent::ReceiveCharacter(
+                    command::ReceiveCharacter(character),
+                )));
             }
             WindowEvent::KeyboardInput {
                 device_id, input, ..
@@ -102,11 +106,11 @@ impl EventHandler {
         _device_id: DeviceId,
         state: ElementState,
         button: MouseButton,
-    ) -> Option<Event> {
+    ) -> Option<FrameEvent> {
         if state == ElementState::Pressed && button == MouseButton::Left {
-            return Some(Event::Canvas(CanvasEvent::Curve(CurveEvent::AddPoint(
+            return Some(FrameEvent::AddPoint(canvas::AddPoint::new(
                 self.cursor_position,
-            ))));
+            )));
         }
         None
     }
@@ -115,43 +119,52 @@ impl EventHandler {
         &mut self,
         _device_id: DeviceId,
         input: KeyboardInput,
-    ) -> Option<Event> {
+    ) -> Option<FrameEvent> {
+        log::debug!("keyboard_input: {input:?}");
+
         if input.state != ElementState::Pressed {
             return None;
         }
+
         match input.virtual_keycode {
-            Some(VirtualKeyCode::Colon) => Some(Event::Frame(FrameEvent::EnterCommand)),
-            Some(VirtualKeyCode::Return) => Some(Event::Frame(FrameEvent::ExecuteCommand)),
-            Some(VirtualKeyCode::Escape) => Some(Event::Frame(FrameEvent::ExitMode)),
+            Some(VirtualKeyCode::Colon) => Some(FrameEvent::EnterCommand(command::EnterCommand)),
+            Some(VirtualKeyCode::Return) => {
+                Some(FrameEvent::ExecuteCommand(command::ExecuteCommand))
+            }
+            Some(VirtualKeyCode::Escape) => Some(FrameEvent::ExitMode(command::ExitMode)),
 
-            Some(VirtualKeyCode::C) => Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Curve))),
-            Some(VirtualKeyCode::A) => Some(Event::Canvas(CanvasEvent::Add)),
-            Some(VirtualKeyCode::D) => Some(Event::Canvas(CanvasEvent::Delete)),
+            Some(VirtualKeyCode::C) => Some(FrameEvent::ChangeMode(input::ChangeMode(Mode::Curve))),
+            Some(VirtualKeyCode::A) => Some(FrameEvent::AddCurve(canvas::AddCurve)),
+            Some(VirtualKeyCode::D) => Some(FrameEvent::Delete(input::Delete)),
 
-            Some(VirtualKeyCode::J) => Some(Event::Canvas(CanvasEvent::ChangeIndex(-1))),
-            Some(VirtualKeyCode::K) => Some(Event::Canvas(CanvasEvent::ChangeIndex(1))),
-
-            Some(VirtualKeyCode::I) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::ChangeWeight(1.5),
+            Some(VirtualKeyCode::J) => Some(FrameEvent::ChangeIndex(input::ChangeIndex(
+                Change::Decrease,
             ))),
-            Some(VirtualKeyCode::O) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::ChangeWeight(-1.5),
+            Some(VirtualKeyCode::K) => Some(FrameEvent::ChangeIndex(input::ChangeIndex(
+                Change::Increase,
             ))),
 
-            Some(VirtualKeyCode::H) => Some(Event::Canvas(CanvasEvent::ToggleConvexHull)),
+            Some(VirtualKeyCode::I) => Some(FrameEvent::ChangeWeight(input::ChangeWeight(
+                Change::Increase,
+            ))),
+            Some(VirtualKeyCode::O) => Some(FrameEvent::ChangeWeight(input::ChangeWeight(
+                Change::Decrease,
+            ))),
 
-            Some(VirtualKeyCode::Up) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::MoveCurrentPoint(Vector::new(0.0, -4.0)),
-            ))),
-            Some(VirtualKeyCode::Down) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::MoveCurrentPoint(Vector::new(0.0, 4.0)),
-            ))),
-            Some(VirtualKeyCode::Left) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::MoveCurrentPoint(Vector::new(-4.0, 0.0)),
-            ))),
-            Some(VirtualKeyCode::Right) => Some(Event::Canvas(CanvasEvent::Curve(
-                CurveEvent::MoveCurrentPoint(Vector::new(4.0, 0.0)),
-            ))),
+            Some(VirtualKeyCode::H) => Some(FrameEvent::ToggleConvexHull(input::ToggleConvexHull)),
+
+            Some(VirtualKeyCode::Up) => {
+                Some(FrameEvent::MovePoint(input::MovePoint(Direction::Up)))
+            }
+            Some(VirtualKeyCode::Down) => {
+                Some(FrameEvent::MovePoint(input::MovePoint(Direction::Down)))
+            }
+            Some(VirtualKeyCode::Left) => {
+                Some(FrameEvent::MovePoint(input::MovePoint(Direction::Left)))
+            }
+            Some(VirtualKeyCode::Right) => {
+                Some(FrameEvent::MovePoint(input::MovePoint(Direction::Right)))
+            }
             _ => None,
         }
     }

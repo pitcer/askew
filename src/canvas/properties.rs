@@ -1,13 +1,11 @@
 use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::mode::Mode;
+use crate::canvas::paint::PaintColor;
+use crate::config::rgb::Rgb;
 use crate::config::Config;
-use crate::ui::color::Rgb;
-use crate::ui::paint::PaintColor;
 
 #[derive(Debug)]
 pub struct CanvasProperties {
     pub area: Rectangle<f32>,
-    pub mode: Mode,
     pub command_mode: bool,
     pub line_width: f32,
     pub point_radius: f32,
@@ -25,7 +23,6 @@ impl CanvasProperties {
     pub fn new(area: Rectangle<f32>) -> Self {
         Self {
             area,
-            mode: Mode::Normal,
             command_mode: false,
             line_width: 0.0,
             point_radius: 0.0,

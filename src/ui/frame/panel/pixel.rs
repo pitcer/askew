@@ -1,4 +1,4 @@
-use crate::ui::color::{Alpha, Rgb};
+use crate::config::rgb::{Alpha, Rgb};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]

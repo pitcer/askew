@@ -141,6 +141,7 @@ dependencies = [
  "replace_with",
  "simplelog",
  "softbuffer",
+ "static_assertions",
  "thiserror",
  "time",
  "tiny-skia",

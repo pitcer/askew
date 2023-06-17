@@ -1,3 +1,9 @@
+use anyhow::anyhow;
+use anyhow::Result;
+use atoi::FromRadix16;
+use chumsky::prelude::*;
+use chumsky::Parser;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
     red: u8,
@@ -9,6 +15,14 @@ impl Rgb {
     #[must_use]
     pub const fn new(red: u8, green: u8, blue: u8) -> Self {
         Self { red, green, blue }
+    }
+
+    pub fn parse(input: &str) -> Result<Self> {
+        let result = parser()
+            .parse(input.as_bytes())
+            .into_result()
+            .map_err(|error| anyhow!("{:?}", error))?;
+        Ok(result)
     }
 
     #[must_use]
@@ -56,4 +70,14 @@ impl Alpha {
     pub const fn alpha(self) -> u8 {
         self.0
     }
+}
+
+fn parser<'a>() -> impl Parser<'a, &'a [u8], Rgb> {
+    let hex_digit = any().filter(u8::is_ascii_hexdigit);
+    let color_byte = group([hex_digit, hex_digit])
+        .map(|digits| u8::from_radix_16(&digits))
+        .map(|(color_byte, _)| color_byte);
+    just(b'#')
+        .ignore_then(group((color_byte, color_byte, color_byte)))
+        .map(|(red, green, blue)| Rgb::new(red, green, blue))
 }

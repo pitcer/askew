@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 
+use rgb::Rgb;
+
 use crate::config::property::{ChebyshevNodes, ConvexHull, LineWidth, Property, Samples};
-use crate::ui::color::Rgb;
 
 pub mod property;
-pub mod rgb_parser;
+pub mod rgb;
 
 #[derive(Debug, clap::Parser)]
 #[command(version)]
@@ -45,16 +46,16 @@ pub struct Config {
     #[arg(long, default_value = "JetBrainsMonoNL-Regular.ttf")]
     pub font_path: PathBuf,
 
-    #[arg(long, default_value = "#ffff00", value_parser = rgb_parser::parse_rgb)]
+    #[arg(long, default_value = "#ffff00", value_parser = Rgb::parse)]
     pub line_color: Rgb,
 
-    #[arg(long, default_value = "#00ffff", value_parser = rgb_parser::parse_rgb)]
+    #[arg(long, default_value = "#00ffff", value_parser = Rgb::parse)]
     pub convex_hull_color: Rgb,
 
-    #[arg(long, default_value = "#ff00ff", value_parser = rgb_parser::parse_rgb)]
+    #[arg(long, default_value = "#ff00ff", value_parser = Rgb::parse)]
     pub control_points_color: Rgb,
 
-    #[arg(long, default_value = "#ffffff", value_parser = rgb_parser::parse_rgb)]
+    #[arg(long, default_value = "#ffffff", value_parser = Rgb::parse)]
     pub current_control_point_color: Rgb,
 }
 

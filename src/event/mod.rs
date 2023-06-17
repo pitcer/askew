@@ -1,41 +1,63 @@
-use winit::dpi::PhysicalPosition;
+pub use declare::*;
 
-use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::math::vector::Vector;
-use crate::canvas::mode::Mode;
+use crate::event::input::command;
 
+pub mod declare;
 pub mod handler;
-
-#[derive(Debug)]
-pub enum Event {
-    Frame(FrameEvent),
-    Canvas(CanvasEvent),
-}
+mod macros;
 
 #[derive(Debug)]
 pub enum FrameEvent {
-    EnterCommand,
-    ReceiveCharacter(char),
-    ExecuteCommand,
-    ExitMode,
+    ToggleConvexHull(input::ToggleConvexHull),
+    ChangeWeight(input::ChangeWeight),
+    MovePoint(input::MovePoint),
+    AddPoint(canvas::AddPoint),
+    AddCurve(canvas::AddCurve),
+    Delete(input::Delete),
+    ChangeIndex(input::ChangeIndex),
+
+    EnterCommand(command::EnterCommand),
+    ReceiveCharacter(command::ReceiveCharacter),
+    ExecuteCommand(command::ExecuteCommand),
+    ExitMode(command::ExitMode),
+    ChangeMode(input::ChangeMode),
+}
+
+pub trait Event {
+    type Return;
+}
+
+pub type HandlerResult<E> = anyhow::Result<<E as Event>::Return, Error>;
+
+pub trait EventHandler<E>
+where
+    E: Event,
+{
+    fn handle(&mut self, event: E) -> HandlerResult<E>;
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("unimplemented handler")]
+    Unimplemented,
+    #[error("no such point: {0}")]
+    NoSuchPoint(PointId),
+    #[error("other error: {0}")]
+    Other(anyhow::Error),
+}
+
+pub type PointId = usize;
+
+#[derive(Debug)]
+pub enum Change {
+    Decrease,
+    Increase,
 }
 
 #[derive(Debug)]
-pub enum CanvasEvent {
-    ChangeMode(Mode),
-    ChangeIndex(i32),
-    Add,
-    Delete,
-    Curve(CurveEvent),
-    ToggleConvexHull,
-    Resize { area: Rectangle<f32> },
-}
-
-#[derive(Debug)]
-pub enum CurveEvent {
-    ChangeWeight(f32),
-    DeleteCurrentPoint,
-    MoveCurrentPoint(Vector<f32>),
-    AddPoint(PhysicalPosition<f64>),
-    ChangeCurrentIndex(i32),
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
 }

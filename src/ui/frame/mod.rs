@@ -22,16 +22,22 @@ use crate::canvas::curve::Curve;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
-use crate::canvas::mode::Mode;
 use crate::canvas::Canvas;
+use crate::config::rgb::{Alpha, Rgb};
 use crate::config::{Config, CurveType, SaveFormat};
-use crate::event::{CanvasEvent, Event, FrameEvent};
-use crate::ui::bar::TextPanel;
-use crate::ui::color::{Alpha, Rgb};
+use crate::event::{EventHandler, FrameEvent};
 use crate::ui::command::{CommandState, MessageType};
-use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
-use crate::ui::panel::Panel;
-use crate::ui::pixel::Pixel;
+use crate::ui::frame::event_handler::FrameEventHandler;
+use crate::ui::frame::font::{FontLayout, FontLoader, GlyphRasterizer};
+use crate::ui::frame::mode::Mode;
+use crate::ui::frame::panel::bar::TextPanel;
+use crate::ui::frame::panel::pixel::Pixel;
+use crate::ui::frame::panel::Panel;
+
+pub mod event_handler;
+pub mod font;
+pub mod mode;
+pub mod panel;
 
 const TEXT_COLOR: Rgb = Rgb::new(249, 250, 244);
 const ERROR_COLOR: Rgb = Rgb::new(179, 26, 64);
@@ -46,6 +52,7 @@ pub struct Frame {
     status_layout: FontLayout,
     command_layout: FontLayout,
     command: CommandState,
+    mode: Mode,
 }
 
 impl Frame {
@@ -166,6 +173,7 @@ impl Frame {
         let status_layout = FontLayout::new(config.font_size);
         let command_layout = FontLayout::new(config.font_size);
         let command = CommandState::initial();
+        let mode = Mode::Normal;
         Ok(Self {
             window,
             surface,
@@ -176,6 +184,7 @@ impl Frame {
             status_layout,
             command_layout,
             command,
+            mode,
         })
     }
 
@@ -185,50 +194,44 @@ impl Frame {
         Rectangle::new(origin, size)
     }
 
-    pub fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
-        let Some(event) = event else { return Ok(()) };
-        log::debug!("Event received from input: {event:?}");
-        match event {
-            Event::Frame(event) => {
-                let event = self.handle_frame_event(event);
-                log::debug!("Event received from command: {event:?}");
-                if let Some(Event::Canvas(event)) = event {
-                    self.canvas.handle_event(event)?;
-                }
-                self.window.request_redraw();
-            }
-            Event::Canvas(event) if self.command.is_closed() => {
-                self.canvas.handle_event(event)?;
-                self.window.request_redraw();
-            }
-            _ => {}
-        }
-        Ok(())
+    pub fn event_handler(&mut self) -> FrameEventHandler<'_> {
+        FrameEventHandler::new(self)
     }
 
-    fn handle_frame_event(&mut self, event: FrameEvent) -> Option<Event> {
+    pub fn receive_event(&mut self, event: FrameEvent) -> Result<()> {
+        log::debug!("Event received from input: {event:?}");
+
+        let command_closed = self.command.is_closed();
+        let mut handler = self.event_handler();
+        // TODO: replace with state machine
         match event {
-            FrameEvent::EnterCommand => {
-                self.command.open();
-                None
-            }
-            FrameEvent::ReceiveCharacter(character) => {
-                if let CommandState::Open(command) = &mut self.command {
-                    command.receive_character(character);
-                }
-                None
-            }
-            FrameEvent::ExecuteCommand => self.command.execute(&mut self.canvas),
-            FrameEvent::ExitMode => {
-                if let CommandState::Closed(command) = &mut self.command {
-                    command.clear_message();
-                    Some(Event::Canvas(CanvasEvent::ChangeMode(Mode::Normal)))
-                } else {
-                    self.command.close();
-                    None
-                }
-            }
+            FrameEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
+            FrameEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
+            FrameEvent::MovePoint(event) if command_closed => handler.handle(event)?,
+            FrameEvent::AddPoint(event) if command_closed => handler.handle(event)?,
+            FrameEvent::AddCurve(event) if command_closed => handler.handle(event)?,
+            FrameEvent::Delete(event) if command_closed => handler.handle(event)?,
+            FrameEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
+            FrameEvent::ChangeMode(event) if command_closed => handler.handle(event)?,
+
+            FrameEvent::EnterCommand(event) => handler.handle(event)?,
+            FrameEvent::ReceiveCharacter(event) => handler.handle(event)?,
+            FrameEvent::ExecuteCommand(event) => handler.handle(event)?,
+            FrameEvent::ExitMode(event) => handler.handle(event)?,
+
+            FrameEvent::ToggleConvexHull(_)
+            | FrameEvent::ChangeWeight(_)
+            | FrameEvent::MovePoint(_)
+            | FrameEvent::AddPoint(_)
+            | FrameEvent::AddCurve(_)
+            | FrameEvent::Delete(_)
+            | FrameEvent::ChangeIndex(_)
+            | FrameEvent::ChangeMode(_) => {}
         }
+
+        self.window.request_redraw();
+
+        Ok(())
     }
 
     pub fn draw(&mut self) -> Result<()> {
@@ -253,7 +256,7 @@ impl Frame {
             .setup(&self.font_loader)
             .append_text(&format!(
                 "{} {} {}/{} {}",
-                self.canvas.properties().mode,
+                self.mode,
                 name,
                 self.canvas.properties().current_curve + 1,
                 self.canvas.curves().len(),

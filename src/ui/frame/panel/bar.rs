@@ -1,7 +1,7 @@
-use crate::ui::color::{Alpha, Rgb};
-use crate::ui::font::{FontLayout, FontLoader, GlyphPixel, GlyphRaster, GlyphRasterizer};
-use crate::ui::panel::Panel;
-use crate::ui::pixel::Pixel;
+use crate::config::rgb::{Alpha, Rgb};
+use crate::ui::frame::font::{FontLayout, FontLoader, GlyphPixel, GlyphRaster, GlyphRasterizer};
+use crate::ui::frame::panel::pixel::Pixel;
+use crate::ui::frame::panel::Panel;
 
 pub struct TextPanel<'a> {
     panel: Panel<'a>,

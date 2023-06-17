@@ -9,6 +9,7 @@ use crate::canvas::{curve, math};
 use crate::event::handler::{
     AddPointHandler, ChangePointWeightHandler, CurveEventError, MovePointHandler,
 };
+use crate::event::PointId;
 
 #[derive(Debug)]
 pub struct RationalBezier {
@@ -39,6 +40,12 @@ impl RationalBezier {
 
     pub fn samples_mut(&mut self) -> &mut u32 {
         &mut self.samples
+    }
+
+    pub fn change_point_weight(&mut self, id: PointId, weight: RationalBezierWeight) {
+        if let Some(point) = self.points.get_mut(id) {
+            point.weight = weight;
+        }
     }
 
     fn rational_bezier(&self, t: f32) -> CurvePoint {
@@ -73,7 +80,9 @@ impl RationalBezier {
 
 pub type RationalBezierPoints = ControlPoints<RationalBezierPoint>;
 
-pub type RationalBezierPoint = WeightedPoint<f32, f32>;
+pub type RationalBezierWeight = f32;
+
+pub type RationalBezierPoint = WeightedPoint<f32, RationalBezierWeight>;
 
 impl ToPath for RationalBezier {
     fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {

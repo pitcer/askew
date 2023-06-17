@@ -8,7 +8,7 @@ use fontdue::{Font, FontSettings, Metrics};
 use lru::LruCache;
 
 use crate::canvas::math::point::Point;
-use crate::ui::color::{Alpha, Rgb};
+use crate::config::rgb::{Alpha, Rgb};
 
 #[derive(Debug)]
 pub struct FontLoader {

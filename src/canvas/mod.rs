@@ -1,28 +1,24 @@
 use anyhow::Result;
 
-use crate::canvas::curve::control_points::polyline::Polyline;
-use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints};
 use crate::canvas::curve::Curve;
-use crate::canvas::event_handler::EventHandler;
+use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math::rectangle::Rectangle;
-use crate::canvas::mode::Mode;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
 use crate::config::Config;
-use crate::event::{CanvasEvent, CurveEvent};
-use crate::ui::panel::Panel;
+use crate::ui::frame::mode::Mode;
+use crate::ui::frame::panel::Panel;
 
 pub mod curve;
-mod event_handler;
+pub mod event_handler;
 pub mod math;
-pub mod mode;
+pub mod paint;
 pub mod properties;
 mod rasterizer;
 
 #[derive(Debug)]
 pub struct Canvas {
     rasterizer: Rasterizer,
-    event_handler: EventHandler,
     curves: Vec<Curve>,
     properties: CanvasProperties,
 }
@@ -34,78 +30,13 @@ impl Canvas {
         properties.include_config(config);
         Self {
             rasterizer: Rasterizer {},
-            event_handler: EventHandler {},
             curves,
             properties,
         }
     }
 
-    pub fn handle_event(&mut self, event: CanvasEvent) -> Result<()> {
-        match event {
-            CanvasEvent::ChangeMode(mode) => {
-                self.properties.mode = mode;
-                Ok(())
-            }
-            CanvasEvent::Add => {
-                self.curves
-                    .push(Curve::ControlPoints(ControlPointsCurve::Polyline(
-                        Polyline::new(CurvePoints::new(vec![])),
-                    )));
-                self.properties.current_curve += 1;
-                Ok(())
-            }
-            CanvasEvent::Delete => {
-                if self.properties.mode == Mode::Curve {
-                    self.event_handler.handle_event(
-                        &mut self.curves[self.properties.current_curve],
-                        &mut self.properties,
-                        CurveEvent::DeleteCurrentPoint,
-                    )?;
-                }
-                Ok(())
-            }
-            CanvasEvent::Curve(event) => self.event_handler.handle_event(
-                &mut self.curves[self.properties.current_curve],
-                &mut self.properties,
-                event,
-            ),
-            CanvasEvent::ChangeIndex(change) => {
-                if self.properties.mode == Mode::Curve {
-                    self.event_handler.handle_event(
-                        &mut self.curves[self.properties.current_curve],
-                        &mut self.properties,
-                        CurveEvent::ChangeCurrentIndex(change),
-                    )?;
-                } else {
-                    self.change_current_index(change as isize)?;
-                }
-                Ok(())
-            }
-            CanvasEvent::ToggleConvexHull => {
-                self.properties.show_convex_hull = !self.properties.show_convex_hull;
-                Ok(())
-            }
-            CanvasEvent::Resize { area } => {
-                self.properties.area = area;
-                Ok(())
-            }
-        }
-    }
-
-    fn change_current_index(&mut self, change: isize) -> Result<()> {
-        let i = self.properties.current_curve as isize + change;
-        let v = self.curves.len() as isize;
-        let r = i % v;
-        self.properties.current_curve = if r < 0 {
-            if v < 0 {
-                r - v
-            } else {
-                r + v
-            }
-        } else {
-            r
-        } as usize;
-        Ok(())
+    pub fn event_handler(&mut self, mode: Mode) -> CanvasEventHandler<'_> {
+        CanvasEventHandler::new(self, mode)
     }
 
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {

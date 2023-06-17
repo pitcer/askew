@@ -1,5 +1,5 @@
 use crate::canvas::Canvas;
-use crate::event::Event;
+use crate::event::FrameEvent;
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
 
 #[derive(Debug)]
@@ -12,7 +12,7 @@ impl<'a> CommandInterpreter<'a> {
         Self { properties }
     }
 
-    pub fn interpret(&mut self, command: Command) -> Result<Option<Event>, Error> {
+    pub fn interpret(&mut self, command: Command) -> Result<Option<FrameEvent>, Error> {
         match command {
             Command::Get(get) => self.interpret_get(get),
             Command::Set(set) => self.interpret_set(set),
@@ -32,7 +32,7 @@ impl<'a> CommandInterpreter<'a> {
     fn interpret_set(&mut self, set: Set) {
         match set {
             Set::ConvexHull(value) => self.properties.properties_mut().show_convex_hull = value,
-            Set::ChebyshevNodes(value) => {}
+            Set::ChebyshevNodes(_value) => {}
             Set::Samples(value) => {
                 if let Some(samples) = self.properties.current_curve_mut().samples_mut() {
                     *samples = value;
