@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::ui::color::Rgb;
 use crate::ui::paint::PaintColor;
 
+#[derive(Debug)]
 pub struct CanvasProperties {
     pub area: Rectangle<f32>,
     pub mode: Mode,

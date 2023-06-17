@@ -16,6 +16,15 @@ pub enum Curve {
     Formula(FormulaCurve),
 }
 
+impl Curve {
+    pub fn samples_mut(&mut self) -> Option<&mut u32> {
+        match self {
+            Curve::ControlPoints(curve) => curve.samples_mut(),
+            Curve::Formula(curve) => curve.samples_mut(),
+        }
+    }
+}
+
 impl Display for Curve {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

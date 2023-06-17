@@ -28,6 +28,10 @@ impl Bezier {
         }
     }
 
+    pub fn samples_mut(&mut self) -> &mut u32 {
+        &mut self.samples
+    }
+
     fn bezier(&self, t: f32) -> CurvePoint {
         let n = self.points.length() as u32 - 1;
         self.points
@@ -57,17 +61,17 @@ impl ToPath for Bezier {
         match self.algorithm {
             BezierAlgorithm::Generic => {
                 let path = path.map(|t| self.bezier(t));
-                let path = CurvePath::new_closed(path);
+                let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
             BezierAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::de_casteljau(&self.points.points, t));
-                let path = CurvePath::new_closed(path);
+                let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
             BezierAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::chudy_wozny(&self.points.points, t));
-                let path = CurvePath::new_closed(path);
+                let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
         }

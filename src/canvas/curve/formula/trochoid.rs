@@ -24,6 +24,10 @@ impl Trochoid {
             w_2,
         }
     }
+
+    pub fn samples_mut(&mut self) -> &mut u32 {
+        &mut self.samples
+    }
 }
 
 impl ToPath for Trochoid {

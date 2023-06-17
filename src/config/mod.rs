@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
+use crate::config::property::{ChebyshevNodes, ConvexHull, LineWidth, Property, Samples};
 use crate::ui::color::Rgb;
 
+pub mod property;
 pub mod rgb_parser;
 
 #[derive(Debug, clap::Parser)]
@@ -10,17 +12,20 @@ pub struct Config {
     #[arg(short, long, value_enum, default_value_t = CurveType::Polyline)]
     pub curve_type: CurveType,
 
-    #[arg(short = 'e', long, default_value_t = false)]
-    pub chebyshev_nodes: bool,
+    #[arg(
+        short = 'e', long = ChebyshevNodes.name(),
+        default_value_t = ChebyshevNodes.default_value()
+    )]
+    pub chebyshev_nodes: <ChebyshevNodes as Property>::Type,
 
-    #[arg(short = 'H', long, default_value_t = false)]
-    pub show_convex_hull: bool,
+    #[arg(short = 'H', long = ConvexHull.name(), default_value_t = ConvexHull.default_value())]
+    pub show_convex_hull: <ConvexHull as Property>::Type,
 
-    #[arg(short, long, default_value_t = 5000)]
-    pub samples: u32,
+    #[arg(short, long = Samples.name(), default_value_t = Samples.default_value())]
+    pub samples: <Samples as Property>::Type,
 
-    #[arg(short, long, default_value_t = 2.0)]
-    pub line_width: f32,
+    #[arg(short, long = LineWidth.name(), default_value_t = LineWidth.default_value())]
+    pub line_width: <LineWidth as Property>::Type,
 
     #[arg(short, long, default_value_t = 4.0)]
     pub point_radius: f32,

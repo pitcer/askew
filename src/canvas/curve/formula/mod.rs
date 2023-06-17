@@ -10,6 +10,14 @@ pub enum FormulaCurve {
     Trochoid(Trochoid),
 }
 
+impl FormulaCurve {
+    pub fn samples_mut(&mut self) -> Option<&mut u32> {
+        match self {
+            FormulaCurve::Trochoid(curve) => Some(curve.samples_mut()),
+        }
+    }
+}
+
 impl ToPath for FormulaCurve {
     fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         match self {

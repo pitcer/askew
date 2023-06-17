@@ -21,6 +21,14 @@ impl Interpolation {
             chebyshev_nodes,
         }
     }
+
+    pub fn samples_mut(&mut self) -> &mut u32 {
+        &mut self.samples
+    }
+
+    pub fn chebyshev_nodes_mut(&mut self) -> &mut bool {
+        &mut self.chebyshev_nodes
+    }
 }
 
 impl ToPath for Interpolation {
@@ -48,7 +56,7 @@ impl ToPath for Interpolation {
             self.points.iterator().map(|point| (*point).into()).unzip();
         let path = curve::equally_spaced(first..=last, self.samples as usize)
             .map(move |t| Point::new(math::lagrange(t, &ts, &xs), math::lagrange(t, &ts, &ys)));
-        let path = CurvePath::new_closed(path);
+        let path = CurvePath::new_open(path);
         converter.to_path(path)
     }
 }

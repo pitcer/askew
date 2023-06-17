@@ -16,6 +16,7 @@ use crate::event::handler::{
 };
 use crate::event::CurveEvent;
 
+#[derive(Debug)]
 pub struct EventHandler {}
 
 impl EventHandler {

@@ -41,6 +41,17 @@ pub enum ControlPointsCurve {
     RationalBezier(RationalBezier),
 }
 
+impl ControlPointsCurve {
+    pub fn samples_mut(&mut self) -> Option<&mut u32> {
+        match self {
+            ControlPointsCurve::Polyline(_) | ControlPointsCurve::ConvexHull(_) => None,
+            ControlPointsCurve::Interpolation(curve) => Some(curve.samples_mut()),
+            ControlPointsCurve::Bezier(curve) => Some(curve.samples_mut()),
+            ControlPointsCurve::RationalBezier(curve) => Some(curve.samples_mut()),
+        }
+    }
+}
+
 impl Display for ControlPointsCurve {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Write};
-use std::marker::PhantomData;
 
 use anyhow::Result;
 
+use crate::canvas::Canvas;
 use crate::event::Event;
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::parser::CommandParser;
@@ -12,14 +12,14 @@ mod parser;
 
 #[derive(Debug)]
 pub enum CommandState {
-    Closed(Command<Closed>),
-    Open(Command<Open>),
+    Closed(CommandClosed),
+    Open(CommandOpen),
 }
 
 impl CommandState {
     #[must_use]
     pub fn initial() -> Self {
-        CommandState::Closed(Command::new(String::new()))
+        CommandState::Closed(CommandClosed::new(None))
     }
 
     pub fn open(&mut self) {
@@ -36,10 +36,10 @@ impl CommandState {
         });
     }
 
-    pub fn execute(&mut self) -> Option<Event> {
+    pub fn execute(&mut self, properties: &mut Canvas) -> Option<Event> {
         replace_with::replace_with_or_abort_and_return(self, |state| match state {
             CommandState::Open(command) => {
-                let (event, command) = command.execute();
+                let (event, command) = command.execute(properties);
                 (event, CommandState::Closed(command))
             }
             other => (None, other),
@@ -58,73 +58,106 @@ impl CommandState {
 }
 
 #[derive(Debug)]
-pub struct Closed;
-
-#[derive(Debug)]
-pub struct Open;
-
-#[derive(Debug)]
-pub struct Command<State> {
-    buffer: String,
-    state: PhantomData<State>,
+pub struct CommandClosed {
+    message: Option<Message>,
 }
 
-impl<State> Command<State> {
-    #[must_use]
-    pub fn new(buffer: String) -> Self {
+#[derive(Debug)]
+pub struct Message {
+    message: String,
+    message_type: MessageType,
+}
+
+impl Message {
+    pub fn new(message: String, message_type: MessageType) -> Self {
         Self {
-            buffer,
-            state: PhantomData,
+            message,
+            message_type,
         }
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    pub fn message_type(&self) -> &MessageType {
+        &self.message_type
     }
 }
 
-impl Command<Closed> {
+#[derive(Debug)]
+pub enum MessageType {
+    Info,
+    Error,
+}
+
+impl CommandClosed {
+    pub fn new(message: Option<Message>) -> Self {
+        Self { message }
+    }
+
     #[must_use]
-    pub fn open(mut self) -> Command<Open> {
-        self.buffer.clear();
-        Command::new(self.buffer)
+    pub fn open(self) -> CommandOpen {
+        let mut message = self
+            .message
+            .map(|message| message.message)
+            .unwrap_or_default();
+        message.clear();
+        CommandOpen::new(message)
     }
 
     pub fn clear_message(&mut self) {
-        self.buffer.clear();
+        self.message = None;
     }
 
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.buffer
+    pub fn message(&self) -> &Option<Message> {
+        &self.message
     }
 }
 
-impl Command<Open> {
+#[derive(Debug)]
+pub struct CommandOpen {
+    buffer: String,
+}
+
+impl CommandOpen {
+    pub fn new(buffer: String) -> Self {
+        Self { buffer }
+    }
+
     pub fn receive_character(&mut self, character: char) {
-        self.buffer.push(character);
+        if character == '\u{8}' {
+            self.buffer.pop();
+        } else if !character.is_control() {
+            self.buffer.push(character);
+        }
     }
 
     #[must_use]
-    pub fn execute(mut self) -> (Option<Event>, Command<Closed>) {
-        let result: Result<Option<Event>> = (|| {
+    pub fn execute(mut self, properties: &mut Canvas) -> (Option<Event>, CommandClosed) {
+        let result: Result<(Option<Event>, Option<Message>)> = (|| {
             let mut parser = CommandParser::new(&self.buffer);
             let result = parser.parse()?;
-            let mut interpreter = CommandInterpreter::new(result);
-            let result = interpreter.interpret()?;
-            Ok(result)
+            let mut interpreter = CommandInterpreter::new(properties);
+            let result = interpreter.interpret(result)?;
+            let message = None;
+            Ok((result, message))
         })();
-        self.buffer.clear();
-        let event = result.unwrap_or_else(|error| {
+        let (event, message) = result.unwrap_or_else(|error| {
+            self.buffer.clear();
             self.buffer
                 .write_fmt(format_args!("{error}"))
                 .expect("formatting should not fail");
-            None
+            let message = Message::new(self.buffer, MessageType::Error);
+            (None, Some(message))
         });
-        let closed = Command::new(self.buffer);
+        let closed = CommandClosed::new(message);
         (event, closed)
     }
 
     #[must_use]
-    pub fn close(mut self) -> Command<Closed> {
-        self.buffer.clear();
-        Command::new(self.buffer)
+    pub fn close(self) -> CommandClosed {
+        CommandClosed::new(None)
     }
 
     #[must_use]

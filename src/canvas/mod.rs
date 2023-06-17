@@ -16,9 +16,10 @@ pub mod curve;
 mod event_handler;
 pub mod math;
 pub mod mode;
-mod properties;
+pub mod properties;
 mod rasterizer;
 
+#[derive(Debug)]
 pub struct Canvas {
     rasterizer: Rasterizer,
     event_handler: EventHandler,
@@ -115,9 +116,18 @@ impl Canvas {
         Ok(())
     }
 
+    pub fn current_curve_mut(&mut self) -> &mut Curve {
+        &mut self.curves[self.properties.current_curve]
+    }
+
     #[must_use]
     pub fn curves(&self) -> &Vec<Curve> {
         &self.curves
+    }
+
+    #[must_use]
+    pub fn properties_mut(&mut self) -> &mut CanvasProperties {
+        &mut self.properties
     }
 
     #[must_use]

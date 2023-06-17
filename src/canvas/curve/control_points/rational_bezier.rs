@@ -37,6 +37,10 @@ impl RationalBezier {
         }
     }
 
+    pub fn samples_mut(&mut self) -> &mut u32 {
+        &mut self.samples
+    }
+
     fn rational_bezier(&self, t: f32) -> CurvePoint {
         let n = self.points.length() as u32 - 1;
         let result = self

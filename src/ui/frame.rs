@@ -28,7 +28,7 @@ use crate::config::{Config, CurveType, SaveFormat};
 use crate::event::{CanvasEvent, Event, FrameEvent};
 use crate::ui::bar::TextPanel;
 use crate::ui::color::{Alpha, Rgb};
-use crate::ui::command::CommandState;
+use crate::ui::command::{CommandState, MessageType};
 use crate::ui::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::panel::Panel;
 use crate::ui::pixel::Pixel;
@@ -218,7 +218,7 @@ impl Frame {
                 }
                 None
             }
-            FrameEvent::ExecuteCommand => self.command.execute(),
+            FrameEvent::ExecuteCommand => self.command.execute(&mut self.canvas),
             FrameEvent::ExitMode => {
                 if let CommandState::Closed(command) = &mut self.command {
                     command.clear_message();
@@ -269,16 +269,18 @@ impl Frame {
 
         let mut setup = self.command_layout.setup(&self.font_loader);
         match &self.command {
-            CommandState::Closed(command) if command.message().is_empty() => {
-                setup.append_text(" ");
-            }
             CommandState::Closed(command) => {
-                let message = command.message();
-                setup.append_color_text(message, ERROR_COLOR);
+                if let Some(message) = command.message() {
+                    let color = Self::message_color(message.message_type());
+                    setup.append_color_text(message.message(), color);
+                } else {
+                    setup.append_text(" ");
+                }
             }
             CommandState::Open(command) => {
                 let buffer = command.input();
                 setup.append_color_text(buffer, TEXT_COLOR);
+                setup.append_color_text("█", TEXT_COLOR);
             }
         }
         let mut command_bar = TextPanel::new(command, TEXT_COLOR, Rgb::new(42, 42, 42));
@@ -295,6 +297,13 @@ impl Frame {
             .present()
             .map_err(|error| anyhow!(error.to_string()))?;
         Ok(())
+    }
+
+    fn message_color(message_type: &MessageType) -> Rgb {
+        match message_type {
+            MessageType::Info => TEXT_COLOR,
+            MessageType::Error => ERROR_COLOR,
+        }
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) -> Result<()> {

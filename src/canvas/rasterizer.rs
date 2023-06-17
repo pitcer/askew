@@ -10,6 +10,7 @@ use crate::canvas::properties::CanvasProperties;
 use crate::ui::paint::PaintBuilder;
 use crate::ui::panel::Panel;
 
+#[derive(Debug)]
 pub struct Rasterizer {}
 
 impl Rasterizer {
