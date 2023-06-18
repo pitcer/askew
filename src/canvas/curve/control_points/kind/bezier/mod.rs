@@ -2,14 +2,15 @@ use crate::canvas::curve::control_points::kind::bezier::event_handler::BezierEve
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::{CurvePoint, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::{curve, math};
+use crate::canvas::curve::samples::Samples;
+use crate::canvas::math;
 
 pub mod event_handler;
 
 #[derive(Debug)]
 pub struct Bezier {
     points: CurvePoints,
-    samples: u32,
+    samples: Samples,
     algorithm: BezierAlgorithm,
 }
 
@@ -22,7 +23,7 @@ pub enum BezierAlgorithm {
 
 impl Bezier {
     #[must_use]
-    pub fn new(points: CurvePoints, samples: u32, algorithm: BezierAlgorithm) -> Self {
+    pub fn new(points: CurvePoints, samples: Samples, algorithm: BezierAlgorithm) -> Self {
         Self {
             points,
             samples,
@@ -59,7 +60,7 @@ impl ToPath for Bezier {
             return None;
         }
 
-        let path = curve::equally_spaced(0.0..=1.0, self.samples as usize);
+        let path = self.samples.equally_spaced(0.0..=1.0);
         match self.algorithm {
             BezierAlgorithm::Generic => {
                 let path = path.map(|t| self.bezier(t));

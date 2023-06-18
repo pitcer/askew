@@ -1,8 +1,10 @@
 use std::fmt::{Display, Formatter};
 
 use crate::canvas::curve::converter::{PathConverter, ToPath};
+use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
 use crate::canvas::curve::formula::trochoid::Trochoid;
 
+pub mod event_handler;
 pub mod trochoid;
 
 #[derive(Debug)]
@@ -11,10 +13,8 @@ pub enum FormulaCurveKind {
 }
 
 impl FormulaCurveKind {
-    pub fn samples_mut(&mut self) -> Option<&mut u32> {
-        match self {
-            FormulaCurveKind::Trochoid(curve) => Some(curve.samples_mut()),
-        }
+    pub fn event_handler(&mut self) -> FormulaCurveEventHandler<'_> {
+        FormulaCurveEventHandler::new(self)
     }
 }
 

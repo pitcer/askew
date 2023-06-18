@@ -1,6 +1,6 @@
 use crate::canvas::curve::control_points::kind::polyline::Polyline;
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints};
+use crate::canvas::curve::event_handler::CurveEventHandler;
 use crate::canvas::curve::CurveKind;
 use crate::canvas::Canvas;
 use crate::event::canvas::{
@@ -23,12 +23,12 @@ impl<'a> CanvasEventHandler<'a> {
 impl<'a, E> DelegateEventHandler<E> for CanvasEventHandler<'a>
 where
     E: Event,
-    for<'b> ControlPointsEventHandler<'b>: EventHandler<E>,
+    for<'b> CurveEventHandler<'b>: EventHandler<E>,
 {
-    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+    type Delegate<'b> = CurveEventHandler<'b> where Self: 'b;
 
     fn delegate_handler(&mut self) -> Self::Delegate<'_> {
-        todo!("delegate to current curve")
+        self.canvas.current_curve_mut().event_handler()
     }
 }
 

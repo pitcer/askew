@@ -1,7 +1,9 @@
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierPoint;
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
-use crate::event::curve::{AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint};
+use crate::event::curve::control_points::{
+    AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
+};
 use crate::event::{Error, EventHandler, HandlerResult};
 
 pub struct ControlPointsEventHandler<'a, P = CurvePoint> {

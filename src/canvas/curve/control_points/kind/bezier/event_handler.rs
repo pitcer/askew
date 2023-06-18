@@ -1,9 +1,7 @@
 use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
-use crate::event::curve::{
-    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetSamples, GetWeight, MovePoint, SetSamples,
-};
+use crate::event::curve::control_points::weighted;
+use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
 use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
 
@@ -31,30 +29,29 @@ where
 
 impl EventHandler<SetSamples> for BezierEventHandler<'_> {
     fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples = event.0;
-        Ok(())
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 impl EventHandler<GetSamples> for BezierEventHandler<'_> {
-    fn handle(&mut self, _event: GetSamples) -> HandlerResult<GetSamples> {
-        Ok(self.curve.samples)
+    fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 delegate_handlers! {
     BezierEventHandler<'_> {
-        GetControlPointsLength,
-        AddControlPoint,
-        MovePoint,
-        DeletePoint,
+        control_points::GetControlPointsLength,
+        control_points::AddControlPoint,
+        control_points::MovePoint,
+        control_points::DeletePoint,
     }
 }
 
 unimplemented_handlers! {
     BezierEventHandler<'_> {
-        AddWeightedControlPoint,
-        ChangeWeight,
-        GetWeight,
+        weighted::AddWeightedControlPoint,
+        weighted::ChangeWeight,
+        weighted::GetWeight,
     }
 }

@@ -6,6 +6,8 @@ macro_rules! unimplemented_handlers {
                 Err($crate::event::Error::Unimplemented)
             }
         }
+
+        impl $crate::event::UnimplementedHandler<$event> for $handler {}
         )+
     };
 }
@@ -15,7 +17,7 @@ macro_rules! delegate_handlers {
         $(
         impl $crate::event::EventHandler<$event> for $handler {
             fn handle(&mut self, event: $event) -> $crate::event::HandlerResult<$event> {
-                DelegateEventHandler::<$event>::delegate_handler(self).handle(event)
+                $crate::event::DelegateEventHandler::<$event>::delegate_handler(self).handle(event)
             }
         }
         )+
@@ -27,7 +29,7 @@ macro_rules! delegate_events {
         $(
         impl $crate::event::EventHandler<$event> for $handler {
             fn handle(&mut self, event: $event) -> $crate::event::HandlerResult<$event> {
-                DelegateEvent::<$event>::delegate(self, event)
+                $crate::event::DelegateEvent::<$event>::delegate(self, event)
             }
         }
         )+
@@ -35,26 +37,44 @@ macro_rules! delegate_events {
 }
 
 macro_rules! declare_events {
-    ($($handler:ty $(: $($other_event:ty),+ $(,)? )? {
+    ( $( $handler:ty {
+        $(~ $inherited:tt )?
+        $(! $unimplemented:tt )?
         $( $event_name:ident $event:tt -> $event_return:ty ),* $(,)?
-    })*) => {
+    } )*
+    ) => {
         $(
-        $(
-        declare_events!(@declare_struct $event_name $event);
+            $(
+            declare_events!(@declare_struct $event_name $event);
 
-        impl $crate::event::Event for $event_name {
-            type Return = $event_return;
-        }
+            impl $crate::event::Event for $event_name {
+                type Return = $event_return;
+            }
 
-        static_assertions::assert_impl_all!($handler: $crate::event::EventHandler<$event_name>);
-        )*
-        $($(
-            static_assertions::assert_impl_all!(
-                $handler: $crate::event::EventHandler<$other_event>
-            );
-        )+)?
+            static_assertions::assert_impl_all!($handler: $crate::event::EventHandler<$event_name>);
+            )*
+        $( declare_events!(@unimplemented $handler, $unimplemented ); )?
+        $( declare_events!(@inherited $handler, $inherited ); )?
         )*
     };
+
+    (@unimplemented $handler:ty, { $($other_event:ty),+ $(,)? } ) => {
+        $(
+        static_assertions::assert_impl_all!($handler:
+            $crate::event::EventHandler<$other_event>,
+            $crate::event::UnimplementedHandler<$other_event>
+        );
+        )+
+    };
+
+    (@inherited $handler:ty, { $($other_event:ty),+ $(,)? } ) => {
+        $(
+        static_assertions::assert_impl_all!($handler:
+            $crate::event::EventHandler<$other_event>
+        );
+        )+
+    };
+
     (@declare_struct $name:ident {
         $($field:ident: $field_type:ty),+ $(,)?
     }) => {
@@ -69,10 +89,12 @@ macro_rules! declare_events {
             }
         }
     };
+
     (@declare_struct $name:ident()) => {
         #[derive(Debug)]
         pub struct $name;
     };
+
     (@declare_struct $name:ident (
         $($field_type:ty),+ $(,)?
     )) => {

@@ -1,22 +1,25 @@
-use crate::canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler;
-use crate::canvas::curve::control_points::points::ControlPoints;
-use crate::canvas::curve::control_points::{CurvePoint, CurvePoints, GetControlPoints};
-use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::math::point::Point;
-use crate::canvas::{curve, math};
+use crate::{
+    canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
+    canvas::curve::control_points::points::ControlPoints,
+    canvas::curve::control_points::{CurvePoint, CurvePoints, GetControlPoints},
+    canvas::curve::converter::{CurvePath, PathConverter, ToPath},
+    canvas::curve::samples::Samples,
+    canvas::math,
+    canvas::math::point::Point,
+};
 
 pub mod event_handler;
 
 #[derive(Debug)]
 pub struct Interpolation {
     points: CurvePoints,
-    samples: u32,
+    samples: Samples,
     chebyshev_nodes: bool,
 }
 
 impl Interpolation {
     #[must_use]
-    pub fn new(points: CurvePoints, samples: u32, chebyshev_nodes: bool) -> Self {
+    pub fn new(points: CurvePoints, samples: Samples, chebyshev_nodes: bool) -> Self {
         Self {
             points,
             samples,
@@ -56,7 +59,9 @@ impl ToPath for Interpolation {
 
         let (xs, ys): (Vec<_>, Vec<_>) =
             self.points.iterator().map(|point| (*point).into()).unzip();
-        let path = curve::equally_spaced(first..=last, self.samples as usize)
+        let path = self
+            .samples
+            .equally_spaced(first..=last)
             .map(move |t| Point::new(math::lagrange(t, &ts, &xs), math::lagrange(t, &ts, &ys)));
         let path = CurvePath::new_open(path);
         converter.to_path(path)

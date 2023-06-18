@@ -2,10 +2,10 @@ use crate::canvas::curve::control_points::kind::rational_bezier::{
     RationalBezier, RationalBezierPoint,
 };
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
-use crate::event::curve::{
-    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetSamples, GetWeight, MovePoint, SetSamples,
+use crate::event::curve::control_points::weighted::{
+    AddWeightedControlPoint, ChangeWeight, GetWeight,
 };
+use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
 use crate::event::{DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
 
@@ -19,7 +19,7 @@ impl<'a> RationalBezierEventHandler<'a> {
     }
 }
 
-impl<'a, E> DelegateEventHandler<E> for RationalBezierEventHandler<'a>
+impl<E> DelegateEventHandler<E> for RationalBezierEventHandler<'_>
 where
     E: Event,
     for<'b> ControlPointsEventHandler<'b, RationalBezierPoint>: EventHandler<E>,
@@ -59,29 +59,35 @@ impl EventHandler<GetWeight> for RationalBezierEventHandler<'_> {
     }
 }
 
+// NOTE: Those could be delegated, but unfortunately for some reason trait solver does not allow
+// to implement the following, because of a conflict with ControlPointsEventHandler delegate:
+// impl<E> DelegateEventHandler<E> for RationalBezierEventHandler<'_>
+// where
+//     E: Event,
+//     for<'b> SamplesEventHandler<'b>: EventHandler<E>
+
 impl EventHandler<SetSamples> for RationalBezierEventHandler<'_> {
     fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples = event.0;
-        Ok(())
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 impl EventHandler<GetSamples> for RationalBezierEventHandler<'_> {
-    fn handle(&mut self, _event: GetSamples) -> HandlerResult<GetSamples> {
-        Ok(self.curve.samples)
+    fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 delegate_handlers! {
     RationalBezierEventHandler<'_> {
-        GetControlPointsLength,
-        MovePoint,
-        DeletePoint,
+        control_points::GetControlPointsLength,
+        control_points::MovePoint,
+        control_points::DeletePoint,
     }
 }
 
 unimplemented_handlers! {
     RationalBezierEventHandler<'_> {
-        AddControlPoint,
+        control_points::AddControlPoint,
     }
 }

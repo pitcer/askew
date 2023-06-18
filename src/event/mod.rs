@@ -32,6 +32,12 @@ where
     fn handle(&mut self, event: E) -> HandlerResult<E>;
 }
 
+pub trait UnimplementedHandler<E>: EventHandler<E>
+where
+    E: Event,
+{
+}
+
 pub trait DelegateEventHandler<E>
 where
     E: Event,

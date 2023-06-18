@@ -1,4 +1,4 @@
-use crate::event::curve::{GetSamples, SetSamples};
+use crate::event::curve;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -6,10 +6,6 @@ use crate::{
     canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
     canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::ControlPointsCurveKind,
-    event::curve::{
-        AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint,
-        GetControlPointsLength, GetWeight, MovePoint,
-    },
     event::macros::delegate_events,
     event::{DelegateEvent, Event, EventHandler, HandlerResult},
 };
@@ -46,15 +42,14 @@ where
 
 delegate_events! {
     ControlPointsCurveEventHandler<'_> {
-        GetControlPointsLength,
-        AddControlPoint,
-        MovePoint,
-        DeletePoint,
-        AddWeightedControlPoint,
-        ChangeWeight,
-        GetWeight,
-
-        SetSamples,
-        GetSamples,
+        curve::control_points::GetControlPointsLength,
+        curve::control_points::AddControlPoint,
+        curve::control_points::MovePoint,
+        curve::control_points::DeletePoint,
+        curve::control_points::weighted::AddWeightedControlPoint,
+        curve::control_points::weighted::ChangeWeight,
+        curve::control_points::weighted::GetWeight,
+        curve::SetSamples,
+        curve::GetSamples,
     }
 }

@@ -1,15 +1,18 @@
-use crate::canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler;
-use crate::canvas::curve::control_points::points::ControlPoints;
-use crate::canvas::curve::control_points::{CurvePoint, GetControlPoints, WeightedPoint};
-use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::{curve, math};
+use crate::{
+    canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
+    canvas::curve::control_points::points::ControlPoints,
+    canvas::curve::control_points::{CurvePoint, GetControlPoints, WeightedPoint},
+    canvas::curve::converter::{CurvePath, PathConverter, ToPath},
+    canvas::curve::samples::Samples,
+    canvas::math,
+};
 
 pub mod event_handler;
 
 #[derive(Debug)]
 pub struct RationalBezier {
     points: RationalBezierPoints,
-    samples: u32,
+    samples: Samples,
     algorithm: RationalBezierAlgorithm,
 }
 
@@ -23,7 +26,7 @@ impl RationalBezier {
     #[must_use]
     pub fn new(
         points: RationalBezierPoints,
-        samples: u32,
+        samples: Samples,
         algorithm: RationalBezierAlgorithm,
     ) -> Self {
         Self {
@@ -77,7 +80,7 @@ impl ToPath for RationalBezier {
             return None;
         }
 
-        let path = curve::equally_spaced(0.0..=1.0, self.samples as usize);
+        let path = self.samples.equally_spaced(0.0..=1.0);
         match self.algorithm {
             RationalBezierAlgorithm::Generic => {
                 let path = path.map(|t| self.rational_bezier(t));

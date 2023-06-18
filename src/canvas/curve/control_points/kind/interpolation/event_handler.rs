@@ -1,11 +1,8 @@
 use crate::canvas::curve::control_points::kind::interpolation::Interpolation;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
-use crate::event::curve::{
-    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetSamples, GetWeight, MovePoint, SetSamples,
-};
+use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
+use crate::event::{curve, DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub struct InterpolationEventHandler<'a> {
     curve: &'a mut Interpolation,
@@ -31,30 +28,29 @@ where
 
 impl EventHandler<SetSamples> for InterpolationEventHandler<'_> {
     fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples = event.0;
-        Ok(())
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 impl EventHandler<GetSamples> for InterpolationEventHandler<'_> {
-    fn handle(&mut self, _event: GetSamples) -> HandlerResult<GetSamples> {
-        Ok(self.curve.samples)
+    fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
+        self.curve.samples.event_handler().handle(event)
     }
 }
 
 delegate_handlers! {
     InterpolationEventHandler<'_> {
-        GetControlPointsLength,
-        AddControlPoint,
-        MovePoint,
-        DeletePoint,
+        curve::control_points::GetControlPointsLength,
+        curve::control_points::AddControlPoint,
+        curve::control_points::MovePoint,
+        curve::control_points::DeletePoint,
     }
 }
 
 unimplemented_handlers! {
     InterpolationEventHandler<'_> {
-        AddWeightedControlPoint,
-        ChangeWeight,
-        GetWeight,
+        curve::control_points::weighted::AddWeightedControlPoint,
+        curve::control_points::weighted::ChangeWeight,
+        curve::control_points::weighted::GetWeight,
     }
 }

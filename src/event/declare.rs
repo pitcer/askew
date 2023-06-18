@@ -1,5 +1,8 @@
+#![allow(clippy::wildcard_imports)]
+
 use winit::dpi::PhysicalPosition;
 
+use crate::canvas::curve::samples::event_handler::SamplesEventHandler;
 use crate::{
     canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler,
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
@@ -9,11 +12,12 @@ use crate::{
     canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::points::event_handler::ControlPointsEventHandler,
     canvas::curve::control_points::WeightedPoint,
+    canvas::curve::event_handler::CurveEventHandler,
+    canvas::curve::formula::event_handler::FormulaCurveEventHandler,
+    canvas::curve::formula::trochoid::event_handler::TrochoidEventHandler,
     canvas::event_handler::CanvasEventHandler,
     canvas::math::point::Point,
     canvas::math::vector::Vector,
-    event::canvas::{AddCurve, AddPoint},
-    event::curve::{GetSamples, SetSamples},
     event::macros::declare_events,
     event::PointId,
     event::{Change, Direction},
@@ -21,58 +25,40 @@ use crate::{
     ui::frame::mode::Mode,
 };
 
-pub mod curve {
-    use super::{
-        declare_events, BezierEventHandler, ControlPointsCurveEventHandler,
-        ControlPointsEventHandler, ConvexHullEventHandler, InterpolationEventHandler, Point,
-        PointId, PolylineEventHandler, RationalBezierEventHandler, Vector, WeightedPoint,
-    };
+pub mod input {
+    use super::*;
 
     declare_events! {
-        ControlPointsEventHandler<'_> {
-            GetControlPointsLength () -> usize,
-            AddControlPoint { point: Point<f32> } -> (),
-            MovePoint { id: PointId, shift: Vector<f32> } -> (),
-            DeletePoint { id: PointId } -> (),
-        }
+        InputEventHandler<'_> {
+            ~ {
+                canvas::AddPoint,
+                canvas::AddCurve,
+            }
 
-        RationalBezierEventHandler<'_>: GetControlPointsLength, MovePoint, DeletePoint, SetSamples,
-            GetSamples
-        {
-            ChangeWeight { id: PointId, weight: f32 } -> (),
-            AddWeightedControlPoint { point: WeightedPoint<f32, f32> } -> (),
-            GetWeight { id: PointId } -> f32,
-        }
-
-        BezierEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
-            AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
-
-        ConvexHullEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
-            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
-
-        InterpolationEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
-            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
-
-        PolylineEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
-            AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
-
-        ControlPointsCurveEventHandler<'_>: DeletePoint, MovePoint, AddControlPoint,
-            GetControlPointsLength, AddWeightedControlPoint, ChangeWeight, GetWeight,
-            SetSamples, GetSamples
-        {
-            SetSamples (u32) -> (),
-            GetSamples () -> u32,
+            ToggleConvexHull () -> (),
+            ChangeWeight (Change) -> (),
+            MovePoint (Direction) -> (),
+            Delete () -> (),
+            ChangeMode (Mode) -> (),
+            ChangeIndex (Change) -> (),
+            EnterCommand () -> (),
+            ReceiveCharacter (char) -> (),
+            ExecuteCommand () -> (),
+            ExitMode () -> (),
         }
     }
 }
 
 pub mod canvas {
-    use super::{
-        declare_events, CanvasEventHandler, GetSamples, PhysicalPosition, SetSamples, Vector,
-    };
+    use super::*;
 
     declare_events! {
-        CanvasEventHandler<'_>: SetSamples, GetSamples {
+        CanvasEventHandler<'_> {
+            ~ {
+                curve::SetSamples,
+                curve::GetSamples
+            }
+
             ChangeCurrentPointWeight { weight: f32 } -> (),
             DeleteCurrentPoint () -> (),
             MoveCurrentPoint { shift: Vector<f32> } -> (),
@@ -88,21 +74,176 @@ pub mod canvas {
     }
 }
 
-pub mod input {
-    use super::{declare_events, AddCurve, AddPoint, Change, Direction, InputEventHandler, Mode};
+pub mod curve {
+    use super::*;
 
     declare_events! {
-        InputEventHandler<'_>: AddPoint, AddCurve {
-            ToggleConvexHull () -> (),
-            ChangeWeight (Change) -> (),
-            MovePoint (Direction) -> (),
-            Delete () -> (),
-            ChangeMode (Mode) -> (),
-            ChangeIndex (Change) -> (),
-            EnterCommand () -> (),
-            ReceiveCharacter (char) -> (),
-            ExecuteCommand () -> (),
-            ExitMode () -> (),
+        CurveEventHandler<'_> {
+            ~ {
+                control_points::DeletePoint,
+                control_points::MovePoint,
+                control_points::AddControlPoint,
+                control_points::GetControlPointsLength,
+                control_points::weighted::AddWeightedControlPoint,
+                control_points::weighted::ChangeWeight,
+                control_points::weighted::GetWeight,
+                SetSamples,
+                GetSamples,
+            }
+        }
+
+        SamplesEventHandler<'_> {
+            SetSamples (u32) -> (),
+            GetSamples () -> u32,
+        }
+    }
+
+    pub mod formula {
+        use super::*;
+
+        declare_events! {
+            FormulaCurveEventHandler<'_> {
+                ~ {
+                    curve::SetSamples,
+                    curve::GetSamples
+                }
+
+                ! {
+                    curve::control_points::DeletePoint,
+                    curve::control_points::MovePoint,
+                    curve::control_points::AddControlPoint,
+                    curve::control_points::GetControlPointsLength,
+                    curve::control_points::weighted::AddWeightedControlPoint,
+                    curve::control_points::weighted::ChangeWeight,
+                    curve::control_points::weighted::GetWeight,
+                }
+            }
+
+            TrochoidEventHandler<'_> {
+                ~ {
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+            }
+        }
+    }
+
+    pub mod control_points {
+        use super::*;
+
+        declare_events! {
+            ControlPointsCurveEventHandler<'_> {
+                ~ {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                    weighted::GetWeight,
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+            }
+
+            BezierEventHandler<'_> {
+                ~ {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+
+                ! {
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                    weighted::GetWeight,
+                }
+            }
+
+            ConvexHullEventHandler<'_> {
+                ~ {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                }
+
+                ! {
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                    weighted::GetWeight,
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+            }
+
+            InterpolationEventHandler<'_> {
+                ~ {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+
+                ! {
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                    weighted::GetWeight,
+                }
+            }
+
+            PolylineEventHandler<'_> {
+                ~ {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                }
+
+                ! {
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                    weighted::GetWeight,
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+            }
+
+            ControlPointsEventHandler<'_> {
+                GetControlPointsLength () -> usize,
+                AddControlPoint { point: Point<f32> } -> (),
+                MovePoint { id: PointId, shift: Vector<f32> } -> (),
+                DeletePoint { id: PointId } -> (),
+            }
+        }
+
+        pub mod weighted {
+            use super::*;
+
+            declare_events! {
+                RationalBezierEventHandler<'_> {
+                    ~ {
+                        control_points::GetControlPointsLength,
+                        control_points::MovePoint,
+                        control_points::DeletePoint,
+                        curve::SetSamples,
+                        curve::GetSamples
+                    }
+
+                    ! {
+                        control_points::AddControlPoint
+                    }
+
+                    ChangeWeight { id: PointId, weight: f32 } -> (),
+                    AddWeightedControlPoint { point: WeightedPoint<f32, f32> } -> (),
+                    GetWeight { id: PointId } -> f32,
+                }
+            }
         }
     }
 }

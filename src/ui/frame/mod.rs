@@ -19,6 +19,7 @@ use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::ControlPointsCurveKind;
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::curve::samples::Samples;
 use crate::canvas::curve::CurveKind;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
@@ -103,6 +104,7 @@ impl Frame {
             })
             .collect::<Vec<_>>();
         let points = ControlPoints::new(points_vec);
+        let samples = Samples::new(config.samples as usize);
         let canvas = match config.curve_type {
             CurveType::Polyline => Canvas::new(
                 canvas_rectangle,
@@ -116,7 +118,7 @@ impl Frame {
                 vec![CurveKind::ControlPoints(
                     ControlPointsCurveKind::Interpolation(Interpolation::new(
                         points,
-                        config.samples,
+                        samples,
                         config.chebyshev_nodes,
                     )),
                 )],
@@ -125,7 +127,7 @@ impl Frame {
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
                 vec![CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
-                    Bezier::new(points, config.samples, BezierAlgorithm::ChudyWozny),
+                    Bezier::new(points, samples, BezierAlgorithm::ChudyWozny),
                 ))],
                 config,
             ),
@@ -153,7 +155,7 @@ impl Frame {
                     vec![CurveKind::ControlPoints(
                         ControlPointsCurveKind::RationalBezier(RationalBezier::new(
                             points,
-                            config.samples,
+                            samples,
                             RationalBezierAlgorithm::ChudyWozny,
                         )),
                     )],
@@ -164,7 +166,7 @@ impl Frame {
                 Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
                 vec![CurveKind::Formula(FormulaCurveKind::Trochoid(
                     Trochoid::new(
-                        5000,
+                        samples,
                         (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
                         0.3,
                         0.8,
