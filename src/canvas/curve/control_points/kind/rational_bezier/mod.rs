@@ -37,10 +37,6 @@ impl RationalBezier {
         RationalBezierEventHandler::new(self)
     }
 
-    pub fn samples_mut(&mut self) -> &mut u32 {
-        &mut self.samples
-    }
-
     fn rational_bezier(&self, t: f32) -> CurvePoint {
         let n = self.points.length() as u32 - 1;
         let result = self
@@ -72,9 +68,7 @@ impl RationalBezier {
 }
 
 pub type RationalBezierPoints = ControlPoints<RationalBezierPoint>;
-
 pub type RationalBezierWeight = f32;
-
 pub type RationalBezierPoint = WeightedPoint<f32, RationalBezierWeight>;
 
 impl ToPath for RationalBezier {

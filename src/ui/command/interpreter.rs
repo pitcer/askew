@@ -1,5 +1,9 @@
+use anyhow::Result;
+
 use crate::canvas::Canvas;
-use crate::event::FrameEvent;
+use crate::event::canvas::{GetConvexHull, SetConvexHull};
+use crate::event::curve::SetSamples;
+use crate::event::{EventHandler, FrameEvent};
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
 
 #[derive(Debug)]
@@ -15,8 +19,8 @@ impl<'a> CommandInterpreter<'a> {
     pub fn interpret(&mut self, command: Command) -> Result<Option<FrameEvent>, Error> {
         match command {
             Command::Get(get) => self.interpret_get(get),
-            Command::Set(set) => self.interpret_set(set),
-            Command::Toggle(toggle) => self.interpret_toggle(toggle),
+            Command::Set(set) => self.interpret_set(set).map_err(Error::OtherError)?,
+            Command::Toggle(toggle) => self.interpret_toggle(toggle).map_err(Error::OtherError)?,
         }
         Err(Error::UnknownCommand)
     }
@@ -29,26 +33,29 @@ impl<'a> CommandInterpreter<'a> {
         }
     }
 
-    fn interpret_set(&mut self, set: Set) {
+    fn interpret_set(&mut self, set: Set) -> Result<()> {
         match set {
-            Set::ConvexHull(value) => self.properties.properties_mut().show_convex_hull = value,
+            Set::ConvexHull(value) => self
+                .properties
+                .event_handler()
+                .handle(SetConvexHull(value))?,
             Set::ChebyshevNodes(_value) => {}
-            Set::Samples(value) => {
-                if let Some(samples) = self.properties.current_curve_mut().samples_mut() {
-                    *samples = value;
-                }
-            }
+            Set::Samples(value) => self.properties.event_handler().handle(SetSamples(value))?,
         }
+        Ok(())
     }
 
-    fn interpret_toggle(&mut self, toggle: Toggle) {
+    fn interpret_toggle(&mut self, toggle: Toggle) -> Result<()> {
         match toggle {
             Toggle::ConvexHull => {
-                self.properties.properties_mut().show_convex_hull =
-                    !self.properties.properties_mut().show_convex_hull;
+                let value = self.properties.event_handler().handle(GetConvexHull)?;
+                self.properties
+                    .event_handler()
+                    .handle(SetConvexHull(!value))?;
             }
             Toggle::ChebyshevNodes => {}
         }
+        Ok(())
     }
 }
 
@@ -56,4 +63,6 @@ impl<'a> CommandInterpreter<'a> {
 pub enum Error {
     #[error("unknown command")]
     UnknownCommand,
+    #[error("other error: {0}")]
+    OtherError(anyhow::Error),
 }

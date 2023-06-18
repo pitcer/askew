@@ -19,13 +19,13 @@ impl<'a> CanvasEventHandler<'a> {
     }
 }
 
-impl<'a> EventHandler<GetConvexHull> for CanvasEventHandler<'a> {
+impl EventHandler<GetConvexHull> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: GetConvexHull) -> HandlerResult<GetConvexHull> {
         Ok(self.canvas.properties.show_convex_hull)
     }
 }
 
-impl<'a> EventHandler<SetConvexHull> for CanvasEventHandler<'a> {
+impl EventHandler<SetConvexHull> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: SetConvexHull) -> HandlerResult<SetConvexHull> {
         self.canvas.properties.show_convex_hull = event.0;
         Ok(())

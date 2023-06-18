@@ -2,10 +2,10 @@ use crate::canvas::curve::control_points::kind::interpolation::Interpolation;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::event::curve::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetWeight, MovePoint,
+    GetSamples, GetWeight, MovePoint, SetSamples,
 };
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{DelegateEventHandler, Event, EventHandler};
+use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub struct InterpolationEventHandler<'a> {
     curve: &'a mut Interpolation,
@@ -26,6 +26,19 @@ where
 
     fn delegate_handler(&mut self) -> Self::Delegate<'_> {
         self.curve.points.event_handler()
+    }
+}
+
+impl EventHandler<SetSamples> for InterpolationEventHandler<'_> {
+    fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
+        self.curve.samples = event.0;
+        Ok(())
+    }
+}
+
+impl EventHandler<GetSamples> for InterpolationEventHandler<'_> {
+    fn handle(&mut self, _event: GetSamples) -> HandlerResult<GetSamples> {
+        Ok(self.curve.samples)
     }
 }
 

@@ -16,14 +16,7 @@ pub enum CurveKind {
     Formula(FormulaCurveKind),
 }
 
-impl CurveKind {
-    pub fn samples_mut(&mut self) -> Option<&mut u32> {
-        match self {
-            CurveKind::ControlPoints(curve) => curve.samples_mut(),
-            CurveKind::Formula(curve) => curve.samples_mut(),
-        }
-    }
-}
+impl CurveKind {}
 
 impl Display for CurveKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

@@ -4,7 +4,7 @@ use crate::canvas::curve::control_points::kind::rational_bezier::{
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::event::curve::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetWeight, MovePoint,
+    GetSamples, GetWeight, MovePoint, SetSamples,
 };
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
 use crate::event::{DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
@@ -56,6 +56,19 @@ impl EventHandler<GetWeight> for RationalBezierEventHandler<'_> {
         } else {
             Err(Error::NoSuchPoint(event.id))
         }
+    }
+}
+
+impl EventHandler<SetSamples> for RationalBezierEventHandler<'_> {
+    fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
+        self.curve.samples = event.0;
+        Ok(())
+    }
+}
+
+impl EventHandler<GetSamples> for RationalBezierEventHandler<'_> {
+    fn handle(&mut self, _event: GetSamples) -> HandlerResult<GetSamples> {
+        Ok(self.curve.samples)
     }
 }
 

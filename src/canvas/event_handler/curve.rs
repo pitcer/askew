@@ -1,6 +1,6 @@
-use crate::canvas::curve::control_points::WeightedPoint;
 use winit::dpi::PhysicalPosition;
 
+use crate::canvas::curve::control_points::WeightedPoint;
 use crate::canvas::curve::CurveKind;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math;
@@ -11,11 +11,11 @@ use crate::event::canvas::{
 };
 use crate::event::curve::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetWeight, MovePoint,
+    GetSamples, GetWeight, MovePoint, SetSamples,
 };
 use crate::event::{Error, EventHandler, HandlerResult};
 
-impl<'a> EventHandler<AddPoint> for CanvasEventHandler<'a> {
+impl EventHandler<AddPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: AddPoint) -> HandlerResult<AddPoint> {
         fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
             Point::new(position.x as f32, position.y as f32)
@@ -37,7 +37,7 @@ impl<'a> EventHandler<AddPoint> for CanvasEventHandler<'a> {
     }
 }
 
-impl<'a> EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'a> {
+impl EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'_> {
     fn handle(
         &mut self,
         event: ChangeCurrentPointWeight,
@@ -61,7 +61,7 @@ impl<'a> EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'a> {
     }
 }
 
-impl<'a> EventHandler<DeleteCurrentPoint> for CanvasEventHandler<'a> {
+impl EventHandler<DeleteCurrentPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: DeleteCurrentPoint) -> HandlerResult<DeleteCurrentPoint> {
         let point_id = self.canvas.properties.current_point_index;
         let curve = self.canvas.current_curve_mut();
@@ -73,7 +73,7 @@ impl<'a> EventHandler<DeleteCurrentPoint> for CanvasEventHandler<'a> {
     }
 }
 
-impl<'a> EventHandler<MoveCurrentPoint> for CanvasEventHandler<'a> {
+impl EventHandler<MoveCurrentPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: MoveCurrentPoint) -> HandlerResult<MoveCurrentPoint> {
         let point_id = self.canvas.properties.current_point_index;
         let curve = self.canvas.current_curve_mut();
@@ -85,7 +85,7 @@ impl<'a> EventHandler<MoveCurrentPoint> for CanvasEventHandler<'a> {
     }
 }
 
-impl<'a> EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'a> {
+impl EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: ChangeCurrentPointIndex) -> HandlerResult<ChangeCurrentPointIndex> {
         let point_id = self.canvas.properties.current_point_index;
         let curve = self.canvas.current_curve_mut();
@@ -96,5 +96,25 @@ impl<'a> EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'a> {
         let new_id = math::rem_euclid((point_id + event.change as usize) as isize, length as isize);
         self.canvas.properties.current_point_index = new_id;
         Ok(())
+    }
+}
+
+impl EventHandler<SetSamples> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
+        let curve = self.canvas.current_curve_mut();
+        let CurveKind::ControlPoints(curve) = curve else {
+            return Err(Error::Unimplemented);
+        };
+        curve.event_handler().handle(event)
+    }
+}
+
+impl EventHandler<GetSamples> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
+        let curve = self.canvas.current_curve_mut();
+        let CurveKind::ControlPoints(curve) = curve else {
+            return Err(Error::Unimplemented);
+        };
+        curve.event_handler().handle(event)
     }
 }

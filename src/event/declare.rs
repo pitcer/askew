@@ -1,7 +1,7 @@
 use winit::dpi::PhysicalPosition;
 
 use crate::{
-    canvas::curve::control_points::event_handler::CurveEventHandler,
+    canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler,
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
     canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
@@ -13,6 +13,7 @@ use crate::{
     canvas::math::point::Point,
     canvas::math::vector::Vector,
     event::canvas::{AddCurve, AddPoint},
+    event::curve::{GetSamples, SetSamples},
     event::macros::declare_events,
     event::PointId,
     event::{Change, Direction},
@@ -22,9 +23,9 @@ use crate::{
 
 pub mod curve {
     use super::{
-        declare_events, BezierEventHandler, ControlPointsEventHandler, ConvexHullEventHandler,
-        CurveEventHandler, InterpolationEventHandler, Point, PointId, PolylineEventHandler,
-        RationalBezierEventHandler, Vector, WeightedPoint,
+        declare_events, BezierEventHandler, ControlPointsCurveEventHandler,
+        ControlPointsEventHandler, ConvexHullEventHandler, InterpolationEventHandler, Point,
+        PointId, PolylineEventHandler, RationalBezierEventHandler, Vector, WeightedPoint,
     };
 
     declare_events! {
@@ -35,34 +36,43 @@ pub mod curve {
             DeletePoint { id: PointId } -> (),
         }
 
-        RationalBezierEventHandler<'_>: GetControlPointsLength, MovePoint, DeletePoint {
+        RationalBezierEventHandler<'_>: GetControlPointsLength, MovePoint, DeletePoint, SetSamples,
+            GetSamples
+        {
             ChangeWeight { id: PointId, weight: f32 } -> (),
             AddWeightedControlPoint { point: WeightedPoint<f32, f32> } -> (),
             GetWeight { id: PointId } -> f32,
         }
 
         BezierEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
-            AddWeightedControlPoint, ChangeWeight, GetWeight {}
+            AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
 
         ConvexHullEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
-            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight {}
+            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
 
         InterpolationEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
-            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight {}
+            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
 
         PolylineEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
-            AddWeightedControlPoint, ChangeWeight, GetWeight {}
+            AddWeightedControlPoint, ChangeWeight, GetWeight, SetSamples, GetSamples {}
 
-        CurveEventHandler<'_>: DeletePoint, MovePoint, AddControlPoint, GetControlPointsLength,
-            AddWeightedControlPoint, ChangeWeight, GetWeight {}
+        ControlPointsCurveEventHandler<'_>: DeletePoint, MovePoint, AddControlPoint,
+            GetControlPointsLength, AddWeightedControlPoint, ChangeWeight, GetWeight,
+            SetSamples, GetSamples
+        {
+            SetSamples (u32) -> (),
+            GetSamples () -> u32,
+        }
     }
 }
 
 pub mod canvas {
-    use super::{declare_events, CanvasEventHandler, PhysicalPosition, Vector};
+    use super::{
+        declare_events, CanvasEventHandler, GetSamples, PhysicalPosition, SetSamples, Vector,
+    };
 
     declare_events! {
-        CanvasEventHandler<'_> {
+        CanvasEventHandler<'_>: SetSamples, GetSamples {
             ChangeCurrentPointWeight { weight: f32 } -> (),
             DeleteCurrentPoint () -> (),
             MoveCurrentPoint { shift: Vector<f32> } -> (),

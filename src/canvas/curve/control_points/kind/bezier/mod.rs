@@ -34,10 +34,6 @@ impl Bezier {
         BezierEventHandler::new(self)
     }
 
-    pub fn samples_mut(&mut self) -> &mut u32 {
-        &mut self.samples
-    }
-
     fn bezier(&self, t: f32) -> CurvePoint {
         let n = self.points.length() as u32 - 1;
         self.points

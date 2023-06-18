@@ -1,3 +1,4 @@
+use crate::event::curve::{GetSamples, SetSamples};
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -13,17 +14,17 @@ use crate::{
     event::{DelegateEvent, Event, EventHandler, HandlerResult},
 };
 
-pub struct CurveEventHandler<'a> {
+pub struct ControlPointsCurveEventHandler<'a> {
     curve: &'a mut ControlPointsCurveKind,
 }
 
-impl<'a> CurveEventHandler<'a> {
+impl<'a> ControlPointsCurveEventHandler<'a> {
     pub fn new(curve: &'a mut ControlPointsCurveKind) -> Self {
         Self { curve }
     }
 }
 
-impl<'a, E> DelegateEvent<E> for CurveEventHandler<'a>
+impl<'a, E> DelegateEvent<E> for ControlPointsCurveEventHandler<'a>
 where
     E: Event,
     for<'b> PolylineEventHandler<'b>: EventHandler<E>,
@@ -44,7 +45,7 @@ where
 }
 
 delegate_events! {
-    CurveEventHandler<'_> {
+    ControlPointsCurveEventHandler<'_> {
         GetControlPointsLength,
         AddControlPoint,
         MovePoint,
@@ -52,5 +53,8 @@ delegate_events! {
         AddWeightedControlPoint,
         ChangeWeight,
         GetWeight,
+
+        SetSamples,
+        GetSamples,
     }
 }

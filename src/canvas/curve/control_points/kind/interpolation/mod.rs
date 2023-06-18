@@ -28,10 +28,6 @@ impl Interpolation {
         InterpolationEventHandler::new(self)
     }
 
-    pub fn samples_mut(&mut self) -> &mut u32 {
-        &mut self.samples
-    }
-
     pub fn chebyshev_nodes_mut(&mut self) -> &mut bool {
         &mut self.chebyshev_nodes
     }

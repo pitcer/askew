@@ -5,7 +5,7 @@ use kind::interpolation::Interpolation;
 use kind::polyline::Polyline;
 use points::ControlPoints;
 
-use crate::canvas::curve::control_points::event_handler::CurveEventHandler;
+use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler;
 use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
@@ -36,17 +36,8 @@ pub enum ControlPointsCurveKind {
 }
 
 impl ControlPointsCurveKind {
-    pub fn event_handler(&mut self) -> CurveEventHandler<'_> {
-        CurveEventHandler::new(self)
-    }
-
-    pub fn samples_mut(&mut self) -> Option<&mut u32> {
-        match self {
-            ControlPointsCurveKind::Polyline(_) | ControlPointsCurveKind::ConvexHull(_) => None,
-            ControlPointsCurveKind::Interpolation(curve) => Some(curve.samples_mut()),
-            ControlPointsCurveKind::Bezier(curve) => Some(curve.samples_mut()),
-            ControlPointsCurveKind::RationalBezier(curve) => Some(curve.samples_mut()),
-        }
+    pub fn event_handler(&mut self) -> ControlPointsCurveEventHandler<'_> {
+        ControlPointsCurveEventHandler::new(self)
     }
 }
 

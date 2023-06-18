@@ -2,7 +2,7 @@ use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::event::curve::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetWeight, MovePoint,
+    GetSamples, GetWeight, MovePoint, SetSamples,
 };
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
 use crate::event::{DelegateEventHandler, Event, EventHandler};
@@ -43,5 +43,8 @@ unimplemented_handlers! {
         AddWeightedControlPoint,
         ChangeWeight,
         GetWeight,
+
+        SetSamples,
+        GetSamples,
     }
 }
