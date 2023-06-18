@@ -26,9 +26,9 @@ use crate::canvas::math::size::Size;
 use crate::canvas::Canvas;
 use crate::config::rgb::{Alpha, Rgb};
 use crate::config::{Config, CurveType, SaveFormat};
-use crate::event::{EventHandler, FrameEvent};
+use crate::event::{EventHandler, InputEvent};
 use crate::ui::command::{CommandState, MessageType};
-use crate::ui::frame::event_handler::FrameEventHandler;
+use crate::ui::frame::event_handler::InputEventHandler;
 use crate::ui::frame::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::frame::mode::Mode;
 use crate::ui::frame::panel::bar::TextPanel;
@@ -201,39 +201,39 @@ impl Frame {
         Rectangle::new(origin, size)
     }
 
-    pub fn event_handler(&mut self) -> FrameEventHandler<'_> {
-        FrameEventHandler::new(self)
+    pub fn event_handler(&mut self) -> InputEventHandler<'_> {
+        InputEventHandler::new(self)
     }
 
-    pub fn receive_event(&mut self, event: FrameEvent) -> Result<()> {
+    pub fn receive_event(&mut self, event: InputEvent) -> Result<()> {
         log::debug!("Event received from input: {event:?}");
 
         let command_closed = self.command.is_closed();
         let mut handler = self.event_handler();
         // TODO: replace with state machine
         match event {
-            FrameEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
-            FrameEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
-            FrameEvent::MovePoint(event) if command_closed => handler.handle(event)?,
-            FrameEvent::AddPoint(event) if command_closed => handler.handle(event)?,
-            FrameEvent::AddCurve(event) if command_closed => handler.handle(event)?,
-            FrameEvent::Delete(event) if command_closed => handler.handle(event)?,
-            FrameEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
-            FrameEvent::ChangeMode(event) if command_closed => handler.handle(event)?,
+            InputEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
+            InputEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
+            InputEvent::MovePoint(event) if command_closed => handler.handle(event)?,
+            InputEvent::AddPoint(event) if command_closed => handler.handle(event)?,
+            InputEvent::AddCurve(event) if command_closed => handler.handle(event)?,
+            InputEvent::Delete(event) if command_closed => handler.handle(event)?,
+            InputEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
+            InputEvent::ChangeMode(event) if command_closed => handler.handle(event)?,
 
-            FrameEvent::EnterCommand(event) => handler.handle(event)?,
-            FrameEvent::ReceiveCharacter(event) => handler.handle(event)?,
-            FrameEvent::ExecuteCommand(event) => handler.handle(event)?,
-            FrameEvent::ExitMode(event) => handler.handle(event)?,
+            InputEvent::EnterCommand(event) => handler.handle(event)?,
+            InputEvent::ReceiveCharacter(event) => handler.handle(event)?,
+            InputEvent::ExecuteCommand(event) => handler.handle(event)?,
+            InputEvent::ExitMode(event) => handler.handle(event)?,
 
-            FrameEvent::ToggleConvexHull(_)
-            | FrameEvent::ChangeWeight(_)
-            | FrameEvent::MovePoint(_)
-            | FrameEvent::AddPoint(_)
-            | FrameEvent::AddCurve(_)
-            | FrameEvent::Delete(_)
-            | FrameEvent::ChangeIndex(_)
-            | FrameEvent::ChangeMode(_) => {}
+            InputEvent::ToggleConvexHull(_)
+            | InputEvent::ChangeWeight(_)
+            | InputEvent::MovePoint(_)
+            | InputEvent::AddPoint(_)
+            | InputEvent::AddCurve(_)
+            | InputEvent::Delete(_)
+            | InputEvent::ChangeIndex(_)
+            | InputEvent::ChangeMode(_) => {}
         }
 
         self.window.request_redraw();

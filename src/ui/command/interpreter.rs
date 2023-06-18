@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::canvas::Canvas;
 use crate::event::canvas::{GetConvexHull, SetConvexHull};
 use crate::event::curve::SetSamples;
-use crate::event::{EventHandler, FrameEvent};
+use crate::event::{EventHandler, InputEvent};
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
 
 #[derive(Debug)]
@@ -16,7 +16,7 @@ impl<'a> CommandInterpreter<'a> {
         Self { properties }
     }
 
-    pub fn interpret(&mut self, command: Command) -> Result<Option<FrameEvent>, Error> {
+    pub fn interpret(&mut self, command: Command) -> Result<Option<InputEvent>, Error> {
         match command {
             Command::Get(get) => self.interpret_get(get),
             Command::Set(set) => self.interpret_set(set).map_err(Error::OtherError)?,

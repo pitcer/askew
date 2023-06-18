@@ -1,12 +1,10 @@
 pub use declare::*;
 
-use crate::event::input::command;
-
 pub mod declare;
 pub mod macros;
 
 #[derive(Debug)]
-pub enum FrameEvent {
+pub enum InputEvent {
     ToggleConvexHull(input::ToggleConvexHull),
     ChangeWeight(input::ChangeWeight),
     MovePoint(input::MovePoint),
@@ -14,11 +12,10 @@ pub enum FrameEvent {
     AddCurve(canvas::AddCurve),
     Delete(input::Delete),
     ChangeIndex(input::ChangeIndex),
-
-    EnterCommand(command::EnterCommand),
-    ReceiveCharacter(command::ReceiveCharacter),
-    ExecuteCommand(command::ExecuteCommand),
-    ExitMode(command::ExitMode),
+    EnterCommand(input::EnterCommand),
+    ReceiveCharacter(input::ReceiveCharacter),
+    ExecuteCommand(input::ExecuteCommand),
+    ExitMode(input::ExitMode),
     ChangeMode(input::ChangeMode),
 }
 
@@ -44,6 +41,10 @@ where
         Self: 'a;
 
     fn delegate_handler(&mut self) -> Self::Delegate<'_>;
+
+    fn delegate(&mut self, event: E) -> HandlerResult<E> {
+        self.delegate_handler().handle(event)
+    }
 }
 
 pub trait DelegateEvent<E>

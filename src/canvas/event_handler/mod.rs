@@ -1,11 +1,12 @@
 use crate::canvas::curve::control_points::kind::polyline::Polyline;
+use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints};
 use crate::canvas::curve::CurveKind;
 use crate::canvas::Canvas;
 use crate::event::canvas::{
     AddCurve, ChangeCurrentCurveIndex, DeleteCurve, GetConvexHull, SetConvexHull,
 };
-use crate::event::{EventHandler, HandlerResult};
+use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub mod curve;
 
@@ -16,6 +17,18 @@ pub struct CanvasEventHandler<'a> {
 impl<'a> CanvasEventHandler<'a> {
     pub fn new(canvas: &'a mut Canvas) -> Self {
         Self { canvas }
+    }
+}
+
+impl<'a, E> DelegateEventHandler<E> for CanvasEventHandler<'a>
+where
+    E: Event,
+    for<'b> ControlPointsEventHandler<'b>: EventHandler<E>,
+{
+    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+
+    fn delegate_handler(&mut self) -> Self::Delegate<'_> {
+        todo!("delegate to current curve")
     }
 }
 

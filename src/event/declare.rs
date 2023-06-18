@@ -17,7 +17,7 @@ use crate::{
     event::macros::declare_events,
     event::PointId,
     event::{Change, Direction},
-    ui::frame::event_handler::FrameEventHandler,
+    ui::frame::event_handler::InputEventHandler,
     ui::frame::mode::Mode,
 };
 
@@ -89,29 +89,20 @@ pub mod canvas {
 }
 
 pub mod input {
-    use super::{declare_events, AddCurve, AddPoint, Change, Direction, FrameEventHandler, Mode};
+    use super::{declare_events, AddCurve, AddPoint, Change, Direction, InputEventHandler, Mode};
 
     declare_events! {
-        FrameEventHandler<'_>: AddPoint, AddCurve {
+        InputEventHandler<'_>: AddPoint, AddCurve {
             ToggleConvexHull () -> (),
             ChangeWeight (Change) -> (),
             MovePoint (Direction) -> (),
             Delete () -> (),
             ChangeMode (Mode) -> (),
             ChangeIndex (Change) -> (),
-        }
-    }
-
-    pub mod command {
-        use super::{declare_events, FrameEventHandler};
-
-        declare_events! {
-            FrameEventHandler<'_> {
-                EnterCommand () -> (),
-                ReceiveCharacter (char) -> (),
-                ExecuteCommand () -> (),
-                ExitMode () -> (),
-            }
+            EnterCommand () -> (),
+            ReceiveCharacter (char) -> (),
+            ExecuteCommand () -> (),
+            ExitMode () -> (),
         }
     }
 }
