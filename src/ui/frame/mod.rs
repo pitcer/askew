@@ -31,7 +31,7 @@ use crate::event::{EventHandler, InputEvent};
 use crate::ui::command::{CommandState, MessageType};
 use crate::ui::frame::event_handler::InputEventHandler;
 use crate::ui::frame::font::{FontLayout, FontLoader, GlyphRasterizer};
-use crate::ui::frame::mode::Mode;
+use crate::ui::frame::mode::ModeState;
 use crate::ui::frame::panel::bar::TextPanel;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
@@ -54,7 +54,7 @@ pub struct Frame {
     status_layout: FontLayout,
     command_layout: FontLayout,
     command: CommandState,
-    mode: Mode,
+    mode: ModeState,
 }
 
 impl Frame {
@@ -182,7 +182,7 @@ impl Frame {
         let status_layout = FontLayout::new(config.font_size);
         let command_layout = FontLayout::new(config.font_size);
         let command = CommandState::initial();
-        let mode = Mode::Normal;
+        let mode = ModeState::initial();
         Ok(Self {
             window,
             surface,
@@ -212,12 +212,11 @@ impl Frame {
 
         let command_closed = self.command.is_closed();
         let mut handler = self.event_handler();
-        // TODO: replace with state machine
         match event {
             InputEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
             InputEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
             InputEvent::MovePoint(event) if command_closed => handler.handle(event)?,
-            InputEvent::AddPoint(event) if command_closed => handler.handle(event)?,
+            InputEvent::MouseClick(event) if command_closed => handler.handle(event)?,
             InputEvent::AddCurve(event) if command_closed => handler.handle(event)?,
             InputEvent::Delete(event) if command_closed => handler.handle(event)?,
             InputEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
@@ -231,7 +230,7 @@ impl Frame {
             InputEvent::ToggleConvexHull(_)
             | InputEvent::ChangeWeight(_)
             | InputEvent::MovePoint(_)
-            | InputEvent::AddPoint(_)
+            | InputEvent::MouseClick(_)
             | InputEvent::AddCurve(_)
             | InputEvent::Delete(_)
             | InputEvent::ChangeIndex(_)

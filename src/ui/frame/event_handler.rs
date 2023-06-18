@@ -6,13 +6,13 @@ use crate::event::canvas::{
 };
 use crate::event::input::{
     ChangeIndex, ChangeMode, ChangeWeight, Delete, EnterCommand, ExecuteCommand, ExitMode,
-    MovePoint, ReceiveCharacter, ToggleConvexHull,
+    MouseClick, MovePoint, ReceiveCharacter, ToggleConvexHull,
 };
 use crate::event::macros::delegate_handlers;
 use crate::event::{Change, DelegateEventHandler, Direction, Error, Event};
 use crate::event::{EventHandler, HandlerResult};
 use crate::ui::command::CommandState;
-use crate::ui::frame::mode::Mode;
+use crate::ui::frame::mode::{Mode, ModeState};
 use crate::ui::frame::Frame;
 
 pub struct InputEventHandler<'a> {
@@ -56,6 +56,12 @@ impl EventHandler<ChangeWeight> for InputEventHandler<'_> {
     }
 }
 
+impl EventHandler<MouseClick> for InputEventHandler<'_> {
+    fn handle(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
+        self.delegate(AddPoint::new(event.0))
+    }
+}
+
 impl EventHandler<MovePoint> for InputEventHandler<'_> {
     fn handle(&mut self, event: MovePoint) -> HandlerResult<MovePoint> {
         let direction = match event.0 {
@@ -72,8 +78,8 @@ impl EventHandler<MovePoint> for InputEventHandler<'_> {
 impl EventHandler<Delete> for InputEventHandler<'_> {
     fn handle(&mut self, _event: Delete) -> HandlerResult<Delete> {
         match self.frame.mode {
-            Mode::Normal => self.delegate(DeleteCurve)?,
-            Mode::Curve => self.delegate(DeleteCurrentPoint)?,
+            ModeState::Curve(_) => self.delegate(DeleteCurve)?,
+            ModeState::Point(_) => self.delegate(DeleteCurrentPoint)?,
         }
         Ok(())
     }
@@ -86,8 +92,8 @@ impl EventHandler<ChangeIndex> for InputEventHandler<'_> {
             Change::Increase => 1,
         };
         match self.frame.mode {
-            Mode::Normal => self.delegate(ChangeCurrentCurveIndex::new(change))?,
-            Mode::Curve => self.delegate(ChangeCurrentPointIndex::new(change))?,
+            ModeState::Curve(_) => self.delegate(ChangeCurrentCurveIndex::new(change))?,
+            ModeState::Point(_) => self.delegate(ChangeCurrentPointIndex::new(change))?,
         }
         Ok(())
     }
@@ -95,7 +101,10 @@ impl EventHandler<ChangeIndex> for InputEventHandler<'_> {
 
 impl EventHandler<ChangeMode> for InputEventHandler<'_> {
     fn handle(&mut self, event: ChangeMode) -> HandlerResult<ChangeMode> {
-        self.frame.mode = event.0;
+        match event.0 {
+            Mode::Curve => self.frame.mode.exit(),
+            Mode::Point => self.frame.mode.enter_point(),
+        }
         Ok(())
     }
 }
@@ -131,7 +140,7 @@ impl EventHandler<ExitMode> for InputEventHandler<'_> {
     fn handle(&mut self, _event: ExitMode) -> HandlerResult<ExitMode> {
         if let CommandState::Closed(command) = &mut self.frame.command {
             command.clear_message();
-            self.frame.mode = Mode::Normal;
+            self.frame.mode.exit();
             self.frame.window.request_redraw();
         } else {
             self.frame.command.close();
@@ -142,7 +151,6 @@ impl EventHandler<ExitMode> for InputEventHandler<'_> {
 
 delegate_handlers! {
     InputEventHandler<'_> {
-        AddPoint,
         AddCurve,
     }
 }

@@ -31,12 +31,12 @@ pub mod input {
     declare_events! {
         InputEventHandler<'_> {
             ~ {
-                canvas::AddPoint,
                 canvas::AddCurve,
             }
 
             ToggleConvexHull () -> (),
             ChangeWeight (Change) -> (),
+            MouseClick (PhysicalPosition<f64>) -> (),
             MovePoint (Direction) -> (),
             Delete () -> (),
             ChangeMode (Mode) -> (),

@@ -8,7 +8,7 @@ pub enum InputEvent {
     ToggleConvexHull(input::ToggleConvexHull),
     ChangeWeight(input::ChangeWeight),
     MovePoint(input::MovePoint),
-    AddPoint(canvas::AddPoint),
+    MouseClick(input::MouseClick),
     AddCurve(canvas::AddCurve),
     Delete(input::Delete),
     ChangeIndex(input::ChangeIndex),

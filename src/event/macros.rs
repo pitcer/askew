@@ -84,6 +84,7 @@ macro_rules! declare_events {
         }
 
         impl $name {
+            #[must_use]
             pub fn new($($field: $field_type),+) -> Self {
                 Self { $($field),+ }
             }

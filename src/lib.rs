@@ -56,9 +56,9 @@ use crate::ui::frame::Frame;
 use crate::ui::window_event_handler::WindowEventHandler;
 
 pub mod canvas;
-mod config;
-mod event;
-mod ui;
+pub mod config;
+pub mod event;
+pub mod ui;
 
 pub fn main() -> Result<()> {
     initialize_logger()?;
