@@ -7,6 +7,7 @@ use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub mod curve;
 
+#[derive(Debug)]
 pub struct CanvasEventHandler<'a> {
     canvas: &'a mut Canvas,
 }

@@ -46,10 +46,12 @@ impl Display for ModeState {
 pub struct ModeCurve {}
 
 impl ModeCurve {
+    #[must_use]
     pub fn new() -> Self {
         Self {}
     }
 
+    #[must_use]
     pub fn into_point(self) -> ModePoint {
         ModePoint::new()
     }
@@ -59,10 +61,12 @@ impl ModeCurve {
 pub struct ModePoint {}
 
 impl ModePoint {
+    #[must_use]
     pub fn new() -> Self {
         Self {}
     }
 
+    #[must_use]
     pub fn exit(self) -> ModeCurve {
         ModeCurve::new()
     }

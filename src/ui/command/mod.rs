@@ -2,8 +2,7 @@ use std::fmt::{Debug, Write};
 
 use anyhow::Result;
 
-use crate::canvas::Canvas;
-use crate::event::InputEvent;
+use crate::canvas::event_handler::CanvasEventHandler;
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::parser::CommandParser;
 
@@ -36,14 +35,11 @@ impl CommandState {
         });
     }
 
-    pub fn execute(&mut self, properties: &mut Canvas) -> Option<InputEvent> {
-        replace_with::replace_with_or_abort_and_return(self, |state| match state {
-            CommandState::Open(command) => {
-                let (event, command) = command.execute(properties);
-                (event, CommandState::Closed(command))
-            }
-            other => (None, other),
-        })
+    pub fn execute(&mut self, event_handler: CanvasEventHandler<'_>) {
+        replace_with::replace_with_or_abort(self, |state| match state {
+            CommandState::Open(command) => CommandState::Closed(command.execute(event_handler)),
+            other => other,
+        });
     }
 
     #[must_use]
@@ -69,6 +65,7 @@ pub struct Message {
 }
 
 impl Message {
+    #[must_use]
     pub fn new(message: String, message_type: MessageType) -> Self {
         Self {
             message,
@@ -76,10 +73,17 @@ impl Message {
         }
     }
 
+    #[must_use]
+    pub fn info(message: String) -> Self {
+        Self::new(message, MessageType::Info)
+    }
+
+    #[must_use]
     pub fn message(&self) -> &str {
         &self.message
     }
 
+    #[must_use]
     pub fn message_type(&self) -> &MessageType {
         &self.message_type
     }
@@ -92,6 +96,7 @@ pub enum MessageType {
 }
 
 impl CommandClosed {
+    #[must_use]
     pub fn new(message: Option<Message>) -> Self {
         Self { message }
     }
@@ -110,6 +115,7 @@ impl CommandClosed {
         self.message = None;
     }
 
+    #[must_use]
     pub fn message(&self) -> &Option<Message> {
         &self.message
     }
@@ -121,6 +127,7 @@ pub struct CommandOpen {
 }
 
 impl CommandOpen {
+    #[must_use]
     pub fn new(buffer: String) -> Self {
         Self { buffer }
     }
@@ -134,25 +141,25 @@ impl CommandOpen {
     }
 
     #[must_use]
-    pub fn execute(mut self, properties: &mut Canvas) -> (Option<InputEvent>, CommandClosed) {
-        let result: Result<(Option<InputEvent>, Option<Message>)> = (|| {
-            let mut parser = CommandParser::new(&self.buffer);
-            let result = parser.parse()?;
-            let mut interpreter = CommandInterpreter::new(properties);
-            let result = interpreter.interpret(result)?;
-            let message = None;
-            Ok((result, message))
-        })();
-        let (event, message) = result.unwrap_or_else(|error| {
+    pub fn execute(mut self, event_handler: CanvasEventHandler<'_>) -> CommandClosed {
+        let result = self.execute_command(event_handler);
+        let message = result.unwrap_or_else(|error| {
             self.buffer.clear();
             self.buffer
                 .write_fmt(format_args!("{error}"))
                 .expect("formatting should not fail");
             let message = Message::new(self.buffer, MessageType::Error);
-            (None, Some(message))
+            Some(message)
         });
-        let closed = CommandClosed::new(message);
-        (event, closed)
+        CommandClosed::new(message)
+    }
+
+    fn execute_command(&self, event_handler: CanvasEventHandler<'_>) -> Result<Option<Message>> {
+        let mut parser = CommandParser::new(&self.buffer);
+        let result = parser.parse()?;
+        let mut interpreter = CommandInterpreter::new(event_handler);
+        let message = interpreter.interpret(result)?;
+        Ok(message)
     }
 
     #[must_use]

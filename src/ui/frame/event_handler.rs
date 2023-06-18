@@ -1,3 +1,5 @@
+use winit::dpi::PhysicalPosition;
+
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
@@ -10,12 +12,11 @@ use crate::event::input::{
     MouseClick, MovePoint, ReceiveCharacter, ToggleConvexHull,
 };
 use crate::event::macros::delegate_handlers;
-use crate::event::{Change, DelegateEventHandler, Direction, Error, Event};
+use crate::event::{Change, DelegateEventHandler, Direction, Event};
 use crate::event::{EventHandler, HandlerResult};
 use crate::ui::command::CommandState;
 use crate::ui::frame::mode::{Mode, ModeState};
 use crate::ui::frame::Frame;
-use winit::dpi::PhysicalPosition;
 
 pub struct InputEventHandler<'a> {
     frame: &'a mut Frame,
@@ -132,11 +133,8 @@ impl EventHandler<ReceiveCharacter> for InputEventHandler<'_> {
 
 impl EventHandler<ExecuteCommand> for InputEventHandler<'_> {
     fn handle(&mut self, _event: ExecuteCommand) -> HandlerResult<ExecuteCommand> {
-        let result = self.frame.command.execute(&mut self.frame.canvas);
-        if let Some(event) = result {
-            self.frame.receive_event(event).map_err(Error::Other)?;
-            self.frame.window.request_redraw();
-        }
+        let handler = self.frame.canvas.event_handler();
+        self.frame.command.execute(handler);
         Ok(())
     }
 }
