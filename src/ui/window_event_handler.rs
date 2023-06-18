@@ -1,14 +1,15 @@
 use anyhow::Result;
-use input::{
-    ChangeIndex, ChangeMode, ChangeWeight, Delete, EnterCommand, ExecuteCommand, ExitMode,
-    MouseClick, MovePoint, ReceiveCharacter, ToggleConvexHull,
-};
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
     DeviceId, ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
     WindowEvent,
 };
 use winit::event_loop::ControlFlow;
+
+use input::{
+    ChangeIndex, ChangeMode, ChangeWeight, Delete, EnterCommand, ExecuteCommand, ExitMode,
+    MouseClick, MovePoint, ReceiveCharacter, ToggleConvexHull,
+};
 
 use crate::config::{Config, SaveFormat};
 use crate::event::{canvas, input, Change, Direction, InputEvent};

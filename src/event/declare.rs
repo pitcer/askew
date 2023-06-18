@@ -51,18 +51,21 @@ pub mod input {
 
 pub mod canvas {
     use super::*;
+    use crate::config::CurveType;
 
     declare_events! {
         CanvasEventHandler<'_> {
             ~ {
                 curve::SetSamples,
-                curve::GetSamples
+                curve::GetSamples,
+                curve::control_points::SetInterpolationNodes,
+                curve::control_points::GetInterpolationNodes,
             }
 
             ChangeCurrentPointWeight { weight: f32 } -> (),
             DeleteCurrentPoint () -> (),
             MoveCurrentPoint { shift: Vector<f32> } -> (),
-            AddPoint { position: PhysicalPosition<f64> } -> (),
+            AddPoint { point: Point<f32> } -> (),
             ChangeCurrentPointIndex { change: i32 } -> (),
             AddCurve () -> (),
             DeleteCurve () -> (),
@@ -70,6 +73,9 @@ pub mod canvas {
 
             SetConvexHull (bool) -> (),
             GetConvexHull () -> bool,
+
+            SetCurveType (CurveType) -> (),
+            GetCurveType () -> CurveType,
         }
     }
 }
@@ -87,6 +93,8 @@ pub mod curve {
                 control_points::weighted::AddWeightedControlPoint,
                 control_points::weighted::ChangeWeight,
                 control_points::weighted::GetWeight,
+                control_points::SetInterpolationNodes,
+                control_points::GetInterpolationNodes,
                 SetSamples,
                 GetSamples,
             }
@@ -130,6 +138,7 @@ pub mod curve {
 
     pub mod control_points {
         use super::*;
+        use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 
         declare_events! {
             ControlPointsCurveEventHandler<'_> {
@@ -143,6 +152,8 @@ pub mod curve {
                     weighted::GetWeight,
                     curve::SetSamples,
                     curve::GetSamples,
+                    SetInterpolationNodes,
+                    GetInterpolationNodes,
                 }
             }
 
@@ -195,6 +206,9 @@ pub mod curve {
                     weighted::ChangeWeight,
                     weighted::GetWeight,
                 }
+
+                SetInterpolationNodes { nodes: InterpolationNodes } -> (),
+                GetInterpolationNodes () -> InterpolationNodes,
             }
 
             PolylineEventHandler<'_> {

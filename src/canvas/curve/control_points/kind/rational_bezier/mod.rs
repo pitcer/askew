@@ -16,9 +16,10 @@ pub struct RationalBezier {
     algorithm: RationalBezierAlgorithm,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum RationalBezierAlgorithm {
     Generic,
+    DeCasteljau,
     ChudyWozny,
 }
 
@@ -84,6 +85,11 @@ impl ToPath for RationalBezier {
         match self.algorithm {
             RationalBezierAlgorithm::Generic => {
                 let path = path.map(|t| self.rational_bezier(t));
+                let path = CurvePath::new_open(path);
+                converter.to_path(path)
+            }
+            RationalBezierAlgorithm::DeCasteljau => {
+                let path = path.map(|t| math::rational_de_casteljau(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }

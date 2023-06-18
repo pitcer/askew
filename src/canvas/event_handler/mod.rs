@@ -1,8 +1,5 @@
-use crate::canvas::curve::control_points::kind::polyline::Polyline;
-use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints};
 use crate::canvas::curve::event_handler::CurveEventHandler;
-use crate::canvas::curve::CurveKind;
-use crate::canvas::Canvas;
+use crate::canvas::{math, Canvas};
 use crate::event::canvas::{
     AddCurve, ChangeCurrentCurveIndex, DeleteCurve, GetConvexHull, SetConvexHull,
 };
@@ -47,11 +44,9 @@ impl EventHandler<SetConvexHull> for CanvasEventHandler<'_> {
 
 impl EventHandler<AddCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: AddCurve) -> HandlerResult<AddCurve> {
-        self.canvas
-            .curves
-            .push(CurveKind::ControlPoints(ControlPointsCurveKind::Polyline(
-                Polyline::new(CurvePoints::new(vec![])),
-            )));
+        let curve_type = self.canvas.properties.default_curve_type;
+        let curve = self.canvas.create_curve(curve_type);
+        self.canvas.curves.push(curve);
         self.canvas.properties.current_curve += 1;
         Ok(())
     }
@@ -59,15 +54,18 @@ impl EventHandler<AddCurve> for CanvasEventHandler<'_> {
 
 impl EventHandler<DeleteCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: DeleteCurve) -> HandlerResult<DeleteCurve> {
-        // TODO: delete curve
+        let current_curve = self.canvas.properties.current_curve;
+        self.canvas.curves.remove(current_curve);
         Ok(())
     }
 }
 
 impl EventHandler<ChangeCurrentCurveIndex> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: ChangeCurrentCurveIndex) -> HandlerResult<ChangeCurrentCurveIndex> {
-        self.canvas.properties.current_curve =
-            (self.canvas.properties.current_curve as i32 + event.change) as usize;
+        self.canvas.properties.current_curve = math::rem_euclid(
+            self.canvas.properties.current_curve as isize + event.change as isize,
+            self.canvas.curves.len() as isize,
+        );
         Ok(())
     }
 }

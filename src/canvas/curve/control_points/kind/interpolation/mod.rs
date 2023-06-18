@@ -14,25 +14,21 @@ pub mod event_handler;
 pub struct Interpolation {
     points: CurvePoints,
     samples: Samples,
-    chebyshev_nodes: bool,
+    nodes: InterpolationNodes,
 }
 
 impl Interpolation {
     #[must_use]
-    pub fn new(points: CurvePoints, samples: Samples, chebyshev_nodes: bool) -> Self {
+    pub fn new(points: CurvePoints, samples: Samples, nodes: InterpolationNodes) -> Self {
         Self {
             points,
             samples,
-            chebyshev_nodes,
+            nodes,
         }
     }
 
     pub fn event_handler(&mut self) -> InterpolationEventHandler<'_> {
         InterpolationEventHandler::new(self)
-    }
-
-    pub fn chebyshev_nodes_mut(&mut self) -> &mut bool {
-        &mut self.chebyshev_nodes
     }
 }
 
@@ -43,18 +39,21 @@ impl ToPath for Interpolation {
             return None;
         }
 
-        let (ts, first, last) = if self.chebyshev_nodes {
-            let ts = (1..=length)
-                .map(|index| math::chebyshev(length, index))
-                .collect::<Vec<_>>();
-            let first = ts[0];
-            let last = ts[length - 1];
-            (ts, first, last)
-        } else {
-            let ts = (0..length)
-                .map(|index| index as f32 / (length - 1) as f32)
-                .collect::<Vec<_>>();
-            (ts, 0.0, 1.0)
+        let (ts, first, last) = match self.nodes {
+            InterpolationNodes::Chebyshev => {
+                let ts = (1..=length)
+                    .map(|index| math::chebyshev(length, index))
+                    .collect::<Vec<_>>();
+                let first = ts[0];
+                let last = ts[length - 1];
+                (ts, first, last)
+            }
+            InterpolationNodes::EquallySpaced => {
+                let ts = (0..length)
+                    .map(|index| index as f32 / (length - 1) as f32)
+                    .collect::<Vec<_>>();
+                (ts, 0.0, 1.0)
+            }
         };
 
         let (xs, ys): (Vec<_>, Vec<_>) =
@@ -78,4 +77,10 @@ impl GetControlPoints for Interpolation {
     fn control_points_mut(&mut self) -> &mut ControlPoints<Self::Point> {
         &mut self.points
     }
+}
+
+#[derive(Debug, Copy, Clone, clap::ValueEnum)]
+pub enum InterpolationNodes {
+    EquallySpaced,
+    Chebyshev,
 }

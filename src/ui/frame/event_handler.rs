@@ -1,4 +1,5 @@
 use crate::canvas::event_handler::CanvasEventHandler;
+use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
@@ -14,6 +15,7 @@ use crate::event::{EventHandler, HandlerResult};
 use crate::ui::command::CommandState;
 use crate::ui::frame::mode::{Mode, ModeState};
 use crate::ui::frame::Frame;
+use winit::dpi::PhysicalPosition;
 
 pub struct InputEventHandler<'a> {
     frame: &'a mut Frame,
@@ -58,7 +60,10 @@ impl EventHandler<ChangeWeight> for InputEventHandler<'_> {
 
 impl EventHandler<MouseClick> for InputEventHandler<'_> {
     fn handle(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
-        self.delegate(AddPoint::new(event.0))
+        fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
+            Point::new(position.x as f32, position.y as f32)
+        }
+        self.delegate(AddPoint::new(scale_position(event.0)))
     }
 }
 

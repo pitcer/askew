@@ -1,4 +1,5 @@
-use crate::event::curve;
+use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
+use crate::event::{curve, Error};
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -40,15 +41,35 @@ where
     }
 }
 
+impl EventHandler<SetInterpolationNodes> for ControlPointsCurveEventHandler<'_> {
+    fn handle(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
+        match self.curve {
+            ControlPointsCurveKind::Interpolation(curve) => curve.event_handler().handle(event),
+            _ => Err(Error::Unimplemented),
+        }
+    }
+}
+
+impl EventHandler<GetInterpolationNodes> for ControlPointsCurveEventHandler<'_> {
+    fn handle(&mut self, event: GetInterpolationNodes) -> HandlerResult<GetInterpolationNodes> {
+        match self.curve {
+            ControlPointsCurveKind::Interpolation(curve) => curve.event_handler().handle(event),
+            _ => Err(Error::Unimplemented),
+        }
+    }
+}
+
 delegate_events! {
     ControlPointsCurveEventHandler<'_> {
         curve::control_points::GetControlPointsLength,
         curve::control_points::AddControlPoint,
         curve::control_points::MovePoint,
         curve::control_points::DeletePoint,
+
         curve::control_points::weighted::AddWeightedControlPoint,
         curve::control_points::weighted::ChangeWeight,
         curve::control_points::weighted::GetWeight,
+
         curve::SetSamples,
         curve::GetSamples,
     }

@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter};
-
 use crate::canvas::curve::converter::{PathConverter, ToPath};
 use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
 use crate::canvas::curve::formula::trochoid::Trochoid;
@@ -22,14 +20,6 @@ impl ToPath for FormulaCurveKind {
     fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         match self {
             FormulaCurveKind::Trochoid(trochoid) => trochoid.to_path(converter),
-        }
-    }
-}
-
-impl Display for FormulaCurveKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FormulaCurveKind::Trochoid(_) => write!(f, "trochoid"),
         }
     }
 }

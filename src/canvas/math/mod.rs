@@ -57,6 +57,30 @@ pub fn de_casteljau(points: &[CurvePoint], t: f32) -> CurvePoint {
     w[0]
 }
 
+#[allow(clippy::many_single_char_names)]
+#[must_use]
+pub fn rational_de_casteljau(points: &[RationalBezierPoint], t: f32) -> CurvePoint {
+    let t_1 = 1.0 - t;
+    let (mut q, mut w): (Vec<Point<f32>>, Vec<f32>) = points
+        .iter()
+        .map(|point| (point.point(), point.weight()))
+        .unzip();
+    for k in 1..(points.len()) {
+        for i in 0..(points.len() - k) {
+            let u = t_1 * w[i];
+            let v = t * w[i + 1];
+            w[i] = u + v;
+            let u = u / w[i];
+            let v = 1.0 - u;
+            q[i] = Point::new(
+                u * q[i].horizontal() + v * q[i + 1].horizontal(),
+                u * q[i].vertical() + v * q[i + 1].vertical(),
+            );
+        }
+    }
+    q[0]
+}
+
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::many_single_char_names)]
 #[must_use]

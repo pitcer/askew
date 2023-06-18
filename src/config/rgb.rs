@@ -3,6 +3,7 @@ use anyhow::Result;
 use atoi::FromRadix16;
 use chumsky::prelude::*;
 use chumsky::Parser;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
@@ -69,6 +70,12 @@ impl Alpha {
     #[must_use]
     pub const fn alpha(self) -> u8 {
         self.0
+    }
+}
+
+impl Display for Rgb {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
     }
 }
 

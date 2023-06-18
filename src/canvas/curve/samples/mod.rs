@@ -12,6 +12,7 @@ pub struct Samples {
 }
 
 impl Samples {
+    #[must_use]
     pub fn new(samples: usize) -> Self {
         Self { samples }
     }

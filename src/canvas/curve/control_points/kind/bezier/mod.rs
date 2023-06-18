@@ -14,7 +14,7 @@ pub struct Bezier {
     algorithm: BezierAlgorithm,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum BezierAlgorithm {
     Generic,
     DeCasteljau,

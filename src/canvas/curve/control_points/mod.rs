@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter};
-
 use kind::convex_hull::ConvexHull;
 use kind::interpolation::Interpolation;
 use kind::polyline::Polyline;
@@ -38,18 +36,6 @@ pub enum ControlPointsCurveKind {
 impl ControlPointsCurveKind {
     pub fn event_handler(&mut self) -> ControlPointsCurveEventHandler<'_> {
         ControlPointsCurveEventHandler::new(self)
-    }
-}
-
-impl Display for ControlPointsCurveKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ControlPointsCurveKind::Polyline(_) => write!(f, "polyline"),
-            ControlPointsCurveKind::Interpolation(_) => write!(f, "interpolation"),
-            ControlPointsCurveKind::Bezier(_) => write!(f, "bezier"),
-            ControlPointsCurveKind::RationalBezier(_) => write!(f, "rational_bezier"),
-            ControlPointsCurveKind::ConvexHull(_) => write!(f, "convex_hull"),
-        }
     }
 }
 

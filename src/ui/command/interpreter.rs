@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use crate::canvas::Canvas;
 use crate::event::canvas::{GetConvexHull, SetConvexHull};
+use crate::event::curve::control_points::SetInterpolationNodes;
 use crate::event::curve::SetSamples;
 use crate::event::{EventHandler, InputEvent};
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
@@ -28,7 +29,7 @@ impl<'a> CommandInterpreter<'a> {
     fn interpret_get(&mut self, get: Get) {
         match get {
             Get::ConvexHull => {}
-            Get::ChebyshevNodes => {}
+            Get::InterpolationNodes => {}
             Get::Samples => {}
         }
     }
@@ -39,7 +40,10 @@ impl<'a> CommandInterpreter<'a> {
                 .properties
                 .event_handler()
                 .handle(SetConvexHull(value))?,
-            Set::ChebyshevNodes(_value) => {}
+            Set::InterpolationNodes(value) => self
+                .properties
+                .event_handler()
+                .handle(SetInterpolationNodes::new(value))?,
             Set::Samples(value) => self.properties.event_handler().handle(SetSamples(value))?,
         }
         Ok(())
@@ -53,7 +57,6 @@ impl<'a> CommandInterpreter<'a> {
                     .event_handler()
                     .handle(SetConvexHull(!value))?;
             }
-            Toggle::ChebyshevNodes => {}
         }
         Ok(())
     }

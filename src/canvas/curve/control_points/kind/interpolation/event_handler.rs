@@ -1,5 +1,6 @@
 use crate::canvas::curve::control_points::kind::interpolation::Interpolation;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
+use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
 use crate::event::{curve, DelegateEventHandler, Event, EventHandler, HandlerResult};
@@ -35,6 +36,19 @@ impl EventHandler<SetSamples> for InterpolationEventHandler<'_> {
 impl EventHandler<GetSamples> for InterpolationEventHandler<'_> {
     fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
         self.curve.samples.event_handler().handle(event)
+    }
+}
+
+impl EventHandler<SetInterpolationNodes> for InterpolationEventHandler<'_> {
+    fn handle(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
+        self.curve.nodes = event.nodes;
+        Ok(())
+    }
+}
+
+impl EventHandler<GetInterpolationNodes> for InterpolationEventHandler<'_> {
+    fn handle(&mut self, _event: GetInterpolationNodes) -> HandlerResult<GetInterpolationNodes> {
+        Ok(self.curve.nodes)
     }
 }
 
