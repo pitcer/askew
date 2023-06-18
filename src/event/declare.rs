@@ -1,29 +1,65 @@
+use winit::dpi::PhysicalPosition;
+
+use crate::{
+    canvas::curve::control_points::event_handler::CurveEventHandler,
+    canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
+    canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
+    canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
+    canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
+    canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
+    canvas::curve::control_points::points::event_handler::ControlPointsEventHandler,
+    canvas::curve::control_points::WeightedPoint,
+    canvas::event_handler::CanvasEventHandler,
+    canvas::math::point::Point,
+    canvas::math::vector::Vector,
+    event::canvas::{AddCurve, AddPoint},
+    event::macros::declare_events,
+    event::PointId,
+    event::{Change, Direction},
+    ui::frame::event_handler::FrameEventHandler,
+    ui::frame::mode::Mode,
+};
+
 pub mod curve {
-    use crate::canvas::curve::control_points::event_handler::CurveEventHandler;
-    use crate::canvas::math::point::Point;
-    use crate::canvas::math::vector::Vector;
-    use crate::event::macros::declare_events;
-    use crate::event::PointId;
+    use super::{
+        declare_events, BezierEventHandler, ControlPointsEventHandler, ConvexHullEventHandler,
+        CurveEventHandler, InterpolationEventHandler, Point, PointId, PolylineEventHandler,
+        RationalBezierEventHandler, Vector, WeightedPoint,
+    };
 
     declare_events! {
-        CurveEventHandler<'_> {
-            ChangeWeight { id: PointId, weight: f32 } -> (),
-            DeletePoint { id: PointId } -> (),
-            MovePoint { id: PointId, shift: Vector<f32> } -> (),
-            AddControlPoint { position: Point<f32> } -> (),
-            AddWeightedControlPoint { position: Point<f32>, weight: f32 } -> (),
-            GetWeight { id: PointId } -> f32,
+        ControlPointsEventHandler<'_> {
             GetControlPointsLength () -> usize,
+            AddControlPoint { point: Point<f32> } -> (),
+            MovePoint { id: PointId, shift: Vector<f32> } -> (),
+            DeletePoint { id: PointId } -> (),
         }
+
+        RationalBezierEventHandler<'_>: GetControlPointsLength, MovePoint, DeletePoint {
+            ChangeWeight { id: PointId, weight: f32 } -> (),
+            AddWeightedControlPoint { point: WeightedPoint<f32, f32> } -> (),
+            GetWeight { id: PointId } -> f32,
+        }
+
+        BezierEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
+            AddWeightedControlPoint, ChangeWeight, GetWeight {}
+
+        ConvexHullEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
+            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight {}
+
+        InterpolationEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint,
+            DeletePoint, AddWeightedControlPoint, ChangeWeight, GetWeight {}
+
+        PolylineEventHandler<'_>: GetControlPointsLength, AddControlPoint, MovePoint, DeletePoint,
+            AddWeightedControlPoint, ChangeWeight, GetWeight {}
+
+        CurveEventHandler<'_>: DeletePoint, MovePoint, AddControlPoint, GetControlPointsLength,
+            AddWeightedControlPoint, ChangeWeight, GetWeight {}
     }
 }
 
 pub mod canvas {
-    use winit::dpi::PhysicalPosition;
-
-    use crate::canvas::event_handler::CanvasEventHandler;
-    use crate::canvas::math::vector::Vector;
-    use crate::event::macros::declare_events;
+    use super::{declare_events, CanvasEventHandler, PhysicalPosition, Vector};
 
     declare_events! {
         CanvasEventHandler<'_> {
@@ -35,6 +71,7 @@ pub mod canvas {
             AddCurve () -> (),
             DeleteCurve () -> (),
             ChangeCurrentCurveIndex { change: i32 } -> (),
+
             SetConvexHull (bool) -> (),
             GetConvexHull () -> bool,
         }
@@ -42,11 +79,7 @@ pub mod canvas {
 }
 
 pub mod input {
-    use crate::event::canvas::{AddCurve, AddPoint};
-    use crate::event::macros::declare_events;
-    use crate::event::{Change, Direction};
-    use crate::ui::frame::event_handler::FrameEventHandler;
-    use crate::ui::frame::mode::Mode;
+    use super::{declare_events, AddCurve, AddPoint, Change, Direction, FrameEventHandler, Mode};
 
     declare_events! {
         FrameEventHandler<'_>: AddPoint, AddCurve {
@@ -60,8 +93,7 @@ pub mod input {
     }
 
     pub mod command {
-        use crate::event::macros::declare_events;
-        use crate::ui::frame::event_handler::FrameEventHandler;
+        use super::{declare_events, FrameEventHandler};
 
         declare_events! {
             FrameEventHandler<'_> {

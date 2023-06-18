@@ -1,9 +1,11 @@
-use crate::canvas::curve::control_points::{
-    ControlPoints, CurvePoint, CurvePoints, GetControlPoints,
-};
+use crate::canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler;
+use crate::canvas::curve::control_points::points::ControlPoints;
+use crate::canvas::curve::control_points::{CurvePoint, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
 use crate::canvas::math::point::Point;
 use crate::canvas::{curve, math};
+
+pub mod event_handler;
 
 #[derive(Debug)]
 pub struct Interpolation {
@@ -20,6 +22,10 @@ impl Interpolation {
             samples,
             chebyshev_nodes,
         }
+    }
+
+    pub fn event_handler(&mut self) -> InterpolationEventHandler<'_> {
+        InterpolationEventHandler::new(self)
     }
 
     pub fn samples_mut(&mut self) -> &mut u32 {

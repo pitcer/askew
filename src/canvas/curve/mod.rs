@@ -3,33 +3,33 @@ use std::ops::RangeInclusive;
 
 use num_traits::{Num, NumCast};
 
-use crate::canvas::curve::control_points::ControlPointsCurve;
-use crate::canvas::curve::formula::FormulaCurve;
+use crate::canvas::curve::control_points::ControlPointsCurveKind;
+use crate::canvas::curve::formula::FormulaCurveKind;
 
 pub mod control_points;
 pub mod converter;
 pub mod formula;
 
 #[derive(Debug)]
-pub enum Curve {
-    ControlPoints(ControlPointsCurve),
-    Formula(FormulaCurve),
+pub enum CurveKind {
+    ControlPoints(ControlPointsCurveKind),
+    Formula(FormulaCurveKind),
 }
 
-impl Curve {
+impl CurveKind {
     pub fn samples_mut(&mut self) -> Option<&mut u32> {
         match self {
-            Curve::ControlPoints(curve) => curve.samples_mut(),
-            Curve::Formula(curve) => curve.samples_mut(),
+            CurveKind::ControlPoints(curve) => curve.samples_mut(),
+            CurveKind::Formula(curve) => curve.samples_mut(),
         }
     }
 }
 
-impl Display for Curve {
+impl Display for CurveKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Curve::ControlPoints(curve) => Display::fmt(curve, f),
-            Curve::Formula(curve) => Display::fmt(curve, f),
+            CurveKind::ControlPoints(curve) => Display::fmt(curve, f),
+            CurveKind::Formula(curve) => Display::fmt(curve, f),
         }
     }
 }

@@ -1,8 +1,10 @@
-use crate::canvas::curve::control_points::{
-    ControlPoints, CurvePoint, CurvePoints, GetControlPoints,
-};
+use crate::canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler;
+use crate::canvas::curve::control_points::points::ControlPoints;
+use crate::canvas::curve::control_points::{CurvePoint, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
 use crate::canvas::{curve, math};
+
+pub mod event_handler;
 
 #[derive(Debug)]
 pub struct Bezier {
@@ -26,6 +28,10 @@ impl Bezier {
             samples,
             algorithm,
         }
+    }
+
+    pub fn event_handler(&mut self) -> BezierEventHandler<'_> {
+        BezierEventHandler::new(self)
     }
 
     pub fn samples_mut(&mut self) -> &mut u32 {
@@ -65,12 +71,12 @@ impl ToPath for Bezier {
                 converter.to_path(path)
             }
             BezierAlgorithm::DeCasteljau => {
-                let path = path.map(|t| math::de_casteljau(&self.points.points, t));
+                let path = path.map(|t| math::de_casteljau(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
             BezierAlgorithm::ChudyWozny => {
-                let path = path.map(|t| math::chudy_wozny(&self.points.points, t));
+                let path = path.map(|t| math::chudy_wozny(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }

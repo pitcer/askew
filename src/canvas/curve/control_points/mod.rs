@@ -1,26 +1,18 @@
 use std::fmt::{Display, Formatter};
 
-use num_traits::Num;
+use kind::convex_hull::ConvexHull;
+use kind::interpolation::Interpolation;
+use kind::polyline::Polyline;
+use points::ControlPoints;
 
-use crate::canvas::curve::control_points::bezier::Bezier;
-use crate::canvas::curve::control_points::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::event_handler::CurveEventHandler;
-use crate::canvas::curve::control_points::interpolation::Interpolation;
-use crate::canvas::curve::control_points::polyline::Polyline;
-use crate::canvas::curve::control_points::rational_bezier::RationalBezier;
+use crate::canvas::curve::control_points::kind::bezier::Bezier;
+use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
-use crate::canvas::math::vector::Vector;
-use crate::event::handler::{
-    AddPointHandler, ChangePointWeightHandler, CurveEventError, DeletePointHandler,
-    MovePointHandler,
-};
 
-pub mod bezier;
-pub mod convex_hull;
 pub mod event_handler;
-pub mod interpolation;
-pub mod polyline;
-pub mod rational_bezier;
+pub mod kind;
+pub mod points;
 
 pub type CurvePoints = ControlPoints<CurvePoint>;
 
@@ -35,7 +27,7 @@ pub trait GetControlPoints {
 }
 
 #[derive(Debug)]
-pub enum ControlPointsCurve {
+pub enum ControlPointsCurveKind {
     Polyline(Polyline),
     ConvexHull(ConvexHull),
     Interpolation(Interpolation),
@@ -43,172 +35,30 @@ pub enum ControlPointsCurve {
     RationalBezier(RationalBezier),
 }
 
-impl ControlPointsCurve {
+impl ControlPointsCurveKind {
     pub fn event_handler(&mut self) -> CurveEventHandler<'_> {
         CurveEventHandler::new(self)
     }
 
     pub fn samples_mut(&mut self) -> Option<&mut u32> {
         match self {
-            ControlPointsCurve::Polyline(_) | ControlPointsCurve::ConvexHull(_) => None,
-            ControlPointsCurve::Interpolation(curve) => Some(curve.samples_mut()),
-            ControlPointsCurve::Bezier(curve) => Some(curve.samples_mut()),
-            ControlPointsCurve::RationalBezier(curve) => Some(curve.samples_mut()),
+            ControlPointsCurveKind::Polyline(_) | ControlPointsCurveKind::ConvexHull(_) => None,
+            ControlPointsCurveKind::Interpolation(curve) => Some(curve.samples_mut()),
+            ControlPointsCurveKind::Bezier(curve) => Some(curve.samples_mut()),
+            ControlPointsCurveKind::RationalBezier(curve) => Some(curve.samples_mut()),
         }
     }
 }
 
-impl Display for ControlPointsCurve {
+impl Display for ControlPointsCurveKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ControlPointsCurve::Polyline(_) => write!(f, "polyline"),
-            ControlPointsCurve::Interpolation(_) => write!(f, "interpolation"),
-            ControlPointsCurve::Bezier(_) => write!(f, "bezier"),
-            ControlPointsCurve::RationalBezier(_) => write!(f, "rational_bezier"),
-            ControlPointsCurve::ConvexHull(_) => write!(f, "convex_hull"),
+            ControlPointsCurveKind::Polyline(_) => write!(f, "polyline"),
+            ControlPointsCurveKind::Interpolation(_) => write!(f, "interpolation"),
+            ControlPointsCurveKind::Bezier(_) => write!(f, "bezier"),
+            ControlPointsCurveKind::RationalBezier(_) => write!(f, "rational_bezier"),
+            ControlPointsCurveKind::ConvexHull(_) => write!(f, "convex_hull"),
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ControlPoints<T> {
-    points: Vec<T>,
-}
-
-impl<T> ControlPoints<T> {
-    #[must_use]
-    pub fn new(points: Vec<T>) -> Self {
-        Self { points }
-    }
-
-    pub fn add(&mut self, point: T) {
-        self.points.push(point);
-    }
-
-    pub fn remove(&mut self, index: usize) -> Option<T> {
-        if index < self.points.len() {
-            Some(self.points.remove(index))
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub fn get(&self, index: usize) -> Option<&T> {
-        self.points.get(index)
-    }
-
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        self.points.get_mut(index)
-    }
-
-    #[must_use]
-    pub fn length(&self) -> usize {
-        self.points.len()
-    }
-
-    #[must_use]
-    pub fn iterator(&self) -> impl ExactSizeIterator<Item = &T> {
-        self.points.iter()
-    }
-
-    #[must_use]
-    pub fn into_inner(self) -> Vec<T> {
-        self.points
-    }
-}
-
-impl<T> ControlPoints<Point<T>>
-where
-    T: Copy + Num,
-{
-    pub fn shift(&mut self, index: usize, vector: Vector<T>) {
-        if let Some(point) = self.points.get_mut(index) {
-            *point = *point + vector;
-        }
-    }
-
-    #[must_use]
-    pub fn points_iter(&self) -> impl ExactSizeIterator<Item = &Point<T>> {
-        self.points.iter()
-    }
-}
-
-impl<T, W> ControlPoints<WeightedPoint<T, W>>
-where
-    T: Copy + Num,
-    W: Copy,
-{
-    pub fn shift(&mut self, index: usize, vector: Vector<T>) {
-        if let Some(point) = self.points.get_mut(index) {
-            point.point = point.point + vector;
-        }
-    }
-
-    pub fn map_weight(&mut self, index: usize, weight_change: impl Fn(W) -> W) {
-        if let Some(point) = self.points.get_mut(index) {
-            point.weight = weight_change(point.weight);
-        }
-    }
-
-    pub fn point_mut(&mut self, index: usize) -> Option<&mut WeightedPoint<T, W>> {
-        self.points.get_mut(index)
-    }
-
-    #[must_use]
-    pub fn points_iter(&self) -> impl ExactSizeIterator<Item = Point<T>> + '_ {
-        self.points.iter().map(|point| point.point)
-    }
-}
-
-impl<T> AddPointHandler for T
-where
-    T: GetControlPoints<Point = Point<f32>>,
-    // U: AsRef<Point<f32>>,
-{
-    type Point = Point<f32>;
-
-    fn handle_add_point(&mut self, point: Self::Point) -> anyhow::Result<()> {
-        self.control_points_mut().add(point);
-        Ok(())
-    }
-}
-
-impl<T> MovePointHandler for T
-where
-    T: GetControlPoints<Point = Point<f32>>,
-{
-    fn handle_move_point(
-        &mut self,
-        point_index: usize,
-        position_change: Vector<f32>,
-    ) -> anyhow::Result<()> {
-        self.control_points_mut()
-            .shift(point_index, position_change);
-        Ok(())
-    }
-}
-
-impl<T> DeletePointHandler for T
-where
-    T: GetControlPoints,
-{
-    fn handle_delete_point(&mut self, point_index: usize) -> anyhow::Result<()> {
-        self.control_points_mut().remove(point_index);
-        Ok(())
-    }
-}
-
-impl<T> ChangePointWeightHandler for T
-where
-    T: GetControlPoints<Point = Point<f32>>,
-{
-    fn handle_change_point_weight(
-        &mut self,
-        _point_index: usize,
-        _weight_change: impl Fn(f32) -> f32,
-    ) -> Result<(), CurveEventError> {
-        Err(CurveEventError::Unimplemented)
     }
 }
 

@@ -1,9 +1,33 @@
-macro_rules! declare_unimplemented_handlers {
+macro_rules! unimplemented_handlers {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
         impl $crate::event::EventHandler<$event> for $handler {
-            fn handle(&mut self, _event: $event) -> HandlerResult<$event> {
+            fn handle(&mut self, _event: $event) -> $crate::event::HandlerResult<$event> {
                 Err($crate::event::Error::Unimplemented)
+            }
+        }
+        )+
+    };
+}
+
+macro_rules! delegate_handlers {
+    ($handler:ty { $($event:ty),+ $(,)? }) => {
+        $(
+        impl $crate::event::EventHandler<$event> for $handler {
+            fn handle(&mut self, event: $event) -> $crate::event::HandlerResult<$event> {
+                DelegateEventHandler::<$event>::delegate_handler(self).handle(event)
+            }
+        }
+        )+
+    };
+}
+
+macro_rules! delegate_events {
+    ($handler:ty { $($event:ty),+ $(,)? }) => {
+        $(
+        impl $crate::event::EventHandler<$event> for $handler {
+            fn handle(&mut self, event: $event) -> $crate::event::HandlerResult<$event> {
+                DelegateEvent::<$event>::delegate(self, event)
             }
         }
         )+
@@ -60,4 +84,7 @@ macro_rules! declare_events {
 }
 
 pub(super) use declare_events;
-pub(super) use declare_unimplemented_handlers;
+
+pub(crate) use delegate_events;
+pub(crate) use delegate_handlers;
+pub(crate) use unimplemented_handlers;

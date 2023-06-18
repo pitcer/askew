@@ -2,43 +2,43 @@ use anyhow::Result;
 use tiny_skia::FillRule;
 use tiny_skia::{Path, PathBuilder, Stroke};
 
-use crate::canvas::curve::control_points::convex_hull::ConvexHull;
-use crate::canvas::curve::control_points::{ControlPointsCurve, CurvePoints, GetControlPoints};
+use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
+use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{TinySkiaPathConverter, ToPath};
-use crate::canvas::curve::Curve;
+use crate::canvas::curve::CurveKind;
 use crate::canvas::paint::PaintBuilder;
 use crate::canvas::properties::CanvasProperties;
 use crate::ui::frame::panel::Panel;
 
 #[derive(Debug)]
-pub struct Rasterizer {}
+pub struct Rasterizer;
 
 impl Rasterizer {
     pub fn rasterize<'a>(
         &self,
-        curve: &'a Curve,
+        curve: &'a CurveKind,
         properties: &'a CanvasProperties,
         panel: &'a mut Panel<'_>,
     ) -> Result<()> {
         match curve {
-            Curve::ControlPoints(curve) => match curve {
-                ControlPointsCurve::Polyline(curve) => {
+            CurveKind::ControlPoints(curve) => match curve {
+                ControlPointsCurveKind::Polyline(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurve::Interpolation(curve) => {
+                ControlPointsCurveKind::Interpolation(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurve::Bezier(curve) => {
+                ControlPointsCurveKind::Bezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurve::RationalBezier(curve) => {
+                ControlPointsCurveKind::RationalBezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurve::ConvexHull(curve) => {
+                ControlPointsCurveKind::ConvexHull(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
             },
-            Curve::Formula(curve) => {
+            CurveKind::Formula(curve) => {
                 let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
                 rasterizer.draw_curve();
             }

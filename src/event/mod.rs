@@ -3,8 +3,7 @@ pub use declare::*;
 use crate::event::input::command;
 
 pub mod declare;
-pub mod handler;
-mod macros;
+pub mod macros;
 
 #[derive(Debug)]
 pub enum FrameEvent {
@@ -34,6 +33,24 @@ where
     E: Event,
 {
     fn handle(&mut self, event: E) -> HandlerResult<E>;
+}
+
+pub trait DelegateEventHandler<E>
+where
+    E: Event,
+{
+    type Delegate<'a>: EventHandler<E>
+    where
+        Self: 'a;
+
+    fn delegate_handler(&mut self) -> Self::Delegate<'_>;
+}
+
+pub trait DelegateEvent<E>
+where
+    E: Event,
+{
+    fn delegate(&mut self, event: E) -> HandlerResult<E>;
 }
 
 #[derive(Debug, thiserror::Error)]

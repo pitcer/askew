@@ -28,7 +28,7 @@ impl<'a> FrameEventHandler<'a> {
         CanvasEventHandler<'b>: EventHandler<E>,
         E: Event,
     {
-        let mut handler = self.frame.canvas.event_handler(self.frame.mode);
+        let mut handler = self.frame.canvas.event_handler();
         handler.handle(event)
     }
 }

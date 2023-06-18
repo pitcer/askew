@@ -1,7 +1,8 @@
-use crate::canvas::curve::control_points::rational_bezier::RationalBezierPoint;
+use num_traits::Euclid;
+
+use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierPoint;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
-use num_traits::Euclid;
 
 pub mod convex_hull;
 pub mod point;

@@ -9,16 +9,17 @@ use tiny_skia::Pixmap;
 use winit::dpi::PhysicalSize;
 use winit::window::{Window, WindowId};
 
-use crate::canvas::curve::control_points::bezier::{Bezier, BezierAlgorithm};
-use crate::canvas::curve::control_points::interpolation::Interpolation;
-use crate::canvas::curve::control_points::polyline::Polyline;
-use crate::canvas::curve::control_points::rational_bezier::{
+use crate::canvas::curve::control_points::kind::bezier::{Bezier, BezierAlgorithm};
+use crate::canvas::curve::control_points::kind::interpolation::Interpolation;
+use crate::canvas::curve::control_points::kind::polyline::Polyline;
+use crate::canvas::curve::control_points::kind::rational_bezier::{
     RationalBezier, RationalBezierAlgorithm, RationalBezierPoint,
 };
-use crate::canvas::curve::control_points::{ControlPoints, ControlPointsCurve};
+use crate::canvas::curve::control_points::points::ControlPoints;
+use crate::canvas::curve::control_points::ControlPointsCurveKind;
 use crate::canvas::curve::formula::trochoid::Trochoid;
-use crate::canvas::curve::formula::FormulaCurve;
-use crate::canvas::curve::Curve;
+use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::curve::CurveKind;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
@@ -105,21 +106,25 @@ impl Frame {
         let canvas = match config.curve_type {
             CurveType::Polyline => Canvas::new(
                 canvas_rectangle,
-                vec![Curve::ControlPoints(ControlPointsCurve::Polyline(
+                vec![CurveKind::ControlPoints(ControlPointsCurveKind::Polyline(
                     Polyline::new(points),
                 ))],
                 config,
             ),
             CurveType::Interpolation => Canvas::new(
                 canvas_rectangle,
-                vec![Curve::ControlPoints(ControlPointsCurve::Interpolation(
-                    Interpolation::new(points, config.samples, config.chebyshev_nodes),
-                ))],
+                vec![CurveKind::ControlPoints(
+                    ControlPointsCurveKind::Interpolation(Interpolation::new(
+                        points,
+                        config.samples,
+                        config.chebyshev_nodes,
+                    )),
+                )],
                 config,
             ),
             CurveType::Bezier => Canvas::new(
                 canvas_rectangle,
-                vec![Curve::ControlPoints(ControlPointsCurve::Bezier(
+                vec![CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
                     Bezier::new(points, config.samples, BezierAlgorithm::ChudyWozny),
                 ))],
                 config,
@@ -145,26 +150,28 @@ impl Frame {
                 let points = ControlPoints::new(points);
                 Canvas::new(
                     canvas_rectangle,
-                    vec![Curve::ControlPoints(ControlPointsCurve::RationalBezier(
-                        RationalBezier::new(
+                    vec![CurveKind::ControlPoints(
+                        ControlPointsCurveKind::RationalBezier(RationalBezier::new(
                             points,
                             config.samples,
                             RationalBezierAlgorithm::ChudyWozny,
-                        ),
-                    ))],
+                        )),
+                    )],
                     config,
                 )
             }
             CurveType::Trochoid => Canvas::new(
                 Rectangle::new(Point::new(-2.0, -2.0), Size::new(4.0, 4.0)),
-                vec![Curve::Formula(FormulaCurve::Trochoid(Trochoid::new(
-                    5000,
-                    (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
-                    0.3,
-                    0.8,
-                    0.3,
-                    0.7,
-                )))],
+                vec![CurveKind::Formula(FormulaCurveKind::Trochoid(
+                    Trochoid::new(
+                        5000,
+                        (10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
+                        0.3,
+                        0.8,
+                        0.3,
+                        0.7,
+                    ),
+                ))],
                 config,
             ),
         };

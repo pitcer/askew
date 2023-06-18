@@ -1,15 +1,10 @@
-use anyhow::Result;
-
-use crate::canvas::curve::control_points::{
-    ControlPoints, CurvePoint, GetControlPoints, WeightedPoint,
-};
+use crate::canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler;
+use crate::canvas::curve::control_points::points::ControlPoints;
+use crate::canvas::curve::control_points::{CurvePoint, GetControlPoints, WeightedPoint};
 use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
-use crate::canvas::math::vector::Vector;
 use crate::canvas::{curve, math};
-use crate::event::handler::{
-    AddPointHandler, ChangePointWeightHandler, CurveEventError, MovePointHandler,
-};
-use crate::event::PointId;
+
+pub mod event_handler;
 
 #[derive(Debug)]
 pub struct RationalBezier {
@@ -38,14 +33,12 @@ impl RationalBezier {
         }
     }
 
-    pub fn samples_mut(&mut self) -> &mut u32 {
-        &mut self.samples
+    pub fn event_handler(&mut self) -> RationalBezierEventHandler<'_> {
+        RationalBezierEventHandler::new(self)
     }
 
-    pub fn change_point_weight(&mut self, id: PointId, weight: RationalBezierWeight) {
-        if let Some(point) = self.points.get_mut(id) {
-            point.weight = weight;
-        }
+    pub fn samples_mut(&mut self) -> &mut u32 {
+        &mut self.samples
     }
 
     fn rational_bezier(&self, t: f32) -> CurvePoint {
@@ -98,7 +91,7 @@ impl ToPath for RationalBezier {
                 converter.to_path(path)
             }
             RationalBezierAlgorithm::ChudyWozny => {
-                let path = path.map(|t| math::rational_chudy_wozny(&self.points.points, t));
+                let path = path.map(|t| math::rational_chudy_wozny(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
@@ -115,37 +108,5 @@ impl GetControlPoints for RationalBezier {
 
     fn control_points_mut(&mut self) -> &mut ControlPoints<Self::Point> {
         &mut self.points
-    }
-}
-
-impl ChangePointWeightHandler for RationalBezier {
-    fn handle_change_point_weight(
-        &mut self,
-        point_index: usize,
-        weight_change: impl Fn(f32) -> f32,
-    ) -> Result<(), CurveEventError> {
-        self.points.map_weight(point_index, weight_change);
-        Ok(())
-    }
-}
-
-impl MovePointHandler for RationalBezier {
-    fn handle_move_point(
-        &mut self,
-        point_index: usize,
-        position_change: Vector<f32>,
-    ) -> Result<()> {
-        self.control_points_mut()
-            .shift(point_index, position_change);
-        Ok(())
-    }
-}
-
-impl AddPointHandler for RationalBezier {
-    type Point = RationalBezierPoint;
-
-    fn handle_add_point(&mut self, point: Self::Point) -> Result<()> {
-        self.control_points_mut().add(point);
-        Ok(())
     }
 }
