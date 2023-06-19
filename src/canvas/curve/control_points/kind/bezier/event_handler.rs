@@ -3,7 +3,7 @@ use crate::canvas::curve::control_points::points::event_handler::ControlPointsEv
 use crate::event::curve::control_points::weighted;
 use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
+use crate::event::{canvas, DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub struct BezierEventHandler<'a> {
     curve: &'a mut Bezier,
@@ -45,6 +45,9 @@ delegate_handlers! {
         control_points::AddControlPoint,
         control_points::MovePoint,
         control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
     }
 }
 

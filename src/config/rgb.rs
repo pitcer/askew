@@ -1,9 +1,10 @@
+use std::fmt::{Display, Formatter};
+
 use anyhow::anyhow;
 use anyhow::Result;
-use atoi::FromRadix16;
-use chumsky::prelude::*;
 use chumsky::Parser;
-use std::fmt::{Display, Formatter};
+
+use crate::parser;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
@@ -19,7 +20,7 @@ impl Rgb {
     }
 
     pub fn parse(input: &str) -> Result<Self> {
-        let result = parser()
+        let result = parser::rgb_parser()
             .parse(input.as_bytes())
             .into_result()
             .map_err(|error| anyhow!("{:?}", error))?;
@@ -48,6 +49,12 @@ impl Default for Rgb {
     }
 }
 
+impl Display for Rgb {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Alpha(u8);
 
@@ -71,20 +78,4 @@ impl Alpha {
     pub const fn alpha(self) -> u8 {
         self.0
     }
-}
-
-impl Display for Rgb {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "#{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
-    }
-}
-
-fn parser<'a>() -> impl Parser<'a, &'a [u8], Rgb> {
-    let hex_digit = any().filter(u8::is_ascii_hexdigit);
-    let color_byte = group([hex_digit, hex_digit])
-        .map(|digits| u8::from_radix_16(&digits))
-        .map(|(color_byte, _)| color_byte);
-    just(b'#')
-        .ignore_then(group((color_byte, color_byte, color_byte)))
-        .map(|(red, green, blue)| Rgb::new(red, green, blue))
 }

@@ -18,7 +18,7 @@ impl<'a> CanvasEventHandler<'a> {
     }
 }
 
-impl<'a, E> DelegateEventHandler<E> for CanvasEventHandler<'a>
+impl<E> DelegateEventHandler<E> for CanvasEventHandler<'_>
 where
     E: Event,
     for<'b> CurveEventHandler<'b>: EventHandler<E>,

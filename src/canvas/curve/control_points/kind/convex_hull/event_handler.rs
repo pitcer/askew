@@ -1,7 +1,7 @@
 use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{curve, DelegateEventHandler, Event, EventHandler};
+use crate::event::{canvas, curve, DelegateEventHandler, Event, EventHandler};
 
 pub struct ConvexHullEventHandler<'a> {
     curve: &'a mut ConvexHull,
@@ -31,6 +31,9 @@ delegate_handlers! {
         curve::control_points::AddControlPoint,
         curve::control_points::MovePoint,
         curve::control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
     }
 }
 

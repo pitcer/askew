@@ -20,8 +20,6 @@ pub trait GetControlPoints {
     type Point: AsRef<CurvePoint>;
 
     fn control_points(&self) -> &ControlPoints<Self::Point>;
-
-    fn control_points_mut(&mut self) -> &mut ControlPoints<Self::Point>;
 }
 
 #[derive(Debug)]
@@ -67,6 +65,18 @@ impl<T, W> AsRef<Point<T>> for WeightedPoint<T, W> {
 
 impl<T> AsRef<Point<T>> for Point<T> {
     fn as_ref(&self) -> &Point<T> {
+        self
+    }
+}
+
+impl<T, W> AsMut<Point<T>> for WeightedPoint<T, W> {
+    fn as_mut(&mut self) -> &mut Point<T> {
+        &mut self.point
+    }
+}
+
+impl<T> AsMut<Point<T>> for Point<T> {
+    fn as_mut(&mut self) -> &mut Point<T> {
         self
     }
 }

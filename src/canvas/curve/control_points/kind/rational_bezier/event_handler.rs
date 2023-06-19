@@ -7,7 +7,7 @@ use crate::event::curve::control_points::weighted::{
 };
 use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
+use crate::event::{canvas, DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
 
 pub struct RationalBezierEventHandler<'a> {
     curve: &'a mut RationalBezier,
@@ -65,7 +65,6 @@ impl EventHandler<GetWeight> for RationalBezierEventHandler<'_> {
 // where
 //     E: Event,
 //     for<'b> SamplesEventHandler<'b>: EventHandler<E>
-
 impl EventHandler<SetSamples> for RationalBezierEventHandler<'_> {
     fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
         self.curve.samples.event_handler().handle(event)
@@ -83,6 +82,9 @@ delegate_handlers! {
         control_points::GetControlPointsLength,
         control_points::MovePoint,
         control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
     }
 }
 

@@ -3,7 +3,7 @@ use crate::canvas::curve::control_points::points::event_handler::ControlPointsEv
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{curve, DelegateEventHandler, Event, EventHandler, HandlerResult};
+use crate::event::{canvas, curve, DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub struct InterpolationEventHandler<'a> {
     curve: &'a mut Interpolation,
@@ -58,6 +58,9 @@ delegate_handlers! {
         curve::control_points::AddControlPoint,
         curve::control_points::MovePoint,
         curve::control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
     }
 }
 

@@ -15,7 +15,7 @@ use crate::event::curve::control_points::{
     AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
 };
 use crate::event::macros::delegate_handlers;
-use crate::event::{curve, DelegateEventHandler, Error, EventHandler, HandlerResult};
+use crate::event::{canvas, curve, DelegateEventHandler, Error, EventHandler, HandlerResult};
 
 impl EventHandler<AddPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: AddPoint) -> HandlerResult<AddPoint> {
@@ -118,5 +118,8 @@ delegate_handlers! {
 
         curve::control_points::SetInterpolationNodes,
         curve::control_points::GetInterpolationNodes,
+
+        canvas::MoveCurve,
+        canvas::RotateCurve,
     }
 }

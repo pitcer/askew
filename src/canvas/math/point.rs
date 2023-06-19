@@ -11,7 +11,7 @@ pub struct Point<T> {
 }
 
 impl<T> Point<T> {
-    pub fn new(horizontal: T, vertical: T) -> Self {
+    pub const fn new(horizontal: T, vertical: T) -> Self {
         Self {
             horizontal,
             vertical,
@@ -33,10 +33,18 @@ impl<T> Point<T>
 where
     T: Copy + Num,
 {
-    pub fn distance_squared(&self, other: Point<T>) -> T {
-        let horizontal = self.horizontal - other.horizontal;
-        let vertical = self.vertical - other.vertical;
-        horizontal * horizontal + vertical * vertical
+    #[must_use]
+    pub fn zero() -> Self {
+        Point::new(T::zero(), T::zero())
+    }
+
+    pub fn distance_squared(self, other: Point<T>) -> T {
+        let vector = self - other;
+        vector.horizontal() * vector.horizontal() + vector.vertical() * vector.vertical()
+    }
+
+    pub fn into_vector(self, origin: Self) -> Vector<T> {
+        self - origin
     }
 }
 
@@ -56,7 +64,7 @@ where
 
 impl<T> Sub for Point<T>
 where
-    T: Sub<Output = T>,
+    T: Copy + Num,
 {
     type Output = Vector<T>;
 

@@ -6,8 +6,10 @@ use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, GetControlPoints};
 use crate::canvas::curve::converter::{TinySkiaPathConverter, ToPath};
 use crate::canvas::curve::CurveKind;
-use crate::canvas::paint::PaintBuilder;
+use crate::canvas::math::point::Point;
+use crate::canvas::paint::{PaintBuilder, PaintColor};
 use crate::canvas::properties::CanvasProperties;
+use crate::config::rgb::Rgb;
 use crate::ui::frame::panel::Panel;
 
 #[derive(Debug)]
@@ -60,6 +62,7 @@ impl Rasterizer {
         rasterizer.draw_curve();
         rasterizer.draw_control_points();
         rasterizer.draw_current_control_point();
+        rasterizer.draw_center_of_mass();
     }
 }
 
@@ -150,6 +153,19 @@ where
         }
     }
 
+    fn draw_center_of_mass(&mut self) {
+        if let Some(center) = self.curve.control_points().center_of_mass() {
+            let center = *center.as_ref();
+            let points_paint = PaintBuilder::new()
+                .color(PaintColor::from_rgb(Rgb::new(0, 255, 0)))
+                .build();
+            if let Some(path) = self.create_point_path(center) {
+                self.panel
+                    .draw_fill_path(&path, &points_paint, FillRule::Winding);
+            }
+        }
+    }
+
     fn create_convex_hull_path(&self) -> Option<Path> {
         let points = self
             .curve
@@ -174,6 +190,16 @@ where
 
         let path = path.finish()?;
         Some(path)
+    }
+
+    fn create_point_path(&self, point: Point<f32>) -> Option<Path> {
+        let mut path = PathBuilder::new();
+        path.push_circle(
+            point.horizontal(),
+            point.vertical(),
+            self.properties.point_radius * 2.0,
+        );
+        path.finish()
     }
 }
 

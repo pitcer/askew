@@ -44,8 +44,4 @@ impl GetControlPoints for ConvexHull {
     fn control_points(&self) -> &ControlPoints<Self::Point> {
         &self.points
     }
-
-    fn control_points_mut(&mut self) -> &mut ControlPoints<Self::Point> {
-        &mut self.points
-    }
 }

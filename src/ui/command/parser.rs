@@ -1,9 +1,8 @@
-use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-use atoi::FromRadix10;
 use chumsky::prelude::*;
-use chumsky::text;
 
+use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
+use crate::parser;
 
 #[derive(Debug)]
 pub struct CommandParser<'a> {
@@ -29,47 +28,30 @@ impl<'a> CommandParser<'a> {
     }
 
     fn parser() -> impl Parser<'a, &'a [u8], Command, ParserError<'a>> {
-        fn get_property<'a>(
-            property: impl Property,
-        ) -> impl Parser<'a, &'a [u8], &'a [u8], ParserError<'a>> {
-            just(property.name().as_bytes()).padded()
-        }
+        let bool = choice((Self::value(b"true", true), Self::value(b"false", false)));
 
-        fn set_property<'a, T>(
-            property: impl Property,
-            value: impl Parser<'a, &'a [u8], T, ParserError<'a>>,
-        ) -> impl Parser<'a, &'a [u8], T, ParserError<'a>> {
-            get_property(property).ignore_then(value)
-        }
-
-        fn value<T>(input: &[u8], value: T) -> impl Parser<'_, &[u8], T, ParserError<'_>>
-        where
-            T: Copy,
-        {
-            just(input).padded().ignored().map(move |_| value)
-        }
-
-        let bool = choice((value(b"true", true), value(b"false", false)));
-        let uint = text::int(10)
-            .map(u32::from_radix_10)
-            .map(|(number, _)| number);
         let interpolation_nodes = choice((
-            value(b"equally_spaced", InterpolationNodes::EquallySpaced),
-            value(b"chebyshev", InterpolationNodes::Chebyshev),
+            Self::value(b"equally_spaced", InterpolationNodes::EquallySpaced),
+            Self::value(b"chebyshev", InterpolationNodes::Chebyshev),
         ));
 
         let get = choice((
-            get_property(ConvexHull).map(|_| Get::ConvexHull),
-            get_property(InterpolationNodesProperty).map(|_| Get::InterpolationNodes),
-            get_property(Samples).map(|_| Get::Samples),
+            Self::get_property(ConvexHull).map(|_| Get::ConvexHull),
+            Self::get_property(InterpolationNodesProperty).map(|_| Get::InterpolationNodes),
+            Self::get_property(Samples).map(|_| Get::Samples),
         ));
         let set = choice((
-            set_property(ConvexHull, bool).map(Set::ConvexHull),
-            set_property(InterpolationNodesProperty, interpolation_nodes)
+            Self::set_property(ConvexHull, bool).map(Set::ConvexHull),
+            Self::set_property(InterpolationNodesProperty, interpolation_nodes)
                 .map(Set::InterpolationNodes),
-            set_property(Samples, uint).map(Set::Samples),
+            Self::set_property(Samples, parser::unsigned_parser()).map(Set::Samples),
         ));
-        let toggle = choice((get_property(ConvexHull).map(|_| Toggle::ConvexHull),));
+        let toggle = choice((Self::get_property(ConvexHull).map(|_| Toggle::ConvexHull),));
+        let rotate = parser::unsigned_parser().padded();
+        let r#move = parser::f32_parser()
+            .padded()
+            .then(parser::f32_parser().padded());
+
         just(b':').ignore_then(choice((
             just(b"get").padded().ignore_then(get).map(Command::Get),
             just(b"set").padded().ignore_then(set).map(Command::Set),
@@ -77,7 +59,35 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(toggle)
                 .map(Command::Toggle),
+            just(b"rotate")
+                .padded()
+                .ignore_then(rotate)
+                .map(Command::Rotate),
+            just(b"move")
+                .padded()
+                .ignore_then(r#move)
+                .map(|(a, b)| Command::Move(a, b)),
         )))
+    }
+
+    fn get_property<'b>(
+        property: impl Property,
+    ) -> impl Parser<'b, &'b [u8], &'b [u8], ParserError<'b>> {
+        just(property.name().as_bytes()).padded()
+    }
+
+    fn set_property<'b, T>(
+        property: impl Property,
+        value: impl Parser<'b, &'b [u8], T, ParserError<'b>>,
+    ) -> impl Parser<'b, &'b [u8], T, ParserError<'b>> {
+        Self::get_property(property).ignore_then(value)
+    }
+
+    fn value<T>(value_text: &[u8], value: T) -> impl Parser<'_, &[u8], T, ParserError<'_>>
+    where
+        T: Copy,
+    {
+        just(value_text).padded().ignored().map(move |_| value)
     }
 }
 
@@ -92,6 +102,8 @@ pub enum Command {
     Get(Get),
     Set(Set),
     Toggle(Toggle),
+    Rotate(u16),
+    Move(f32, f32),
 }
 
 #[derive(Debug)]

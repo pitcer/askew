@@ -1,7 +1,9 @@
 use anyhow::Result;
+use std::f32::consts;
 
 use crate::canvas::event_handler::CanvasEventHandler;
-use crate::event::canvas::{GetConvexHull, SetConvexHull};
+use crate::canvas::math::vector::Vector;
+use crate::event::canvas::{GetConvexHull, MoveCurve, RotateCurve, SetConvexHull};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::EventHandler;
@@ -13,6 +15,8 @@ pub struct CommandInterpreter<'a> {
     handler: CanvasEventHandler<'a>,
 }
 
+type InterpretResult = Result<Option<Message>>;
+
 impl<'a> CommandInterpreter<'a> {
     pub fn new(event_handler: CanvasEventHandler<'a>) -> Self {
         Self {
@@ -21,14 +25,17 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {
-        match command {
-            Command::Get(get) => self.interpret_get(get).map(Some).map_err(Error::OtherError),
-            Command::Set(set) => self.interpret_set(set).map_err(Error::OtherError),
-            Command::Toggle(toggle) => self.interpret_toggle(toggle).map_err(Error::OtherError),
-        }
+        let result = match command {
+            Command::Get(get) => self.interpret_get(get),
+            Command::Set(set) => self.interpret_set(set),
+            Command::Toggle(toggle) => self.interpret_toggle(toggle),
+            Command::Rotate(angle) => self.interpret_rotate(angle),
+            Command::Move(horizontal, vertical) => self.interpret_move(horizontal, vertical),
+        };
+        result.map_err(Error::OtherError)
     }
 
-    fn interpret_get(&mut self, get: Get) -> Result<Message> {
+    fn interpret_get(&mut self, get: Get) -> InterpretResult {
         let message = match get {
             Get::ConvexHull => {
                 let convex_hull = self.handler.handle(GetConvexHull)?;
@@ -43,10 +50,10 @@ impl<'a> CommandInterpreter<'a> {
                 format!("{samples}")
             }
         };
-        Ok(Message::info(message))
+        Ok(Some(Message::info(message)))
     }
 
-    fn interpret_set(&mut self, set: Set) -> Result<Option<Message>> {
+    fn interpret_set(&mut self, set: Set) -> InterpretResult {
         match set {
             Set::ConvexHull(value) => self.handler.handle(SetConvexHull(value))?,
             Set::InterpolationNodes(value) => {
@@ -57,7 +64,7 @@ impl<'a> CommandInterpreter<'a> {
         Ok(None)
     }
 
-    fn interpret_toggle(&mut self, toggle: Toggle) -> Result<Option<Message>> {
+    fn interpret_toggle(&mut self, toggle: Toggle) -> InterpretResult {
         match toggle {
             Toggle::ConvexHull => {
                 let value = self.handler.handle(GetConvexHull)?;
@@ -65,6 +72,20 @@ impl<'a> CommandInterpreter<'a> {
             }
         }
         Ok(None)
+    }
+
+    fn interpret_rotate(&mut self, angle: u16) -> InterpretResult {
+        let radians = consts::PI * f32::from(angle) / 180.0;
+        self.handler.handle(RotateCurve::new(radians))?;
+        Ok(Some(Message::info(format!("Curve rotated by {angle} deg"))))
+    }
+
+    fn interpret_move(&mut self, horizontal: f32, vertical: f32) -> InterpretResult {
+        let shift = Vector::new(horizontal, vertical);
+        self.handler.handle(MoveCurve::new(shift))?;
+        Ok(Some(Message::info(format!(
+            "Curve moved by ({horizontal}, {vertical})"
+        ))))
     }
 }
 

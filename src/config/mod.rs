@@ -12,7 +12,7 @@ use crate::config::property::{
 
 pub mod property;
 pub mod rgb;
-pub mod trochoid_properties_parser;
+pub mod trochoid_properties;
 
 #[derive(Debug, clap::Parser)]
 #[command(version)]
@@ -38,7 +38,7 @@ pub struct Config {
     #[arg(
         long = DefaultTrochoidProperties.name(),
         default_value_t = DefaultTrochoidProperties.value(),
-        value_parser = trochoid_properties_parser::parse,
+        value_parser = trochoid_properties::parse,
     )]
     pub trochoid_properties: <DefaultTrochoidProperties as Property>::Type,
 

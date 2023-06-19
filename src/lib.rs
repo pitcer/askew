@@ -58,6 +58,7 @@ use crate::ui::window_event_handler::WindowEventHandler;
 pub mod canvas;
 pub mod config;
 pub mod event;
+pub mod parser;
 pub mod ui;
 
 pub fn main() -> Result<()> {

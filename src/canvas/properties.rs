@@ -18,6 +18,7 @@ pub struct CanvasProperties {
     pub line_width: f32,
     pub point_radius: f32,
     pub show_convex_hull: bool,
+    pub show_center_of_mass: bool,
     pub interpolation_nodes: InterpolationNodes,
     pub default_weight: f32,
     pub samples: u32,
@@ -41,6 +42,8 @@ impl CanvasProperties {
             line_width: config.line_width,
             point_radius: config.point_radius,
             show_convex_hull: config.show_convex_hull,
+            // TODO: use config variable
+            show_center_of_mass: true,
             interpolation_nodes: config.interpolation_nodes,
             default_weight: config.default_weight,
             samples: config.samples,

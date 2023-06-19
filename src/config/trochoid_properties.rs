@@ -6,6 +6,7 @@ use anyhow::{anyhow, Result};
 use chumsky::prelude::*;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::parser;
 
 pub fn parse(input: &str) -> Result<TrochoidProperties> {
     let result = parser()
@@ -26,15 +27,8 @@ impl Display for TrochoidProperties {
 }
 
 fn parser<'a>() -> impl Parser<'a, &'a [u8], TrochoidProperties> {
+    let number = parser::f32_parser();
     let comma = just(b',');
-    let digits = text::digits(10);
-    let fractional = just(b'.').then(digits);
-    let number = just(b'-')
-        .or_not()
-        .then(text::int(10))
-        .then(fractional.or_not())
-        .map_slice(|slice| str::from_utf8(slice).expect("slice should be an utf8 string"))
-        .map(|string| string.parse().expect("string should be in decimal form"));
 
     group((
         number, comma, number, comma, number, comma, number, comma, number, comma, number,

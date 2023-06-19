@@ -1,7 +1,7 @@
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
-use num_traits::Num;
+use num_traits::{Float, Num, NumCast};
+use std::fmt::Debug;
 
-use crate::canvas::curve::control_points::WeightedPoint;
+use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 
@@ -34,6 +34,62 @@ impl<T> ControlPoints<T> {
         }
     }
 
+    pub fn shift_all<V>(&mut self, vector: Vector<V>)
+    where
+        T: AsRef<Point<V>> + AsMut<Point<V>>,
+        V: Copy + Num,
+    {
+        for point in &mut self.points {
+            *point.as_mut() = *point.as_ref() + vector;
+        }
+    }
+
+    pub fn shift<V>(&mut self, index: usize, vector: Vector<V>) -> Option<()>
+    where
+        T: AsRef<Point<V>> + AsMut<Point<V>>,
+        V: Copy + Num,
+    {
+        if let Some(point) = self.points.get_mut(index) {
+            *point.as_mut() = *point.as_ref() + vector;
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    pub fn rotate_all<V>(&mut self, angle: V)
+    where
+        T: AsRef<Point<V>> + AsMut<Point<V>> + Debug,
+        V: Float + Debug,
+    {
+        let cos_angle = V::cos(angle);
+        let sin_angle = V::sin(angle);
+        let Some(center) = self.center_of_mass() else { return; };
+        for point in &mut self.points {
+            let vector = *point.as_ref() - center;
+            let rotated_horizontal =
+                cos_angle * vector.horizontal() - sin_angle * vector.vertical();
+            let rotated_vertical = sin_angle * vector.horizontal() + cos_angle * vector.vertical();
+            let rotated = Vector::new(rotated_horizontal, rotated_vertical);
+            *point.as_mut() = center + rotated;
+        }
+    }
+
+    #[must_use]
+    pub fn center_of_mass<V>(&self) -> Option<Point<V>>
+    where
+        T: AsRef<Point<V>>,
+        V: Copy + Num + NumCast,
+    {
+        let length = V::from(self.points.len()).unwrap();
+        self.points
+            .iter()
+            .map(|point| point.as_ref().into_vector(Point::zero()))
+            .reduce(|accumulator, point| accumulator + point)
+            .map(|center| center / length)
+            .map(|center| center.into_point(Point::zero()))
+    }
+
     #[must_use]
     pub fn get(&self, index: usize) -> Option<&T> {
         self.points.get(index)
@@ -56,59 +112,5 @@ impl<T> ControlPoints<T> {
     #[must_use]
     pub fn iterator(&self) -> impl ExactSizeIterator<Item = &T> {
         self.points.iter()
-    }
-
-    #[must_use]
-    pub fn into_inner(self) -> Vec<T> {
-        self.points
-    }
-}
-
-impl<T> ControlPoints<Point<T>>
-where
-    T: Copy + Num,
-{
-    pub fn shift(&mut self, index: usize, vector: Vector<T>) -> Option<()> {
-        if let Some(point) = self.points.get_mut(index) {
-            *point = *point + vector;
-            Some(())
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub fn points_iter(&self) -> impl ExactSizeIterator<Item = &Point<T>> {
-        self.points.iter()
-    }
-}
-
-impl<T, W> ControlPoints<WeightedPoint<T, W>>
-where
-    T: Copy + Num,
-    W: Copy,
-{
-    pub fn shift(&mut self, index: usize, vector: Vector<T>) -> Option<()> {
-        if let Some(point) = self.points.get_mut(index) {
-            point.point = point.point + vector;
-            Some(())
-        } else {
-            None
-        }
-    }
-
-    pub fn map_weight(&mut self, index: usize, weight_change: impl Fn(W) -> W) {
-        if let Some(point) = self.points.get_mut(index) {
-            point.weight = weight_change(point.weight);
-        }
-    }
-
-    pub fn point_mut(&mut self, index: usize) -> Option<&mut WeightedPoint<T, W>> {
-        self.points.get_mut(index)
-    }
-
-    #[must_use]
-    pub fn points_iter(&self) -> impl ExactSizeIterator<Item = Point<T>> + '_ {
-        self.points.iter().map(|point| point.point)
     }
 }

@@ -1,5 +1,5 @@
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
-use crate::event::{curve, Error};
+use crate::event::{canvas, curve, Error};
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -72,5 +72,8 @@ delegate_events! {
 
         curve::SetSamples,
         curve::GetSamples,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
     }
 }

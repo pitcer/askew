@@ -2,7 +2,6 @@
 
 use winit::dpi::PhysicalPosition;
 
-use crate::canvas::curve::samples::event_handler::SamplesEventHandler;
 use crate::{
     canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler,
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
@@ -15,9 +14,11 @@ use crate::{
     canvas::curve::event_handler::CurveEventHandler,
     canvas::curve::formula::event_handler::FormulaCurveEventHandler,
     canvas::curve::formula::trochoid::event_handler::TrochoidEventHandler,
+    canvas::curve::samples::event_handler::SamplesEventHandler,
     canvas::event_handler::CanvasEventHandler,
     canvas::math::point::Point,
     canvas::math::vector::Vector,
+    config::CurveType,
     event::macros::declare_events,
     event::PointId,
     event::{Change, Direction},
@@ -51,7 +52,6 @@ pub mod input {
 
 pub mod canvas {
     use super::*;
-    use crate::config::CurveType;
 
     declare_events! {
         CanvasEventHandler<'_> {
@@ -76,6 +76,9 @@ pub mod canvas {
 
             SetCurveType (CurveType) -> (),
             GetCurveType () -> CurveType,
+
+            RotateCurve { angle: f32 } -> (),
+            MoveCurve { shift: Vector<f32> } -> (),
         }
     }
 }
@@ -97,6 +100,9 @@ pub mod curve {
                 control_points::GetInterpolationNodes,
                 SetSamples,
                 GetSamples,
+
+                canvas::RotateCurve,
+                canvas::MoveCurve,
             }
         }
 
@@ -137,8 +143,9 @@ pub mod curve {
     }
 
     pub mod control_points {
-        use super::*;
         use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
+
+        use super::*;
 
         declare_events! {
             ControlPointsCurveEventHandler<'_> {
@@ -154,6 +161,9 @@ pub mod curve {
                     curve::GetSamples,
                     SetInterpolationNodes,
                     GetInterpolationNodes,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
                 }
             }
 
@@ -165,6 +175,9 @@ pub mod curve {
                     DeletePoint,
                     curve::SetSamples,
                     curve::GetSamples,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
                 }
 
                 ! {
@@ -180,6 +193,9 @@ pub mod curve {
                     AddControlPoint,
                     MovePoint,
                     DeletePoint,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
                 }
 
                 ! {
@@ -199,6 +215,9 @@ pub mod curve {
                     DeletePoint,
                     curve::SetSamples,
                     curve::GetSamples,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
                 }
 
                 ! {
@@ -217,6 +236,9 @@ pub mod curve {
                     AddControlPoint,
                     MovePoint,
                     DeletePoint,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
                 }
 
                 ! {
@@ -229,6 +251,11 @@ pub mod curve {
             }
 
             ControlPointsEventHandler<'_> {
+                ~ {
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
+                }
+
                 GetControlPointsLength () -> usize,
                 AddControlPoint { point: Point<f32> } -> (),
                 MovePoint { id: PointId, shift: Vector<f32> } -> (),
@@ -246,7 +273,10 @@ pub mod curve {
                         control_points::MovePoint,
                         control_points::DeletePoint,
                         curve::SetSamples,
-                        curve::GetSamples
+                        curve::GetSamples,
+
+                        canvas::RotateCurve,
+                        canvas::MoveCurve,
                     }
 
                     ! {
