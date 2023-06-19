@@ -15,7 +15,7 @@ impl<'a> InputHandler<'a> {
         Self { command, state }
     }
 
-    pub fn handle_input(mut self, event: InputEvent) -> Result<()> {
+    pub fn handle_input(self, event: InputEvent) -> Result<()> {
         log::debug!("Event received from input: {event:?}");
 
         let command_closed = self.command.is_closed();
@@ -42,14 +42,14 @@ impl<'a> InputHandler<'a> {
         Ok(())
     }
 
-    fn receive_character(&mut self, character: char) {
-        if let CommandState::Open(command) = &mut self.command {
+    fn receive_character(self, character: char) {
+        if let CommandState::Open(command) = self.command {
             command.receive_character(character);
         }
     }
 
-    fn exit_mode(&mut self) {
-        if let CommandState::Closed(command) = &mut self.command {
+    fn exit_mode(self) {
+        if let CommandState::Closed(command) = self.command {
             command.clear_message();
             self.state.mode.exit();
         } else {
@@ -57,16 +57,12 @@ impl<'a> InputHandler<'a> {
         }
     }
 
-    fn change_mode(&mut self, mode: Mode) {
+    fn change_mode(self, mode: Mode) {
         match mode {
             Mode::Curve => self.state.mode.exit(),
             Mode::Point => self.state.mode.enter_point(),
         }
     }
-
-    pub fn handle_mouse_press(self) {}
-
-    pub fn handle_key_press(self) {}
 }
 
 #[derive(Debug)]
