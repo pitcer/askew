@@ -1,4 +1,5 @@
 use chumsky::prelude::*;
+use std::str;
 
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
@@ -12,11 +13,12 @@ pub struct CommandParser<'a> {
 type ParserError<'a> = extra::Err<Simple<'a, u8>>;
 
 impl<'a> CommandParser<'a> {
+    #[must_use]
     pub fn new(input: &'a str) -> Self {
         Self { input }
     }
 
-    pub fn parse(&mut self) -> Result<Command, Error> {
+    pub fn parse(&mut self) -> Result<Command<'a>, Error> {
         log::debug!("{}", self.input);
         Self::parser()
             .parse(self.input.as_bytes())
@@ -27,8 +29,13 @@ impl<'a> CommandParser<'a> {
             })
     }
 
-    fn parser() -> impl Parser<'a, &'a [u8], Command, ParserError<'a>> {
+    fn parser() -> impl Parser<'a, &'a [u8], Command<'a>, ParserError<'a>> {
         let bool = choice((Self::value(b"true", true), Self::value(b"false", false)));
+        let maybe_word = any()
+            .repeated()
+            .at_least(1)
+            .map_slice(|slice| str::from_utf8(slice).expect("slice should be an utf8 string"))
+            .or_not();
 
         let interpolation_nodes = choice((
             Self::value(b"equally_spaced", InterpolationNodes::EquallySpaced),
@@ -66,7 +73,15 @@ impl<'a> CommandParser<'a> {
             just(b"move")
                 .padded()
                 .ignore_then(r#move)
-                .map(|(a, b)| Command::Move(a, b)),
+                .map(|(horizontal, vertical)| Command::Move(horizontal, vertical)),
+            just(b"save")
+                .padded()
+                .ignore_then(maybe_word)
+                .map(Command::Save),
+            just(b"open")
+                .padded()
+                .ignore_then(maybe_word)
+                .map(Command::Open),
         )))
     }
 
@@ -98,12 +113,14 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-pub enum Command {
+pub enum Command<'a> {
     Get(Get),
     Set(Set),
     Toggle(Toggle),
     Rotate(u16),
     Move(f32, f32),
+    Save(Option<&'a str>),
+    Open(Option<&'a str>),
 }
 
 #[derive(Debug)]

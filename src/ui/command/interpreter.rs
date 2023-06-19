@@ -1,52 +1,63 @@
-use anyhow::Result;
 use std::f32::consts;
 
-use crate::canvas::event_handler::CanvasEventHandler;
+use anyhow::Result;
+
 use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{GetConvexHull, MoveCurve, RotateCurve, SetConvexHull};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
-use crate::event::EventHandler;
+use crate::event::DelegateEventHandler;
+use crate::ui::command::message::Message;
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
-use crate::ui::command::Message;
+use crate::ui::frame::event_handler::CommandEventHandler;
+use crate::ui::frame::Frame;
+use crate::ui::state::ProgramState;
 
 #[derive(Debug)]
 pub struct CommandInterpreter<'a> {
-    handler: CanvasEventHandler<'a>,
+    state: ProgramState<'a>,
 }
 
-type InterpretResult = Result<Option<Message>>;
+type InterpretResult<E = anyhow::Error> = Result<Option<Message>, E>;
 
 impl<'a> CommandInterpreter<'a> {
-    pub fn new(event_handler: CanvasEventHandler<'a>) -> Self {
-        Self {
-            handler: event_handler,
-        }
+    #[must_use]
+    pub fn new(state: ProgramState<'a>) -> Self {
+        Self { state }
     }
 
-    pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {
+    fn command_handler(&mut self) -> CommandEventHandler<'_> {
+        let mode = self.state.mode.as_mode();
+        self.state.frame.event_handler(mode)
+    }
+
+    pub fn interpret(&mut self, command: Command<'_>) -> Result<Option<Message>, Error> {
         let result = match command {
             Command::Get(get) => self.interpret_get(get),
             Command::Set(set) => self.interpret_set(set),
             Command::Toggle(toggle) => self.interpret_toggle(toggle),
             Command::Rotate(angle) => self.interpret_rotate(angle),
             Command::Move(horizontal, vertical) => self.interpret_move(horizontal, vertical),
+            Command::Save(path) => self.interpret_save(path),
+            Command::Open(path) => self.interpret_open(path),
         };
         result.map_err(Error::OtherError)
     }
 
     fn interpret_get(&mut self, get: Get) -> InterpretResult {
+        let mut handler = self.command_handler();
+
         let message = match get {
             Get::ConvexHull => {
-                let convex_hull = self.handler.handle(GetConvexHull)?;
+                let convex_hull = handler.delegate(GetConvexHull)?;
                 format!("{convex_hull}")
             }
             Get::InterpolationNodes => {
-                let nodes = self.handler.handle(GetInterpolationNodes)?;
+                let nodes = handler.delegate(GetInterpolationNodes)?;
                 format!("{nodes:?}")
             }
             Get::Samples => {
-                let samples = self.handler.handle(GetSamples)?;
+                let samples = handler.delegate(GetSamples)?;
                 format!("{samples}")
             }
         };
@@ -54,38 +65,58 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_set(&mut self, set: Set) -> InterpretResult {
+        let mut handler = self.command_handler();
+
         match set {
-            Set::ConvexHull(value) => self.handler.handle(SetConvexHull(value))?,
+            Set::ConvexHull(value) => handler.delegate(SetConvexHull(value))?,
             Set::InterpolationNodes(value) => {
-                self.handler.handle(SetInterpolationNodes::new(value))?;
+                handler.delegate(SetInterpolationNodes::new(value))?;
             }
-            Set::Samples(value) => self.handler.handle(SetSamples(value))?,
+            Set::Samples(value) => handler.delegate(SetSamples(value))?,
         }
         Ok(None)
     }
 
     fn interpret_toggle(&mut self, toggle: Toggle) -> InterpretResult {
+        let mut handler = self.command_handler();
+
         match toggle {
             Toggle::ConvexHull => {
-                let value = self.handler.handle(GetConvexHull)?;
-                self.handler.handle(SetConvexHull(!value))?;
+                let value = handler.delegate(GetConvexHull)?;
+                handler.delegate(SetConvexHull(!value))?;
             }
         }
         Ok(None)
     }
 
     fn interpret_rotate(&mut self, angle: u16) -> InterpretResult {
+        let mut handler = self.command_handler();
         let radians = consts::PI * f32::from(angle) / 180.0;
-        self.handler.handle(RotateCurve::new(radians))?;
+        handler.delegate(RotateCurve::new(radians))?;
         Ok(Some(Message::info(format!("Curve rotated by {angle} deg"))))
     }
 
     fn interpret_move(&mut self, horizontal: f32, vertical: f32) -> InterpretResult {
+        let mut handler = self.command_handler();
         let shift = Vector::new(horizontal, vertical);
-        self.handler.handle(MoveCurve::new(shift))?;
+        handler.delegate(MoveCurve::new(shift))?;
         Ok(Some(Message::info(format!(
             "Curve moved by ({horizontal}, {vertical})"
         ))))
+    }
+
+    fn interpret_save(&mut self, path: Option<&str>) -> InterpretResult {
+        let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
+        self.state.frame.save_canvas(path)?;
+        Ok(Some(Message::info(format!("Project saved into {path}"))))
+    }
+
+    fn interpret_open(&mut self, path: Option<&str>) -> InterpretResult {
+        let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
+        let canvas = Frame::open_canvas(path)?;
+        let message = Message::info(format!("Project opened from {path}"));
+        self.state.frame.load_canvas(canvas);
+        Ok(Some(message))
     }
 }
 

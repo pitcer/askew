@@ -6,12 +6,13 @@ use crate::canvas::math::convex_hull::GrahamScan;
 
 pub mod event_handler;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ConvexHull {
     points: CurvePoints,
 }
 
 impl ConvexHull {
+    #[must_use]
     pub fn new(points: CurvePoints) -> Self {
         Self { points }
     }

@@ -7,7 +7,7 @@ use crate::canvas::math::vector::Vector;
 
 pub mod event_handler;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ControlPoints<T> {
     points: Vec<T>,
 }

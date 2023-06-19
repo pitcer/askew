@@ -22,15 +22,14 @@ use crate::{
     event::macros::declare_events,
     event::PointId,
     event::{Change, Direction},
-    ui::frame::event_handler::InputEventHandler,
-    ui::frame::mode::Mode,
+    ui::frame::event_handler::CommandEventHandler,
 };
 
 pub mod input {
     use super::*;
 
     declare_events! {
-        InputEventHandler<'_> {
+        CommandEventHandler<'_> {
             ~ {
                 canvas::AddCurve,
             }
@@ -40,12 +39,7 @@ pub mod input {
             MouseClick (PhysicalPosition<f64>) -> (),
             MovePoint (Direction) -> (),
             Delete () -> (),
-            ChangeMode (Mode) -> (),
             ChangeIndex (Change) -> (),
-            EnterCommand () -> (),
-            ReceiveCharacter (char) -> (),
-            ExecuteCommand () -> (),
-            ExitMode () -> (),
         }
     }
 }

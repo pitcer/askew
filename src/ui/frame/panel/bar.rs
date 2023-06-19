@@ -1,5 +1,5 @@
 use crate::config::rgb::{Alpha, Rgb};
-use crate::ui::frame::font::{FontLayout, FontLoader, GlyphPixel, GlyphRaster, GlyphRasterizer};
+use crate::ui::painter::font::{FontLayout, FontLoader, GlyphPixel, GlyphRaster, GlyphRasterizer};
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
 

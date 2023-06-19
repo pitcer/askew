@@ -1,5 +1,10 @@
 pub mod color_scheme;
 pub mod command;
 pub mod frame;
+pub mod input_handler;
+pub mod mode;
+pub mod painter;
+pub mod runner;
+pub mod state;
 pub mod window;
-pub mod window_event_handler;
+pub mod window_handler;

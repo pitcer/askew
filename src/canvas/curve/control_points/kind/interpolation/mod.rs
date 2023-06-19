@@ -10,7 +10,7 @@ use crate::{
 
 pub mod event_handler;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Interpolation {
     points: CurvePoints,
     samples: Samples,
@@ -75,7 +75,7 @@ impl GetControlPoints for Interpolation {
     }
 }
 
-#[derive(Debug, Copy, Clone, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum InterpolationNodes {
     EquallySpaced,
     Chebyshev,

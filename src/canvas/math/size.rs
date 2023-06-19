@@ -3,7 +3,7 @@ use std::num::NonZeroU32;
 use tiny_skia::IntSize;
 use winit::dpi::PhysicalSize;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Size<T> {
     width: T,
     height: T,

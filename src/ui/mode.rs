@@ -31,6 +31,14 @@ impl ModeState {
             other => other,
         });
     }
+
+    #[must_use]
+    pub fn as_mode(&self) -> Mode {
+        match self {
+            ModeState::Curve(_) => Mode::Curve,
+            ModeState::Point(_) => Mode::Point,
+        }
+    }
 }
 
 impl Display for ModeState {

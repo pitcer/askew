@@ -89,7 +89,7 @@ where
     fn draw_curve(&mut self) {
         if let Some(path) = self.curve.to_path(TinySkiaPathConverter) {
             let paint = PaintBuilder::new()
-                .color(self.properties.line_color)
+                .rgb_color(self.properties.line_color)
                 .build();
             let stroke = Stroke {
                 width: self.properties.line_width,
@@ -108,7 +108,7 @@ where
         if self.properties.show_convex_hull && self.curve.control_points().length() >= 3 {
             if let Some(path) = self.create_convex_hull_path() {
                 let paint = PaintBuilder::new()
-                    .color(self.properties.convex_hull_color)
+                    .rgb_color(self.properties.convex_hull_color)
                     .build();
                 let stroke = Stroke {
                     width: self.properties.line_width,
@@ -122,7 +122,7 @@ where
     fn draw_control_points(&mut self) {
         if let Some(points_path) = self.create_points_path(self.properties) {
             let points_paint = PaintBuilder::new()
-                .color(self.properties.control_points_color)
+                .rgb_color(self.properties.control_points_color)
                 .build();
             self.panel
                 .draw_fill_path(&points_path, &points_paint, FillRule::Winding);
@@ -137,7 +137,7 @@ where
         {
             let point = point.as_ref();
             let points_paint = PaintBuilder::new()
-                .color(self.properties.current_control_point_color)
+                .rgb_color(self.properties.current_control_point_color)
                 .build();
             let mut path = PathBuilder::new();
             path.push_circle(

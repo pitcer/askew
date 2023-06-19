@@ -9,14 +9,14 @@ use crate::{
 
 pub mod event_handler;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RationalBezier {
     points: RationalBezierPoints,
     samples: Samples,
     algorithm: RationalBezierAlgorithm,
 }
 
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum RationalBezierAlgorithm {
     Generic,
     DeCasteljau,

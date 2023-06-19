@@ -3,22 +3,6 @@ pub use declare::*;
 pub mod declare;
 pub mod macros;
 
-#[derive(Debug)]
-pub enum InputEvent {
-    ToggleConvexHull(input::ToggleConvexHull),
-    ChangeWeight(input::ChangeWeight),
-    MovePoint(input::MovePoint),
-    MouseClick(input::MouseClick),
-    AddCurve(canvas::AddCurve),
-    Delete(input::Delete),
-    ChangeIndex(input::ChangeIndex),
-    EnterCommand(input::EnterCommand),
-    ReceiveCharacter(input::ReceiveCharacter),
-    ExecuteCommand(input::ExecuteCommand),
-    ExitMode(input::ExitMode),
-    ChangeMode(input::ChangeMode),
-}
-
 pub trait Event {
     type Return;
 }

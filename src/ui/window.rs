@@ -42,6 +42,7 @@ impl Window {
         self.window.request_redraw();
     }
 
+    #[must_use]
     pub fn size_rectangle(&self) -> Rectangle<u32> {
         let size = self.window.inner_size();
         let origin = Point::new(0, 0);

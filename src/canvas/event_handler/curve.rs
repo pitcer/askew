@@ -1,9 +1,6 @@
-use crate::canvas::curve::control_points::{ControlPointsCurveKind, WeightedPoint};
-use crate::canvas::curve::formula::FormulaCurveKind;
-use crate::canvas::curve::CurveKind;
+use crate::canvas::curve::control_points::WeightedPoint;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math;
-use crate::config::CurveType;
 use crate::event::canvas::{
     AddPoint, ChangeCurrentPointIndex, ChangeCurrentPointWeight, DeleteCurrentPoint, GetCurveType,
     MoveCurrentPoint, SetCurveType,
@@ -96,18 +93,7 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
 
 impl EventHandler<GetCurveType> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: GetCurveType) -> HandlerResult<GetCurveType> {
-        Ok(match self.canvas.current_curve_mut() {
-            CurveKind::ControlPoints(curve) => match curve {
-                ControlPointsCurveKind::Polyline(_) => CurveType::Polyline,
-                ControlPointsCurveKind::ConvexHull(_) => CurveType::ConvexHull,
-                ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
-                ControlPointsCurveKind::Bezier(_) => CurveType::Bezier,
-                ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
-            },
-            CurveKind::Formula(curve) => match curve {
-                FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,
-            },
-        })
+        Ok(self.canvas.curve_type())
     }
 }
 

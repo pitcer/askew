@@ -8,7 +8,7 @@ pub mod event_handler;
 pub mod formula;
 pub mod samples;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum CurveKind {
     ControlPoints(ControlPointsCurveKind),
     Formula(FormulaCurveKind),

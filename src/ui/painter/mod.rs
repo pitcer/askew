@@ -2,17 +2,19 @@ use anyhow::Result;
 
 use crate::config::rgb::{Alpha, Rgb};
 use crate::config::Config;
-use crate::event::canvas::GetCurveType;
-use crate::event::EventHandler;
 use crate::ui::color_scheme::ColorScheme;
-use crate::ui::command::{CommandState, MessageType};
-use crate::ui::frame::font::{FontLayout, FontLoader, GlyphRasterizer};
+use crate::ui::command::message::MessageType;
+use crate::ui::command::CommandState;
+use crate::ui::painter::font::{FontLayout, FontLoader, GlyphRasterizer};
 use crate::ui::frame::panel::bar::TextPanel;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
-use crate::ui::frame::view::FrameView;
+use view::WindowView;
 
-pub struct Drawer {
+pub mod font;
+pub mod view;
+
+pub struct Painter {
     font_loader: FontLoader,
     glyph_rasterizer: GlyphRasterizer,
     status_layout: FontLayout,
@@ -20,7 +22,7 @@ pub struct Drawer {
     color_scheme: ColorScheme,
 }
 
-impl Drawer {
+impl Painter {
     pub fn new(config: &Config) -> Result<Self> {
         let font_loader = FontLoader::new(&config.font_path)?;
         let glyph_rasterizer = GlyphRasterizer::new();
@@ -36,12 +38,12 @@ impl Drawer {
         })
     }
 
-    pub fn draw(&mut self, frame: FrameView<'_>, mut panel: Panel<'_>) -> Result<()> {
+    pub fn paint(&mut self, view: WindowView<'_>, mut panel: Panel<'_>) -> Result<()> {
         panel.fill(Pixel::from_rgba(
             self.color_scheme.background_color,
             Alpha::max(),
         ));
-        if let Some(background) = &frame.background {
+        if let Some(background) = &view.frame.background() {
             panel.draw_pixmap(0, 0, background.as_ref());
         }
         let area = panel.area();
@@ -49,21 +51,18 @@ impl Drawer {
         let split_layout = [size.height() as usize - 44, 22, 22];
         let [panel, status, command] = panel.split_vertical(split_layout);
 
-        let mut name = frame
-            .canvas
-            .event_handler()
-            .handle(GetCurveType)?
-            .to_string();
+        let canvas = &view.frame.canvas();
+        let mut name = canvas.curve_type().to_string();
         name.truncate(6);
         self.status_layout
             .setup(&self.font_loader)
             .append_text(&format!(
                 "{} {} {}/{} {}",
-                frame.mode,
+                view.mode,
                 name,
-                frame.canvas.properties().current_curve + 1,
-                frame.canvas.curves().len(),
-                frame.canvas.properties().current_point_index
+                canvas.properties().current_curve + 1,
+                canvas.curves().len(),
+                canvas.properties().current_point_index
             ));
         let mut status_bar = TextPanel::new(
             status,
@@ -78,11 +77,11 @@ impl Drawer {
         );
 
         let mut setup = self.command_layout.setup(&self.font_loader);
-        match &frame.command {
+        match &view.command {
             CommandState::Closed(command) => {
                 if let Some(message) = command.message() {
                     let color = Self::message_color(message.message_type(), &self.color_scheme);
-                    setup.append_color_text(message.message(), color);
+                    setup.append_color_text(message.text(), color);
                 } else {
                     setup.append_text(" ");
                 }
@@ -105,7 +104,7 @@ impl Drawer {
             &mut self.glyph_rasterizer,
         );
 
-        frame.canvas.rasterize(panel)?;
+        canvas.rasterize(panel)?;
 
         Ok(())
     }

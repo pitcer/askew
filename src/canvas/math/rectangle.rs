@@ -6,7 +6,7 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::size::Size;
 
 /// Rectangle represented by origin (left bottom point) and its size.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Rectangle<T> {
     origin: Point<T>,
     size: Size<T>,

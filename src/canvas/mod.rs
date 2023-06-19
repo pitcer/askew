@@ -1,4 +1,5 @@
 use anyhow::Result;
+use rand::Rng;
 
 use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
@@ -13,10 +14,13 @@ use crate::canvas::curve::formula::FormulaCurveKind;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::curve::CurveKind;
 use crate::canvas::event_handler::CanvasEventHandler;
+use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
 use crate::config::{Config, CurveType};
+use crate::event::canvas::AddPoint;
+use crate::event::EventHandler;
 use crate::ui::frame::panel::Panel;
 
 pub mod curve;
@@ -26,21 +30,30 @@ pub mod paint;
 pub mod properties;
 mod rasterizer;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Canvas {
     curves: Vec<CurveKind>,
+    size: Rectangle<f32>,
     properties: CanvasProperties,
 }
 
 impl Canvas {
     #[must_use]
-    pub fn new(area: Rectangle<f32>, config: &Config) -> Self {
-        let properties = CanvasProperties::new(area, config);
+    pub fn new(size: Rectangle<f32>, config: &Config) -> Self {
+        let properties = CanvasProperties::new(config);
         let curves = Vec::with_capacity(1);
-        let mut canvas = Self { curves, properties };
+        let mut canvas = Self {
+            curves,
+            size,
+            properties,
+        };
         let curve = canvas.create_curve(config.curve_type);
         canvas.curves.push(curve);
         canvas
+    }
+
+    pub fn resize(&mut self, size: Rectangle<f32>) {
+        self.size = size;
     }
 
     pub fn event_handler(&mut self) -> CanvasEventHandler<'_> {
@@ -50,6 +63,20 @@ impl Canvas {
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
         for curve in &self.curves {
             Rasterizer.rasterize(curve, &self.properties, &mut panel)?;
+        }
+        Ok(())
+    }
+
+    pub fn generate_random_points(&mut self, number_of_points: u32) -> Result<()> {
+        let mut random = rand::thread_rng();
+        let origin = self.size.origin();
+        let size = self.size.size();
+
+        for _ in 0..number_of_points {
+            let horizontal = random.gen_range(origin.horizontal()..=size.width());
+            let vertical = random.gen_range(origin.vertical()..=size.height());
+            let point = Point::new(horizontal, vertical);
+            self.event_handler().handle(AddPoint::new(point))?;
         }
         Ok(())
     }
@@ -90,6 +117,27 @@ impl Canvas {
         }
     }
 
+    #[must_use]
+    pub fn curve_type(&self) -> CurveType {
+        match self.current_curve() {
+            CurveKind::ControlPoints(curve) => match curve {
+                ControlPointsCurveKind::Polyline(_) => CurveType::Polyline,
+                ControlPointsCurveKind::ConvexHull(_) => CurveType::ConvexHull,
+                ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
+                ControlPointsCurveKind::Bezier(_) => CurveType::Bezier,
+                ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
+            },
+            CurveKind::Formula(curve) => match curve {
+                FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,
+            },
+        }
+    }
+
+    #[must_use]
+    pub fn current_curve(&self) -> &CurveKind {
+        &self.curves[self.properties.current_curve]
+    }
+
     pub fn current_curve_mut(&mut self) -> &mut CurveKind {
         &mut self.curves[self.properties.current_curve]
     }
@@ -100,12 +148,12 @@ impl Canvas {
     }
 
     #[must_use]
-    pub fn properties_mut(&mut self) -> &mut CanvasProperties {
-        &mut self.properties
+    pub fn properties(&self) -> &CanvasProperties {
+        &self.properties
     }
 
     #[must_use]
-    pub fn properties(&self) -> &CanvasProperties {
-        &self.properties
+    pub fn size(&self) -> Rectangle<f32> {
+        self.size
     }
 }

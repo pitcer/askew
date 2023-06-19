@@ -5,7 +5,7 @@ use crate::canvas::curve::formula::trochoid::Trochoid;
 pub mod event_handler;
 pub mod trochoid;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum FormulaCurveKind {
     Trochoid(Trochoid),
 }

@@ -1,84 +1,50 @@
+use std::fs::File;
+use std::path::Path;
+
 use anyhow::{anyhow, Result};
 use image::{EncodableLayout, ImageFormat, RgbImage};
-use rand::Rng;
 use tiny_skia::IntSize;
 use tiny_skia::Pixmap;
-use winit::dpi::PhysicalSize;
-use winit::window::{Window as WinitWindow, WindowId};
 
-use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::Canvas;
 use crate::config::rgb::{Alpha, Rgb};
 use crate::config::{Config, SaveFormat};
-use crate::event::canvas::AddPoint;
-use crate::event::{EventHandler, InputEvent};
-use crate::ui::command::CommandState;
-use crate::ui::frame::drawer::Drawer;
-use crate::ui::frame::event_handler::InputEventHandler;
-use crate::ui::frame::mode::ModeState;
+use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
-use crate::ui::frame::view::FrameView;
-use crate::ui::window::Window;
+use crate::ui::frame::properties::FrameProperties;
+use crate::ui::mode::Mode;
 
-pub mod drawer;
 pub mod event_handler;
-pub mod font;
-pub mod mode;
 pub mod panel;
-pub mod view;
+pub mod properties;
 
+#[derive(Debug)]
 pub struct Frame {
-    window: Window,
     canvas: Canvas,
+    size: Rectangle<u32>,
+    properties: FrameProperties,
     background: Option<Pixmap>,
-    command: CommandState,
-    mode: ModeState,
-    drawer: Drawer,
 }
 
 impl Frame {
-    pub fn new(window: WinitWindow, config: &Config) -> Result<Self> {
-        let window = Window::from_winit(window)?;
+    pub fn new(size: Rectangle<u32>, config: &Config) -> Result<Self> {
         let background = Self::load_background(config)?;
 
-        let window_rectangle = window.size_rectangle();
-        let canvas_rectangle: Rectangle<f32> = window_rectangle.into();
-        let mut canvas = Canvas::new(canvas_rectangle, config);
+        let mut canvas = Canvas::new(size.into(), config);
+        let properties = FrameProperties::new(config);
 
         if config.random_points > 0 {
-            Self::generate_random_points(&mut canvas, config.random_points)?;
+            canvas.generate_random_points(config.random_points)?;
         }
-
-        let command = CommandState::initial();
-        let mode = ModeState::initial();
-        let drawer = Drawer::new(config)?;
 
         Ok(Self {
-            window,
             canvas,
+            size,
+            properties,
             background,
-            command,
-            mode,
-            drawer,
         })
-    }
-
-    fn generate_random_points(canvas: &mut Canvas, number_of_points: u32) -> Result<()> {
-        let mut random = rand::thread_rng();
-
-        let canvas_rectangle = canvas.properties().area;
-        let origin = canvas_rectangle.origin();
-        let size = canvas_rectangle.size();
-
-        for _ in 0..number_of_points {
-            let horizontal = random.gen_range(origin.horizontal()..=size.width());
-            let vertical = random.gen_range(origin.vertical()..=size.height());
-            let point = Point::new(horizontal, vertical);
-            canvas.event_handler().handle(AddPoint::new(point))?;
-        }
-        Ok(())
     }
 
     fn load_background(config: &Config) -> Result<Option<Pixmap>> {
@@ -102,81 +68,34 @@ impl Frame {
         }
     }
 
-    pub fn event_handler(&mut self) -> InputEventHandler<'_> {
-        InputEventHandler::new(self)
+    pub fn resize(&mut self, size: Rectangle<u32>) {
+        self.canvas.resize(size.into());
+        self.size = size;
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) -> Result<()> {
-        self.window.resize_surface(size)
+    pub fn event_handler(&mut self, mode: Mode) -> CommandEventHandler<'_> {
+        CommandEventHandler::new(self, mode)
     }
 
-    pub fn receive_event(&mut self, event: InputEvent) -> Result<()> {
-        log::debug!("Event received from input: {event:?}");
-
-        let command_closed = self.command.is_closed();
-        let mut handler = self.event_handler();
-        match event {
-            InputEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
-            InputEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
-            InputEvent::MovePoint(event) if command_closed => handler.handle(event)?,
-            InputEvent::MouseClick(event) if command_closed => handler.handle(event)?,
-            InputEvent::AddCurve(event) if command_closed => handler.handle(event)?,
-            InputEvent::Delete(event) if command_closed => handler.handle(event)?,
-            InputEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
-            InputEvent::ChangeMode(event) if command_closed => handler.handle(event)?,
-
-            InputEvent::EnterCommand(event) => handler.handle(event)?,
-            InputEvent::ReceiveCharacter(event) => handler.handle(event)?,
-            InputEvent::ExecuteCommand(event) => handler.handle(event)?,
-            InputEvent::ExitMode(event) => handler.handle(event)?,
-
-            InputEvent::ToggleConvexHull(_)
-            | InputEvent::ChangeWeight(_)
-            | InputEvent::MovePoint(_)
-            | InputEvent::MouseClick(_)
-            | InputEvent::AddCurve(_)
-            | InputEvent::Delete(_)
-            | InputEvent::ChangeIndex(_)
-            | InputEvent::ChangeMode(_) => {}
+    pub fn handle_close(&mut self) -> Result<()> {
+        if let Some(format) = self.properties.save_format {
+            self.save_image(format)?;
         }
-
-        self.window.request_redraw();
-
         Ok(())
     }
 
-    pub fn draw(&mut self) -> Result<()> {
-        let area = self.window.size_rectangle();
-        let mut buffer = self.window.buffer_mut()?;
-        let panel = Panel::from_buffer(&mut buffer, area);
-        let view = FrameView::new(
-            &mut self.canvas,
-            &self.background,
-            &self.command,
-            &self.mode,
-        );
-
-        self.drawer.draw(view, panel)?;
-
-        buffer
-            .present()
-            .map_err(|error| anyhow!(error.to_string()))?;
-        Ok(())
-    }
-
-    pub fn save(&mut self, format: SaveFormat) -> Result<()> {
+    pub fn save_image(&self, format: SaveFormat) -> Result<()> {
         match format {
             SaveFormat::Png => {
                 const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), Alpha::min());
-                let area = self.window.size_rectangle();
-                let mut buffer = vec![EMPTY_PIXEL; area.area() as usize];
-                let panel = Panel::new(&mut buffer, area);
+                let mut buffer = vec![EMPTY_PIXEL; self.size.area() as usize];
+                let panel = Panel::new(&mut buffer, self.size);
                 self.canvas.rasterize(panel)?;
                 let buffer = buffer
                     .iter()
                     .flat_map(|pixel| pixel.into_rgb_array())
                     .collect::<Vec<_>>();
-                let size = area.size();
+                let size = self.size.size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
                     .ok_or_else(|| anyhow!("image should fit"))?;
                 image.save_with_format("curve.png", ImageFormat::Png)?;
@@ -185,7 +104,36 @@ impl Frame {
         Ok(())
     }
 
-    pub fn has_id(&self, id: WindowId) -> bool {
-        self.window.has_id(id)
+    pub fn save_canvas(&self, path: impl AsRef<Path>) -> Result<()> {
+        let file = File::create(path)?;
+        serde_json::to_writer(file, &self.canvas)?;
+        Ok(())
+    }
+
+    pub fn open_canvas(path: impl AsRef<Path>) -> Result<Canvas> {
+        let file = File::open(path)?;
+        let canvas = serde_json::from_reader(file)?;
+        Ok(canvas)
+    }
+
+    pub fn load_canvas(&mut self, mut canvas: Canvas) {
+        let size = self.size.into();
+        canvas.resize(size);
+        self.canvas = canvas;
+    }
+
+    #[must_use]
+    pub fn canvas(&self) -> &Canvas {
+        &self.canvas
+    }
+
+    #[must_use]
+    pub fn background(&self) -> &Option<Pixmap> {
+        &self.background
+    }
+
+    #[must_use]
+    pub fn properties(&self) -> &FrameProperties {
+        &self.properties
     }
 }

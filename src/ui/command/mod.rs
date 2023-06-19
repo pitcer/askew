@@ -2,12 +2,15 @@ use std::fmt::{Debug, Write};
 
 use anyhow::Result;
 
-use crate::canvas::event_handler::CanvasEventHandler;
+use message::{Message, MessageType};
+
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::parser::CommandParser;
+use crate::ui::state::ProgramState;
 
-mod interpreter;
-mod parser;
+pub mod interpreter;
+pub mod message;
+pub mod parser;
 
 #[derive(Debug)]
 pub enum CommandState {
@@ -35,9 +38,9 @@ impl CommandState {
         });
     }
 
-    pub fn execute(&mut self, event_handler: CanvasEventHandler<'_>) {
+    pub fn execute(&mut self, program_state: ProgramState<'_>) {
         replace_with::replace_with_or_abort(self, |state| match state {
-            CommandState::Open(command) => CommandState::Closed(command.execute(event_handler)),
+            CommandState::Open(command) => CommandState::Closed(command.execute(program_state)),
             other => other,
         });
     }
@@ -58,43 +61,6 @@ pub struct CommandClosed {
     message: Option<Message>,
 }
 
-#[derive(Debug)]
-pub struct Message {
-    message: String,
-    message_type: MessageType,
-}
-
-impl Message {
-    #[must_use]
-    pub fn new(message: String, message_type: MessageType) -> Self {
-        Self {
-            message,
-            message_type,
-        }
-    }
-
-    #[must_use]
-    pub fn info(message: String) -> Self {
-        Self::new(message, MessageType::Info)
-    }
-
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
-    #[must_use]
-    pub fn message_type(&self) -> &MessageType {
-        &self.message_type
-    }
-}
-
-#[derive(Debug)]
-pub enum MessageType {
-    Info,
-    Error,
-}
-
 impl CommandClosed {
     #[must_use]
     pub fn new(message: Option<Message>) -> Self {
@@ -103,10 +69,7 @@ impl CommandClosed {
 
     #[must_use]
     pub fn open(self) -> CommandOpen {
-        let mut message = self
-            .message
-            .map(|message| message.message)
-            .unwrap_or_default();
+        let mut message = self.message.map(Message::into_text).unwrap_or_default();
         message.clear();
         CommandOpen::new(message)
     }
@@ -141,8 +104,8 @@ impl CommandOpen {
     }
 
     #[must_use]
-    pub fn execute(mut self, event_handler: CanvasEventHandler<'_>) -> CommandClosed {
-        let result = self.execute_command(event_handler);
+    pub fn execute(mut self, state: ProgramState<'_>) -> CommandClosed {
+        let result = self.execute_command(state);
         let message = result.unwrap_or_else(|error| {
             self.buffer.clear();
             self.buffer
@@ -154,10 +117,10 @@ impl CommandOpen {
         CommandClosed::new(message)
     }
 
-    fn execute_command(&self, event_handler: CanvasEventHandler<'_>) -> Result<Option<Message>> {
+    fn execute_command(&self, state: ProgramState<'_>) -> Result<Option<Message>> {
         let mut parser = CommandParser::new(&self.buffer);
         let result = parser.parse()?;
-        let mut interpreter = CommandInterpreter::new(event_handler);
+        let mut interpreter = CommandInterpreter::new(state);
         let message = interpreter.interpret(result)?;
         Ok(message)
     }

@@ -6,7 +6,7 @@ use crate::canvas::curve::samples::event_handler::SamplesEventHandler;
 
 pub mod event_handler;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Samples {
     samples: usize,
 }

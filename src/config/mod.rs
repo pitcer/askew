@@ -121,7 +121,7 @@ pub struct Config {
     pub ui_text_error_color: <UiTextErrorColor as Property>::Type,
 }
 
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum CurveType {
     Polyline,
     ConvexHull,

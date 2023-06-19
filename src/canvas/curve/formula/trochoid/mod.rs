@@ -5,7 +5,7 @@ use crate::canvas::math::point::Point;
 
 pub mod event_handler;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Trochoid {
     samples: Samples,
     properties: TrochoidProperties,
@@ -45,7 +45,7 @@ impl ToPath for Trochoid {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TrochoidProperties {
     pub range: (f32, f32),
     pub r_1: f32,

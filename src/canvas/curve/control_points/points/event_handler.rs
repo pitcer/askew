@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;

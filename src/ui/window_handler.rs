@@ -1,79 +1,36 @@
 use anyhow::Result;
-use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::dpi::PhysicalPosition;
 use winit::event::{
-    DeviceId, ElementState, Event, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode,
-    WindowEvent,
-};
-use winit::event_loop::ControlFlow;
-
-use input::{
-    ChangeIndex, ChangeMode, ChangeWeight, Delete, EnterCommand, ExecuteCommand, ExitMode,
-    MouseClick, MovePoint, ReceiveCharacter, ToggleConvexHull,
+    DeviceId, ElementState, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent,
 };
 
-use crate::config::{Config, SaveFormat};
-use crate::event::{canvas, input, Change, Direction, InputEvent};
-use crate::ui::frame::mode::Mode;
-use crate::ui::frame::Frame;
+use crate::event::input::{
+    ChangeIndex, ChangeWeight, Delete, MouseClick, MovePoint, ToggleConvexHull,
+};
+use crate::event::{canvas, Change, Direction};
+use crate::ui::input_handler::InputEvent;
+use crate::ui::mode::Mode;
 
 pub struct WindowEventHandler {
-    frame: Frame,
     cursor_position: PhysicalPosition<f64>,
     modifiers: ModifiersState,
-    save_format: Option<SaveFormat>,
 }
 
 impl WindowEventHandler {
     #[must_use]
-    pub fn new(frame: Frame, config: &Config) -> Self {
+    pub fn new() -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
         let modifiers = ModifiersState::empty();
         Self {
-            frame,
             cursor_position,
             modifiers,
-            save_format: config.save_format,
         }
     }
 
-    pub fn run(&mut self, event: Event<'_, ()>, control_flow: &mut ControlFlow) -> Result<()> {
-        control_flow.set_wait();
-
+    pub fn handle(&mut self, event: WindowEvent<'_>) -> Result<Option<InputEvent>> {
         match event {
-            Event::RedrawRequested(window_id) if self.frame.has_id(window_id) => {
-                self.frame.draw()?;
-            }
-            Event::WindowEvent { event, window_id } if self.frame.has_id(window_id) => {
-                let event = self.handle_window_event(event, control_flow)?;
-                if let Some(event) = event {
-                    self.frame.receive_event(event)?;
-                }
-            }
-            _ => {}
-        }
-
-        Ok(())
-    }
-
-    fn handle_window_event(
-        &mut self,
-        event: WindowEvent<'_>,
-        control_flow: &mut ControlFlow,
-    ) -> Result<Option<InputEvent>> {
-        match event {
-            WindowEvent::Resized(size) => {
-                self.handle_resized(size)?;
-            }
-            WindowEvent::CloseRequested => {
-                if let Some(format) = self.save_format {
-                    self.frame.save(format)?;
-                }
-                control_flow.set_exit();
-            }
             WindowEvent::ReceivedCharacter(character) => {
-                return Ok(Some(InputEvent::ReceiveCharacter(ReceiveCharacter(
-                    character,
-                ))));
+                return Ok(Some(InputEvent::ReceiveCharacter(character)));
             }
             WindowEvent::KeyboardInput {
                 device_id, input, ..
@@ -95,10 +52,6 @@ impl WindowEventHandler {
             _ => {}
         }
         Ok(None)
-    }
-
-    fn handle_resized(&mut self, size: PhysicalSize<u32>) -> Result<()> {
-        self.frame.resize(size)
     }
 
     fn handle_cursor_moved(&mut self, _device_id: DeviceId, position: PhysicalPosition<f64>) {
@@ -129,11 +82,11 @@ impl WindowEventHandler {
         }
 
         match input.virtual_keycode {
-            Some(VirtualKeyCode::Colon) => Some(InputEvent::EnterCommand(EnterCommand)),
-            Some(VirtualKeyCode::Return) => Some(InputEvent::ExecuteCommand(ExecuteCommand)),
-            Some(VirtualKeyCode::Escape) => Some(InputEvent::ExitMode(ExitMode)),
+            Some(VirtualKeyCode::Colon) => Some(InputEvent::EnterCommand),
+            Some(VirtualKeyCode::Return) => Some(InputEvent::ExecuteCommand),
+            Some(VirtualKeyCode::Escape) => Some(InputEvent::ExitMode),
 
-            Some(VirtualKeyCode::C) => Some(InputEvent::ChangeMode(ChangeMode(Mode::Point))),
+            Some(VirtualKeyCode::C) => Some(InputEvent::ChangeMode(Mode::Point)),
             Some(VirtualKeyCode::A) => Some(InputEvent::AddCurve(canvas::AddCurve)),
             Some(VirtualKeyCode::D) => Some(InputEvent::Delete(Delete)),
 
@@ -155,5 +108,11 @@ impl WindowEventHandler {
             Some(VirtualKeyCode::Right) => Some(InputEvent::MovePoint(MovePoint(Direction::Right))),
             _ => None,
         }
+    }
+}
+
+impl Default for WindowEventHandler {
+    fn default() -> Self {
+        Self::new()
     }
 }

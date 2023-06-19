@@ -53,7 +53,9 @@ use winit::window::WindowBuilder;
 
 use crate::config::Config;
 use crate::ui::frame::Frame;
-use crate::ui::window_event_handler::WindowEventHandler;
+use crate::ui::painter::Painter;
+use crate::ui::runner::WindowRunner;
+use crate::ui::window::Window;
 
 pub mod canvas;
 pub mod config;
@@ -69,8 +71,11 @@ pub fn main() -> Result<()> {
     let window = WindowBuilder::new()
         .with_title("askew")
         .build(&event_loop)?;
-    let frame = Frame::new(window, &config)?;
-    let mut handler = WindowEventHandler::new(frame, &config);
+    let window = Window::from_winit(window)?;
+    let size = window.size_rectangle();
+    let frame = Frame::new(size, &config)?;
+    let painter = Painter::new(&config)?;
+    let mut handler = WindowRunner::new(window, frame, painter);
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);
         result.expect("Error in event loop");

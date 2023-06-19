@@ -22,7 +22,7 @@ pub trait GetControlPoints {
     fn control_points(&self) -> &ControlPoints<Self::Point>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum ControlPointsCurveKind {
     Polyline(Polyline),
     ConvexHull(ConvexHull),
@@ -37,7 +37,7 @@ impl ControlPointsCurveKind {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct WeightedPoint<T, W> {
     point: Point<T>,
     weight: W,

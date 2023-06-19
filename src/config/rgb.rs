@@ -6,7 +6,7 @@ use chumsky::Parser;
 
 use crate::parser;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Rgb {
     red: u8,
     green: u8,

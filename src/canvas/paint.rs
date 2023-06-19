@@ -16,6 +16,12 @@ impl<'a> PaintBuilder<'a> {
     }
 
     #[must_use]
+    pub fn rgb_color(self, color: Rgb) -> PaintBuilder<'a> {
+        let color = PaintColor::from_rgb(color);
+        self.color(color)
+    }
+
+    #[must_use]
     pub fn color(mut self, color: PaintColor) -> PaintBuilder<'a> {
         self.paint.set_color(color.0);
         self

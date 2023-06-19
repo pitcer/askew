@@ -1,5 +1,3 @@
-use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
-use crate::event::{canvas, curve, Error};
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -7,7 +5,9 @@ use crate::{
     canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
     canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::ControlPointsCurveKind,
+    event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes},
     event::macros::delegate_events,
+    event::{canvas, curve, Error},
     event::{DelegateEvent, Event, EventHandler, HandlerResult},
 };
 
