@@ -3,16 +3,22 @@
 Toy curves editor made for Curves and Surfaces in Computer Graphics course at university.
 It features CPU-based computations and rendering, very low memory footprint (13M after start) and IPC (see [scripts/](https://github.com/pitcer/askew/tree/master/scripts)).
 
-## How to compile and run
+## How to run
+
+* [download](https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip) and unzip a `JetBrainsMonoNL-Regular.ttf` font file
+* download the latest binary from [releases](https://github.com/pitcer/askew/releases/download/v0.1.1/askew) and place it in the same directory as font file
+* `chmod +x askew`
+* `./askew run`
+
+List of initial parameters is available under `./askew run --help`.
+
+## Compilation
 
 First, you need to install the latest stable [Rust toolchain](https://www.rust-lang.org/tools/install). Then follow these instructions:
 
 * `git clone https://github.com/pitcer/askew.git`
 * `cd askew`
-* [download](https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip) and unzip here a `JetBrainsMonoNL-Regular.ttf` font file
 * `cargo run --release -- run`
-
-Initial settings are available under `cargo run --release -- run --help`.
 
 You can also directly use compiled binary at `./target/release/askew`.
 
