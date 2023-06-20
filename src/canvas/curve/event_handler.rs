@@ -3,10 +3,10 @@ use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
 use crate::canvas::curve::CurveKind;
 use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
+use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::GetPoint;
 use crate::event::macros::delegate_events;
 use crate::event::{curve, DelegateEvent, Error, Event, EventHandler, HandlerResult};
-use crate::event::curve::formula::SetTrochoidProperties;
 
 pub struct CurveEventHandler<'a> {
     curve: &'a mut CurveKind,

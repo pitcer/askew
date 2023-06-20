@@ -1,7 +1,7 @@
 use crate::canvas::curve::formula::trochoid::Trochoid;
+use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{EventHandler, HandlerResult};
-use crate::event::curve::formula::SetTrochoidProperties;
 
 pub struct TrochoidEventHandler<'a> {
     curve: &'a mut Trochoid,
