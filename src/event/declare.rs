@@ -76,6 +76,10 @@ pub mod canvas {
 
             GetCurrentPoint () -> Point<f32>,
             SelectPoint { guess: Point<f32>, radius: f32 } -> Option<PointId>,
+
+            GetLength (usize) -> usize,
+            GetPointOnCurve (usize, PointId) -> Point<f32>,
+            MovePointOnCurve (usize, PointId, Vector<f32>) -> (),
         }
     }
 }

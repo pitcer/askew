@@ -4,7 +4,10 @@ use anyhow::Result;
 
 use crate::canvas::math::vector::Vector;
 use crate::config::CurveType;
-use crate::event::canvas::{GetConvexHull, MoveCurve, RotateCurve, SetConvexHull, SetCurveType};
+use crate::event::canvas::{
+    GetConvexHull, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve, RotateCurve,
+    SetConvexHull, SetCurveType,
+};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::DelegateEventHandler;
@@ -41,6 +44,9 @@ impl<'a> CommandInterpreter<'a> {
             Command::Save(path) => self.interpret_save(path),
             Command::Open(path) => self.interpret_open(path),
             Command::SetCurveType(curve_type) => self.interpret_set_curve_type(curve_type),
+            Command::GetLength(curve_id) => self.get_length(curve_id),
+            Command::GetPoint(curve_id, id) => self.get_point(curve_id, id),
+            Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
         };
         result.map_err(Error::OtherError)
     }
@@ -129,6 +135,28 @@ impl<'a> CommandInterpreter<'a> {
         Ok(Some(Message::info(format!(
             "Set curve type to {curve_type}"
         ))))
+    }
+
+    fn get_length(&mut self, curve_id: usize) -> InterpretResult {
+        let result = self.command_handler().delegate(GetLength(curve_id))?;
+        Ok(Some(Message::info(format!("{result}"))))
+    }
+
+    fn get_point(&mut self, curve_id: usize, point_id: usize) -> InterpretResult {
+        let result = self
+            .command_handler()
+            .delegate(GetPointOnCurve(curve_id, point_id))?;
+        Ok(Some(Message::info(format!(
+            "{},{}",
+            result.horizontal(),
+            result.vertical()
+        ))))
+    }
+
+    fn move_point(&mut self, curve_id: usize, point_id: usize, x: f32, y: f32) -> InterpretResult {
+        self.command_handler()
+            .delegate(MovePointOnCurve(curve_id, point_id, Vector::new(x, y)))?;
+        Ok(None)
     }
 }
 

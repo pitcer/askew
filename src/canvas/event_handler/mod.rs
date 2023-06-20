@@ -1,8 +1,11 @@
 use crate::canvas::curve::event_handler::CurveEventHandler;
 use crate::canvas::{math, Canvas};
 use crate::event::canvas::{
-    AddCurve, ChangeCurrentCurveIndex, DeleteCurve, GetConvexHull, SetConvexHull,
+    AddCurve, ChangeCurrentCurveIndex, DeleteCurve, GetConvexHull, GetLength, GetPointOnCurve,
+    MovePointOnCurve, SetConvexHull,
 };
+use crate::event::curve::control_points::{GetControlPointsLength, MovePoint};
+use crate::event::curve::GetPoint;
 use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
 
 pub mod curve;
@@ -67,6 +70,33 @@ impl EventHandler<ChangeCurrentCurveIndex> for CanvasEventHandler<'_> {
             self.canvas.properties.current_curve as isize + event.change as isize,
             self.canvas.curves.len() as isize,
         );
+        Ok(())
+    }
+}
+
+impl EventHandler<GetLength> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: GetLength) -> HandlerResult<GetLength> {
+        let length = self.canvas.curves[event.0]
+            .event_handler()
+            .handle(GetControlPointsLength)?;
+        Ok(length)
+    }
+}
+
+impl EventHandler<GetPointOnCurve> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: GetPointOnCurve) -> HandlerResult<GetPointOnCurve> {
+        let point = self.canvas.curves[event.0]
+            .event_handler()
+            .handle(GetPoint(event.1))?;
+        Ok(point)
+    }
+}
+
+impl EventHandler<MovePointOnCurve> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: MovePointOnCurve) -> HandlerResult<MovePointOnCurve> {
+        self.canvas.curves[event.0]
+            .event_handler()
+            .handle(MovePoint::new(event.1, event.2))?;
         Ok(())
     }
 }

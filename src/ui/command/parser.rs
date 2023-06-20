@@ -76,6 +76,16 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .map(|_| CurveType::RationalBezier),
         ));
+        let get_length = parser::unsigned_parser().padded();
+        let get_point = parser::unsigned_parser()
+            .padded()
+            .then(parser::unsigned_parser().padded());
+        let move_point = group((
+            parser::unsigned_parser().padded(),
+            parser::unsigned_parser().padded(),
+            parser::f32_parser().padded(),
+            parser::f32_parser().padded(),
+        ));
 
         choice((
             just(b"get").padded().ignore_then(get).map(Command::Get),
@@ -104,6 +114,18 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(curve_type)
                 .map(Command::SetCurveType),
+            just(b"get_length")
+                .padded()
+                .ignore_then(get_length)
+                .map(Command::GetLength),
+            just(b"get_point")
+                .padded()
+                .ignore_then(get_point)
+                .map(|(curve_id, point_id)| Command::GetPoint(curve_id, point_id)),
+            just(b"move_point")
+                .padded()
+                .ignore_then(move_point)
+                .map(|(curve_id, point_id, x, y)| Command::MovePoint(curve_id, point_id, x, y)),
         ))
     }
 
@@ -144,6 +166,9 @@ pub enum Command<'a> {
     Save(Option<&'a str>),
     Open(Option<&'a str>),
     SetCurveType(CurveType),
+    GetLength(usize),
+    GetPoint(usize, usize),
+    MovePoint(usize, usize, f32, f32),
 }
 
 #[derive(Debug)]
