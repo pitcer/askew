@@ -3,7 +3,8 @@ use std::f32::consts;
 use anyhow::Result;
 
 use crate::canvas::math::vector::Vector;
-use crate::event::canvas::{GetConvexHull, MoveCurve, RotateCurve, SetConvexHull};
+use crate::config::CurveType;
+use crate::event::canvas::{GetConvexHull, MoveCurve, RotateCurve, SetConvexHull, SetCurveType};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::DelegateEventHandler;
@@ -39,6 +40,7 @@ impl<'a> CommandInterpreter<'a> {
             Command::Move(horizontal, vertical) => self.interpret_move(horizontal, vertical),
             Command::Save(path) => self.interpret_save(path),
             Command::Open(path) => self.interpret_open(path),
+            Command::SetCurveType(curve_type) => self.interpret_set_curve_type(curve_type),
         };
         result.map_err(Error::OtherError)
     }
@@ -116,6 +118,13 @@ impl<'a> CommandInterpreter<'a> {
         let message = Message::info(format!("Project opened from {path}"));
         self.state.frame.load_canvas(canvas);
         Ok(Some(message))
+    }
+
+    fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {
+        self.command_handler().delegate(SetCurveType(curve_type))?;
+        Ok(Some(Message::info(format!(
+            "Set curve type to {curve_type}"
+        ))))
     }
 }
 

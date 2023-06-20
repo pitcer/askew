@@ -3,6 +3,7 @@ use std::str;
 
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
+use crate::config::CurveType;
 use crate::parser;
 
 #[derive(Debug)]
@@ -58,6 +59,17 @@ impl<'a> CommandParser<'a> {
         let r#move = parser::f32_parser()
             .padded()
             .then(parser::f32_parser().padded());
+        let curve_type = choice((
+            just(b"polyline").padded().map(|_| CurveType::Polyline),
+            just(b"convex_hull").padded().map(|_| CurveType::ConvexHull),
+            just(b"interpolation")
+                .padded()
+                .map(|_| CurveType::Interpolation),
+            just(b"bezier").padded().map(|_| CurveType::Bezier),
+            just(b"rational_bezier")
+                .padded()
+                .map(|_| CurveType::RationalBezier),
+        ));
 
         choice((
             just(b"get").padded().ignore_then(get).map(Command::Get),
@@ -82,6 +94,10 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(maybe_word)
                 .map(Command::Open),
+            just(b"set_curve_type")
+                .padded()
+                .ignore_then(curve_type)
+                .map(Command::SetCurveType),
         ))
     }
 
@@ -121,6 +137,7 @@ pub enum Command<'a> {
     Move(f32, f32),
     Save(Option<&'a str>),
     Open(Option<&'a str>),
+    SetCurveType(CurveType),
 }
 
 #[derive(Debug)]

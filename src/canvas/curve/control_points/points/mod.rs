@@ -91,6 +91,11 @@ impl<T> ControlPoints<T> {
     }
 
     #[must_use]
+    pub fn into_inner(self) -> Vec<T> {
+        self.points
+    }
+
+    #[must_use]
     pub fn get(&self, index: usize) -> Option<&T> {
         self.points.get(index)
     }

@@ -8,7 +8,7 @@ use crate::canvas::curve::control_points::kind::polyline::Polyline;
 use crate::canvas::curve::control_points::kind::rational_bezier::{
     RationalBezier, RationalBezierPoints,
 };
-use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints};
+use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, WeightedPoint};
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurveKind;
 use crate::canvas::curve::samples::Samples;
@@ -47,7 +47,7 @@ impl Canvas {
             size,
             properties,
         };
-        let curve = canvas.create_curve(config.curve_type);
+        let curve = canvas.create_curve(config.curve_type, None, None);
         canvas.curves.push(curve);
         canvas
     }
@@ -82,34 +82,48 @@ impl Canvas {
     }
 
     #[must_use]
-    pub fn create_curve(&self, curve_type: CurveType) -> CurveKind {
-        let points = Vec::new();
-        let samples = Samples::new(self.properties.samples as usize);
-        let curve_points = CurvePoints::new(points);
+    pub fn create_curve(
+        &self,
+        curve_type: CurveType,
+        points: Option<Vec<Point<f32>>>,
+        samples: Option<u32>,
+    ) -> CurveKind {
+        let points = points.unwrap_or_default();
+        let samples = Samples::new(samples.unwrap_or(self.properties.samples) as usize);
         match curve_type {
             CurveType::Polyline => CurveKind::ControlPoints(ControlPointsCurveKind::Polyline(
-                Polyline::new(curve_points),
+                Polyline::new(CurvePoints::new(points)),
             )),
             CurveType::ConvexHull => CurveKind::ControlPoints(ControlPointsCurveKind::ConvexHull(
-                ConvexHull::new(curve_points),
+                ConvexHull::new(CurvePoints::new(points)),
             )),
             CurveType::Interpolation => {
                 CurveKind::ControlPoints(ControlPointsCurveKind::Interpolation(Interpolation::new(
-                    curve_points,
+                    CurvePoints::new(points),
                     samples,
                     self.properties.interpolation_nodes,
                 )))
             }
-            CurveType::Bezier => CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
-                Bezier::new(curve_points, samples, self.properties.bezier_algorithm),
-            )),
-            CurveType::RationalBezier => CurveKind::ControlPoints(
-                ControlPointsCurveKind::RationalBezier(RationalBezier::new(
-                    RationalBezierPoints::new(vec![]),
+            CurveType::Bezier => {
+                CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(Bezier::new(
+                    CurvePoints::new(points),
                     samples,
-                    self.properties.rational_bezier_algorithm,
-                )),
-            ),
+                    self.properties.bezier_algorithm,
+                )))
+            }
+            CurveType::RationalBezier => {
+                let points = points
+                    .into_iter()
+                    .map(|point| WeightedPoint::new(point, self.properties.default_weight))
+                    .collect();
+                CurveKind::ControlPoints(ControlPointsCurveKind::RationalBezier(
+                    RationalBezier::new(
+                        RationalBezierPoints::new(points),
+                        samples,
+                        self.properties.rational_bezier_algorithm,
+                    ),
+                ))
+            }
             CurveType::Trochoid => CurveKind::Formula(FormulaCurveKind::Trochoid(Trochoid::new(
                 samples,
                 self.properties.trochoid_properties,
