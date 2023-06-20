@@ -38,6 +38,7 @@ macro_rules! declare_properties {
 
 declare_properties! {
     ConvexHull("show_convex_hull", bool, false),
+    ControlLine("control_line", bool, false),
     InterpolationNodesProperty(
         "interpolation_nodes", InterpolationNodes, InterpolationNodes::Chebyshev
     ),

@@ -1,8 +1,11 @@
-use chumsky::prelude::*;
 use std::str;
 
+use chumsky::prelude::*;
+
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
+use crate::config::property::{
+    ControlLine, ConvexHull, InterpolationNodesProperty, Property, Samples,
+};
 use crate::config::CurveType;
 use crate::parser;
 
@@ -54,7 +57,10 @@ impl<'a> CommandParser<'a> {
                 .map(Set::InterpolationNodes),
             Self::set_property(Samples, parser::unsigned_parser()).map(Set::Samples),
         ));
-        let toggle = choice((Self::get_property(ConvexHull).map(|_| Toggle::ConvexHull),));
+        let toggle = choice((
+            Self::get_property(ConvexHull).map(|_| Toggle::ConvexHull),
+            Self::get_property(ControlLine).map(|_| Toggle::ControlLine),
+        ));
         let rotate = parser::unsigned_parser().padded();
         let r#move = parser::f32_parser()
             .padded()
@@ -157,4 +163,5 @@ pub enum Set {
 #[derive(Debug)]
 pub enum Toggle {
     ConvexHull,
+    ControlLine,
 }

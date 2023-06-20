@@ -86,6 +86,10 @@ impl<'a> CommandInterpreter<'a> {
                 let value = handler.delegate(GetConvexHull)?;
                 handler.delegate(SetConvexHull(!value))?;
             }
+            Toggle::ControlLine => {
+                self.state.frame.canvas_mut().properties_mut().control_line =
+                    !self.state.frame.canvas().properties().control_line;
+            }
         }
         Ok(None)
     }

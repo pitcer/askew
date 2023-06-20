@@ -15,6 +15,7 @@ pub struct CanvasProperties {
     pub trochoid_properties: TrochoidProperties,
     pub line_width: f32,
     pub point_radius: f32,
+    pub control_line: bool,
     pub show_convex_hull: bool,
     pub show_center_of_mass: bool,
     pub interpolation_nodes: InterpolationNodes,
@@ -38,6 +39,7 @@ impl CanvasProperties {
             trochoid_properties: config.trochoid_properties,
             line_width: config.line_width,
             point_radius: config.point_radius,
+            control_line: config.show_control_line,
             show_convex_hull: config.show_convex_hull,
             // TODO: use config variable
             show_center_of_mass: true,

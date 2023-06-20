@@ -5,9 +5,10 @@ use std::path::PathBuf;
 use rgb::Rgb;
 
 use crate::config::property::{
-    ConvexHull, DefaultBezierAlgorithm, DefaultCurveType, DefaultRationalBezierAlgorithm,
-    DefaultTrochoidProperties, DefaultWeight, InterpolationNodesProperty, LineWidth, Property,
-    Samples, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
+    ControlLine, ConvexHull, DefaultBezierAlgorithm, DefaultCurveType,
+    DefaultRationalBezierAlgorithm, DefaultTrochoidProperties, DefaultWeight,
+    InterpolationNodesProperty, LineWidth, Property, Samples, UiBackgroundColor, UiCommandBarColor,
+    UiStatusBarColor, UiTextColor, UiTextErrorColor,
 };
 
 pub mod property;
@@ -49,6 +50,9 @@ pub struct Config {
 
     #[arg(short = 'H', long = ConvexHull.name(), default_value_t = ConvexHull.value())]
     pub show_convex_hull: <ConvexHull as Property>::Type,
+
+    #[arg(short = 'L', long = ControlLine.name(), default_value_t = ControlLine.value())]
+    pub show_control_line: <ControlLine as Property>::Type,
 
     #[arg(short, long = Samples.name(), default_value_t = Samples.value())]
     pub samples: <Samples as Property>::Type,

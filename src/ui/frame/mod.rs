@@ -128,6 +128,11 @@ impl Frame {
     }
 
     #[must_use]
+    pub fn canvas_mut(&mut self) -> &mut Canvas {
+        &mut self.canvas
+    }
+
+    #[must_use]
     pub fn background(&self) -> &Option<Pixmap> {
         &self.background
     }

@@ -4,7 +4,7 @@ use tiny_skia::{Path, PathBuilder, Stroke};
 
 use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, GetControlPoints};
-use crate::canvas::curve::converter::{TinySkiaPathConverter, ToPath};
+use crate::canvas::curve::converter::{CurvePath, PathConverter, TinySkiaPathConverter, ToPath};
 use crate::canvas::curve::CurveKind;
 use crate::canvas::math::point::Point;
 use crate::canvas::paint::{PaintBuilder, PaintColor};
@@ -59,6 +59,7 @@ impl Rasterizer {
     {
         let mut rasterizer = CurveRasterizer::new(curve, properties, panel);
         rasterizer.draw_convex_hull();
+        rasterizer.draw_control_line_path();
         rasterizer.draw_curve();
         rasterizer.draw_control_points();
         rasterizer.draw_current_control_point();
@@ -162,6 +163,29 @@ where
             if let Some(path) = self.create_point_path(center) {
                 self.panel
                     .draw_fill_path(&path, &points_paint, FillRule::Winding);
+            }
+        }
+    }
+
+    fn draw_control_line_path(&mut self) {
+        if self.properties.control_line {
+            let points = self
+                .curve
+                .control_points()
+                .iterator()
+                .map(AsRef::as_ref)
+                .copied();
+            let path = CurvePath::new_open(points);
+            let path = TinySkiaPathConverter.to_path(path);
+            if let Some(path) = path {
+                let paint = PaintBuilder::new()
+                    .rgb_color(self.properties.convex_hull_color)
+                    .build();
+                let stroke = Stroke {
+                    width: self.properties.line_width,
+                    ..Stroke::default()
+                };
+                self.panel.draw_stroke_path(&path, &paint, &stroke);
             }
         }
     }
