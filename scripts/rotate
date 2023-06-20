@@ -1,0 +1,10 @@
+#! /usr/bin/env bash
+
+len="$(./target/release/askew ipc "/tmp/askew.socket" "get_curves_length")"
+
+while true; do
+  for curve in $(seq 0 $((len - 1))); do
+    ./target/release/askew ipc "/tmp/askew.socket" "rotate 1 $curve" &> /dev/null
+    sleep 0.01
+  done
+done

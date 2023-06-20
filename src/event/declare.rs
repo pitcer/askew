@@ -70,6 +70,7 @@ pub mod canvas {
             SetCurveType (CurveType) -> (),
             GetCurveType () -> CurveType,
 
+            RotateCurveById { angle: f32, curve: usize } -> (),
             RotateCurve { angle: f32 } -> (),
             MoveCurve { shift: Vector<f32> } -> (),
             GetCurveCenter () -> Option<Point<f32>>,
@@ -77,9 +78,10 @@ pub mod canvas {
             GetCurrentPoint () -> Point<f32>,
             SelectPoint { guess: Point<f32>, radius: f32 } -> Option<PointId>,
 
+            GetCurvesLength () -> usize,
             GetLength (usize) -> usize,
             GetPointOnCurve (usize, PointId) -> Point<f32>,
-            MovePointOnCurve (usize, PointId, Vector<f32>) -> (),
+            MovePointOnCurve (usize, PointId, Point<f32>) -> (),
         }
     }
 }
@@ -101,6 +103,7 @@ pub mod curve {
                 control_points::GetInterpolationNodes,
                 SetSamples,
                 GetSamples,
+                formula::SetTrochoidProperties,
 
                 canvas::RotateCurve,
                 canvas::MoveCurve,
@@ -119,12 +122,14 @@ pub mod curve {
 
     pub mod formula {
         use super::*;
+        use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 
         declare_events! {
             FormulaCurveEventHandler<'_> {
                 ~ {
                     curve::SetSamples,
-                    curve::GetSamples
+                    curve::GetSamples,
+                    SetTrochoidProperties,
                 }
 
                 ! {
@@ -143,6 +148,8 @@ pub mod curve {
                     curve::SetSamples,
                     curve::GetSamples,
                 }
+
+                SetTrochoidProperties (TrochoidProperties) -> (),
             }
         }
     }

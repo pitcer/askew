@@ -3,13 +3,14 @@ use std::fmt::{Display, Formatter};
 use std::str;
 
 use anyhow::{anyhow, Result};
+use chumsky::extra::ParserExtra;
 use chumsky::prelude::*;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::parser;
 
 pub fn parse(input: &str) -> Result<TrochoidProperties> {
-    let result = parser()
+    let result = parser::<extra::Default>()
         .parse(input.as_bytes())
         .into_result()
         .map_err(|error| anyhow!("{:?}", error))?;
@@ -26,7 +27,10 @@ impl Display for TrochoidProperties {
     }
 }
 
-fn parser<'a>() -> impl Parser<'a, &'a [u8], TrochoidProperties> {
+pub fn parser<'a, E>() -> impl Parser<'a, &'a [u8], TrochoidProperties, E> + Copy
+where
+    E: ParserExtra<'a, &'a [u8]>,
+{
     let number = parser::f32_parser();
     let comma = just(b',');
 

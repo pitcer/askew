@@ -1,6 +1,7 @@
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{EventHandler, HandlerResult};
+use crate::event::curve::formula::SetTrochoidProperties;
 
 pub struct TrochoidEventHandler<'a> {
     curve: &'a mut Trochoid,
@@ -21,5 +22,12 @@ impl EventHandler<SetSamples> for TrochoidEventHandler<'_> {
 impl EventHandler<GetSamples> for TrochoidEventHandler<'_> {
     fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
         self.curve.samples.event_handler().handle(event)
+    }
+}
+
+impl EventHandler<SetTrochoidProperties> for TrochoidEventHandler<'_> {
+    fn handle(&mut self, event: SetTrochoidProperties) -> HandlerResult<SetTrochoidProperties> {
+        self.curve.properties = event.0;
+        Ok(())
     }
 }

@@ -3,11 +3,12 @@ use std::str;
 use chumsky::prelude::*;
 
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
+use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::config::property::{
     ControlLine, ConvexHull, InterpolationNodesProperty, Property, Samples,
 };
 use crate::config::CurveType;
-use crate::parser;
+use crate::{config, parser};
 
 #[derive(Debug)]
 pub struct CommandParser<'a> {
@@ -61,7 +62,9 @@ impl<'a> CommandParser<'a> {
             Self::get_property(ConvexHull).map(|_| Toggle::ConvexHull),
             Self::get_property(ControlLine).map(|_| Toggle::ControlLine),
         ));
-        let rotate = parser::unsigned_parser().padded();
+        let rotate = parser::unsigned_parser()
+            .padded()
+            .then(parser::unsigned_parser().padded().or_not());
         let r#move = parser::f32_parser()
             .padded()
             .then(parser::f32_parser().padded());
@@ -97,7 +100,7 @@ impl<'a> CommandParser<'a> {
             just(b"rotate")
                 .padded()
                 .ignore_then(rotate)
-                .map(Command::Rotate),
+                .map(|(angle, curve)| Command::Rotate(angle, curve)),
             just(b"move")
                 .padded()
                 .ignore_then(r#move)
@@ -114,6 +117,10 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(curve_type)
                 .map(Command::SetCurveType),
+            just(b"get_curves_length")
+                .padded()
+                .ignored()
+                .map(|_| Command::GetCurvesLength),
             just(b"get_length")
                 .padded()
                 .ignore_then(get_length)
@@ -126,6 +133,10 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(move_point)
                 .map(|(curve_id, point_id, x, y)| Command::MovePoint(curve_id, point_id, x, y)),
+            just(b"trochoid_properties")
+                .padded()
+                .ignore_then(config::trochoid_properties::parser())
+                .map(|p| Command::TrochoidProperties(p)),
         ))
     }
 
@@ -161,14 +172,16 @@ pub enum Command<'a> {
     Get(Get),
     Set(Set),
     Toggle(Toggle),
-    Rotate(u16),
+    Rotate(u16, Option<usize>),
     Move(f32, f32),
     Save(Option<&'a str>),
     Open(Option<&'a str>),
     SetCurveType(CurveType),
+    GetCurvesLength,
     GetLength(usize),
     GetPoint(usize, usize),
     MovePoint(usize, usize, f32, f32),
+    TrochoidProperties(TrochoidProperties),
 }
 
 #[derive(Debug)]

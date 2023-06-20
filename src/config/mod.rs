@@ -17,6 +17,9 @@ pub mod trochoid_properties;
 
 #[derive(Debug, clap::Args)]
 pub struct Config {
+    #[arg(short, long, default_value_t = false)]
+    pub debug: bool,
+
     #[arg(
         short, long = DefaultCurveType.name(),
         value_enum, default_value_t = DefaultCurveType.value()

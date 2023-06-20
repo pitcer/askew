@@ -80,7 +80,12 @@ pub fn main() -> Result<()> {
 }
 
 fn run(config: Config) -> Result<()> {
-    initialize_logger()?;
+    let filter = if config.debug {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
+    initialize_logger(filter)?;
 
     let event_loop = EventLoopBuilder::with_user_event().build();
     let window = WindowBuilder::new()
@@ -102,7 +107,7 @@ fn run(config: Config) -> Result<()> {
     });
 }
 
-fn initialize_logger() -> Result<()> {
+fn initialize_logger(filter: LevelFilter) -> Result<()> {
     let logger_config = ConfigBuilder::new()
         .set_time_format_custom(simplelog::format_description!(
             "[hour]:[minute]:[second].[subsecond digits:3]"
@@ -111,7 +116,7 @@ fn initialize_logger() -> Result<()> {
         .unwrap_or_else(convert::identity)
         .build();
     TermLogger::init(
-        LevelFilter::Debug,
+        filter,
         logger_config,
         TerminalMode::Stdout,
         ColorChoice::Auto,

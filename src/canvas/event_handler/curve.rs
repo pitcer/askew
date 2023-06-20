@@ -6,7 +6,7 @@ use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math;
 use crate::event::canvas::{
     AddPoint, ChangeCurrentPointIndex, ChangeCurrentPointWeight, DeleteCurrentPoint,
-    GetCurrentPoint, GetCurveType, MoveCurrentPoint, SetCurveType,
+    GetCurrentPoint, GetCurveType, MoveCurrentPoint, RotateCurve, RotateCurveById, SetCurveType,
 };
 use crate::event::curve::control_points::weighted::{
     AddWeightedControlPoint, ChangeWeight, GetWeight,
@@ -121,6 +121,20 @@ impl EventHandler<GetCurrentPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: GetCurrentPoint) -> HandlerResult<GetCurrentPoint> {
         let point = self.delegate(GetPoint(self.canvas.properties.current_point_index))?;
         Ok(point)
+    }
+}
+
+impl EventHandler<RotateCurveById> for CanvasEventHandler<'_> {
+    fn handle(&mut self, event: RotateCurveById) -> HandlerResult<RotateCurveById> {
+        let curve = self
+            .canvas
+            .curves
+            .get_mut(event.curve)
+            .ok_or_else(|| Error::NoSuchCurve(event.curve))?;
+        curve
+            .event_handler()
+            .handle(RotateCurve::new(event.angle))?;
+        Ok(())
     }
 }
 

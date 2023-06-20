@@ -6,6 +6,7 @@ use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolatio
 use crate::event::curve::GetPoint;
 use crate::event::macros::delegate_events;
 use crate::event::{curve, DelegateEvent, Error, Event, EventHandler, HandlerResult};
+use crate::event::curve::formula::SetTrochoidProperties;
 
 pub struct CurveEventHandler<'a> {
     curve: &'a mut CurveKind,
@@ -89,6 +90,15 @@ impl EventHandler<SelectPoint> for CurveEventHandler<'_> {
     fn handle(&mut self, event: SelectPoint) -> HandlerResult<SelectPoint> {
         match self.curve {
             CurveKind::ControlPoints(curve) => curve.event_handler().handle(event),
+            _ => Err(Error::Unimplemented),
+        }
+    }
+}
+
+impl EventHandler<SetTrochoidProperties> for CurveEventHandler<'_> {
+    fn handle(&mut self, event: SetTrochoidProperties) -> HandlerResult<SetTrochoidProperties> {
+        match self.curve {
+            CurveKind::Formula(curve) => curve.event_handler().handle(event),
             _ => Err(Error::Unimplemented),
         }
     }

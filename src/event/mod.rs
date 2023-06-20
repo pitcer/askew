@@ -50,6 +50,8 @@ pub enum Error {
     Unimplemented,
     #[error("no such point: {0}")]
     NoSuchPoint(PointId),
+    #[error("no such curve: {0}")]
+    NoSuchCurve(usize),
     #[error("other error: {0}")]
     Other(anyhow::Error),
 }

@@ -1,0 +1,32 @@
+#! /usr/bin/env bash
+
+len="$(./target/release/askew ipc "/tmp/askew.socket" "get_curves_length")"
+if [ "$len" -lt 2 ]; then
+  exit
+fi
+
+len="$(./target/release/askew ipc "/tmp/askew.socket" "get_length 0")"
+second_len="$(./target/release/askew ipc "/tmp/askew.socket" "get_length 1")"
+
+if [ "$len" != "$second_len" ]; then
+  exit
+fi
+
+first_points=()
+second_points=()
+
+for i in $(seq 0 $((len - 1))); do
+  first_points[i]=$(./target/release/askew ipc "/tmp/askew.socket" "get_point 0 $i")
+  second_points[i]=$(./target/release/askew ipc "/tmp/askew.socket" "get_point 1 $i")
+done
+
+for alpha in $(seq 0 0.02 1); do
+  for i in $(seq 0 $((len - 1))); do
+    point_1=(${first_points[i]//,/ })
+    point_2=(${second_points[i]//,/ })
+    new_point_x=$(echo "$alpha * ${point_2[0]} + (1 - $alpha) * ${point_1[0]}" | bc)
+    new_point_y=$(echo "$alpha * ${point_2[1]} + (1 - $alpha) * ${point_1[1]}" | bc)
+    ./target/release/askew ipc "/tmp/askew.socket" "move_point 0 $i $new_point_x $new_point_y"
+  done
+  sleep 0.01
+done

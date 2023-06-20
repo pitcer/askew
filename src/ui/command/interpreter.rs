@@ -1,16 +1,19 @@
 use std::f32::consts;
 
+use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::math::point::Point;
 use anyhow::Result;
 
 use crate::canvas::math::vector::Vector;
 use crate::config::CurveType;
 use crate::event::canvas::{
-    GetConvexHull, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve, RotateCurve,
-    SetConvexHull, SetCurveType,
+    GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve,
+    RotateCurve, RotateCurveById, SetConvexHull, SetCurveType,
 };
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
+use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
-use crate::event::DelegateEventHandler;
+use crate::event::{DelegateEventHandler, EventHandler};
 use crate::ui::command::message::Message;
 use crate::ui::command::parser::{Command, Get, Set, Toggle};
 use crate::ui::frame::event_handler::CommandEventHandler;
@@ -39,7 +42,7 @@ impl<'a> CommandInterpreter<'a> {
             Command::Get(get) => self.interpret_get(get),
             Command::Set(set) => self.interpret_set(set),
             Command::Toggle(toggle) => self.interpret_toggle(toggle),
-            Command::Rotate(angle) => self.interpret_rotate(angle),
+            Command::Rotate(angle, curve) => self.interpret_rotate(angle, curve),
             Command::Move(horizontal, vertical) => self.interpret_move(horizontal, vertical),
             Command::Save(path) => self.interpret_save(path),
             Command::Open(path) => self.interpret_open(path),
@@ -47,6 +50,8 @@ impl<'a> CommandInterpreter<'a> {
             Command::GetLength(curve_id) => self.get_length(curve_id),
             Command::GetPoint(curve_id, id) => self.get_point(curve_id, id),
             Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
+            Command::GetCurvesLength => self.get_curves_length(),
+            Command::TrochoidProperties(prop) => self.trochoid(prop),
         };
         result.map_err(Error::OtherError)
     }
@@ -100,10 +105,14 @@ impl<'a> CommandInterpreter<'a> {
         Ok(None)
     }
 
-    fn interpret_rotate(&mut self, angle: u16) -> InterpretResult {
+    fn interpret_rotate(&mut self, angle: u16, curve: Option<usize>) -> InterpretResult {
         let mut handler = self.command_handler();
         let radians = consts::PI * f32::from(angle) / 180.0;
-        handler.delegate(RotateCurve::new(radians))?;
+        if let Some(curve) = curve {
+            handler.delegate(RotateCurveById::new(radians, curve))?;
+        } else {
+            handler.delegate(RotateCurve::new(radians))?;
+        }
         Ok(Some(Message::info(format!("Curve rotated by {angle} deg"))))
     }
 
@@ -137,6 +146,11 @@ impl<'a> CommandInterpreter<'a> {
         ))))
     }
 
+    fn get_curves_length(&mut self) -> InterpretResult {
+        let result = self.command_handler().delegate(GetCurvesLength)?;
+        Ok(Some(Message::info(format!("{result}"))))
+    }
+
     fn get_length(&mut self, curve_id: usize) -> InterpretResult {
         let result = self.command_handler().delegate(GetLength(curve_id))?;
         Ok(Some(Message::info(format!("{result}"))))
@@ -155,7 +169,17 @@ impl<'a> CommandInterpreter<'a> {
 
     fn move_point(&mut self, curve_id: usize, point_id: usize, x: f32, y: f32) -> InterpretResult {
         self.command_handler()
-            .delegate(MovePointOnCurve(curve_id, point_id, Vector::new(x, y)))?;
+            .delegate(MovePointOnCurve(curve_id, point_id, Point::new(x, y)))?;
+        Ok(None)
+    }
+
+    fn trochoid(&mut self, prop: TrochoidProperties) -> InterpretResult {
+        self.state
+            .frame
+            .canvas_mut()
+            .current_curve_mut()
+            .event_handler()
+            .handle(SetTrochoidProperties(prop))?;
         Ok(None)
     }
 }

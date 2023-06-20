@@ -29,6 +29,7 @@ delegate_events! {
     FormulaCurveEventHandler<'_> {
         curve::SetSamples,
         curve::GetSamples,
+        curve::formula::SetTrochoidProperties,
     }
 }
 
