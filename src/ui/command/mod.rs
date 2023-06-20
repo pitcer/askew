@@ -118,7 +118,8 @@ impl CommandOpen {
     }
 
     fn execute_command(&self, state: ProgramState<'_>) -> Result<Option<Message>> {
-        let mut parser = CommandParser::new(&self.buffer);
+        let input = &self.buffer[1..];
+        let mut parser = CommandParser::new(input);
         let result = parser.parse()?;
         let mut interpreter = CommandInterpreter::new(state);
         let message = interpreter.interpret(result)?;

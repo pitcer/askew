@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::ControlFlow;
 
+use crate::ipc::server::{IpcMessage, IpcServerHandle};
 use crate::ui::command::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
@@ -21,11 +22,12 @@ pub struct WindowRunner {
     command: CommandState,
     mode: ModeState,
     event_handler: WindowEventHandler,
+    handle: Option<IpcServerHandle>,
 }
 
 impl WindowRunner {
     #[must_use]
-    pub fn new(window: Window, frame: Frame, painter: Painter) -> Self {
+    pub fn new(window: Window, frame: Frame, painter: Painter, handle: IpcServerHandle) -> Self {
         let command = CommandState::initial();
         let mode = ModeState::initial();
         let event_handler = WindowEventHandler::new();
@@ -36,10 +38,15 @@ impl WindowRunner {
             command,
             mode,
             event_handler,
+            handle: Some(handle),
         }
     }
 
-    pub fn run(&mut self, event: Event<'_, ()>, control_flow: &mut ControlFlow) -> Result<()> {
+    pub fn run(
+        &mut self,
+        event: Event<'_, IpcMessage>,
+        control_flow: &mut ControlFlow,
+    ) -> Result<()> {
         control_flow.set_wait();
 
         match event {
@@ -54,6 +61,17 @@ impl WindowRunner {
                     handler.handle_input(event)?;
                     self.window.request_redraw();
                 }
+            }
+            Event::UserEvent(message) => {
+                let state = ProgramState::new(&mut self.mode, &mut self.frame);
+                let reply = message.handle(state);
+                let handle = self.handle.as_ref().expect("handle should exist");
+                handle.send(reply)?;
+                self.window.request_redraw();
+            }
+            Event::LoopDestroyed => {
+                let handle = self.handle.take().expect("handle should exist");
+                handle.close()?;
             }
             _ => {}
         }

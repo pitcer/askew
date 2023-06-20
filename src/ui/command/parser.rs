@@ -25,7 +25,7 @@ impl<'a> CommandParser<'a> {
             .into_result()
             .map_err(|error| {
                 log::debug!("{error:?}");
-                Error::ParserInternal(Vec::new())
+                Error::ParserInternal(format!("{error:?}"))
             })
     }
 
@@ -59,7 +59,7 @@ impl<'a> CommandParser<'a> {
             .padded()
             .then(parser::f32_parser().padded());
 
-        just(b':').ignore_then(choice((
+        choice((
             just(b"get").padded().ignore_then(get).map(Command::Get),
             just(b"set").padded().ignore_then(set).map(Command::Set),
             just(b"toggle")
@@ -82,7 +82,7 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(maybe_word)
                 .map(Command::Open),
-        )))
+        ))
     }
 
     fn get_property<'b>(
@@ -109,7 +109,7 @@ impl<'a> CommandParser<'a> {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Internal parser error: {0:?}")]
-    ParserInternal(Vec<EmptyErr>),
+    ParserInternal(String),
 }
 
 #[derive(Debug)]

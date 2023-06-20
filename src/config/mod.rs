@@ -14,8 +14,7 @@ pub mod property;
 pub mod rgb;
 pub mod trochoid_properties;
 
-#[derive(Debug, clap::Parser)]
-#[command(version)]
+#[derive(Debug, clap::Args)]
 pub struct Config {
     #[arg(
         short, long = DefaultCurveType.name(),
@@ -89,6 +88,9 @@ pub struct Config {
 
     #[arg(long, default_value = "#ffffff", value_parser = Rgb::parse)]
     pub current_control_point_color: Rgb,
+
+    #[arg(long, default_value = "/tmp/askew.socket")]
+    pub ipc_path: String,
 
     #[arg(
         long = UiBackgroundColor.name(), default_value_t = UiBackgroundColor.value(),

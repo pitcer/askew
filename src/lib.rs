@@ -38,6 +38,8 @@
     clippy::missing_panics_doc,
     clippy::module_name_repetitions,
     clippy::needless_pass_by_value,
+    clippy::print_stderr,
+    clippy::print_stdout,
     clippy::unused_self,
     clippy::unnecessary_wraps
 )]
@@ -48,9 +50,13 @@ use anyhow::Result;
 use clap::Parser;
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
-use winit::event_loop::EventLoop;
+use winit::event_loop::EventLoopBuilder;
 use winit::window::WindowBuilder;
 
+use ipc::client::IpcClient;
+use ipc::server::IpcServer;
+
+use crate::cli::SubCommands;
 use crate::config::Config;
 use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
@@ -58,16 +64,25 @@ use crate::ui::runner::WindowRunner;
 use crate::ui::window::Window;
 
 pub mod canvas;
+pub mod cli;
 pub mod config;
 pub mod event;
+pub mod ipc;
 pub mod parser;
 pub mod ui;
 
 pub fn main() -> Result<()> {
+    let command = cli::Command::parse();
+    match command.command {
+        SubCommands::Run(config) => run(config),
+        SubCommands::Ipc(ipc) => IpcClient::new(ipc.socket_path)?.send(ipc.message),
+    }
+}
+
+fn run(config: Config) -> Result<()> {
     initialize_logger()?;
 
-    let config = Config::parse();
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoopBuilder::with_user_event().build();
     let window = WindowBuilder::new()
         .with_title("askew")
         .build(&event_loop)?;
@@ -75,7 +90,12 @@ pub fn main() -> Result<()> {
     let size = window.size_rectangle();
     let frame = Frame::new(size, &config)?;
     let painter = Painter::new(&config)?;
-    let mut handler = WindowRunner::new(window, frame, painter);
+
+    let proxy = event_loop.create_proxy();
+    let handle = IpcServer::run(config.ipc_path, proxy)?;
+
+    let mut handler = WindowRunner::new(window, frame, painter, handle);
+
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);
         result.expect("Error in event loop");
