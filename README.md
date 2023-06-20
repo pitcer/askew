@@ -9,6 +9,7 @@ First, you need to install the latest stable [Rust toolchain](https://www.rust-l
 
 * `git clone https://github.com/pitcer/askew.git`
 * `cd askew`
+* (download)[https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip] and unzip here a `JetBrainsMonoNL-Regular.ttf` font file
 * `cargo run --release -- run`
 
 Initial settings are available under `cargo run --release -- run --help`.
@@ -22,7 +23,7 @@ You can also directly use compiled binary at `./target/release/askew`.
 * `escape` - exit mode
 * `p` - change mode to point
 * `s` - change mode to point select
-* `a` - add curve
+* `a` - change mode to point add or add curve
 * `d` - delete curve or point
 * `j` - previous curve or point
 * `k` - next curve or point
