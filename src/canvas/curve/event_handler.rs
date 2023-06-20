@@ -1,7 +1,7 @@
 use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler;
 use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
 use crate::canvas::curve::CurveKind;
-use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve};
+use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::GetPoint;
 use crate::event::macros::delegate_events;
@@ -78,6 +78,15 @@ impl EventHandler<GetCurveCenter> for CurveEventHandler<'_> {
 
 impl EventHandler<GetPoint> for CurveEventHandler<'_> {
     fn handle(&mut self, event: GetPoint) -> HandlerResult<GetPoint> {
+        match self.curve {
+            CurveKind::ControlPoints(curve) => curve.event_handler().handle(event),
+            _ => Err(Error::Unimplemented),
+        }
+    }
+}
+
+impl EventHandler<SelectPoint> for CurveEventHandler<'_> {
+    fn handle(&mut self, event: SelectPoint) -> HandlerResult<SelectPoint> {
         match self.curve {
             CurveKind::ControlPoints(curve) => curve.event_handler().handle(event),
             _ => Err(Error::Unimplemented),

@@ -76,7 +76,7 @@ delegate_events! {
         canvas::RotateCurve,
         canvas::MoveCurve,
         canvas::GetCurveCenter,
-
+        canvas::SelectPoint,
         curve::GetPoint,
     }
 }

@@ -6,7 +6,7 @@ use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveCenter,
-    MoveCurrentPoint, MoveCurve, SetConvexHull,
+    MoveCurrentPoint, MoveCurve, SelectPoint, SetConvexHull,
 };
 use crate::event::input::{
     Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
@@ -75,6 +75,15 @@ impl EventHandler<MouseClick> for CommandEventHandler<'_> {
             Mode::PointAdd => {
                 self.delegate(AddPoint::new(click_point))?;
             }
+            Mode::PointSelect => {
+                let point = self.delegate(SelectPoint::new(
+                    click_point,
+                    self.frame.canvas.properties().point_radius,
+                ))?;
+                if let Some(point) = point {
+                    self.frame.canvas.properties_mut().current_point_index = point;
+                }
+            }
         }
         Ok(())
     }
@@ -94,7 +103,7 @@ impl EventHandler<MousePress> for CommandEventHandler<'_> {
                 let shift = click_point - point;
                 self.delegate(MoveCurrentPoint::new(shift))?;
             }
-            Mode::PointAdd => {}
+            Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
@@ -111,7 +120,7 @@ impl EventHandler<MovePoint> for CommandEventHandler<'_> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate(MoveCurve::new(direction))?,
             Mode::Point => self.delegate(MoveCurrentPoint::new(direction))?,
-            Mode::PointAdd => {}
+            Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
@@ -122,7 +131,7 @@ impl EventHandler<Delete> for CommandEventHandler<'_> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate(DeleteCurve)?,
             Mode::Point => self.delegate(DeleteCurrentPoint)?,
-            Mode::PointAdd => {}
+            Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
@@ -137,7 +146,7 @@ impl EventHandler<ChangeIndex> for CommandEventHandler<'_> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate(ChangeCurrentCurveIndex::new(change))?,
             Mode::Point => self.delegate(ChangeCurrentPointIndex::new(change))?,
-            Mode::PointAdd => {}
+            Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
@@ -148,7 +157,7 @@ impl EventHandler<Add> for CommandEventHandler<'_> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate(AddCurve)?,
             Mode::Point => self.mode.enter_add(),
-            Mode::PointAdd => {}
+            Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }

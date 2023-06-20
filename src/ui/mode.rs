@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 pub enum Mode {
     Curve,
     Point,
+    PointSelect,
     PointAdd,
 }
 
@@ -13,6 +14,7 @@ impl Display for Mode {
             Mode::Curve => write!(f, "Curve"),
             Mode::Point => write!(f, "Point"),
             Mode::PointAdd => write!(f, "PointAdd"),
+            Mode::PointSelect => write!(f, "PointSelect"),
         }
     }
 }
@@ -22,6 +24,7 @@ pub enum ModeState {
     Curve(ModeCurve),
     Point(ModePoint),
     PointAdd(ModePointAdd),
+    PointSelect(ModePointSelect),
 }
 
 impl ModeState {
@@ -44,10 +47,18 @@ impl ModeState {
         });
     }
 
+    pub fn select(&mut self) {
+        replace_with::replace_with_or_abort(self, |state| match state {
+            ModeState::Point(mode) => ModeState::PointSelect(mode.select()),
+            other => other,
+        });
+    }
+
     pub fn exit(&mut self) {
         replace_with::replace_with_or_abort(self, |state| match state {
             ModeState::Point(mode) => ModeState::Curve(mode.exit()),
             ModeState::PointAdd(mode) => ModeState::Point(mode.exit()),
+            ModeState::PointSelect(mode) => ModeState::Point(mode.exit()),
             other => other,
         });
     }
@@ -58,6 +69,7 @@ impl ModeState {
             ModeState::Curve(_) => Mode::Curve,
             ModeState::Point(_) => Mode::Point,
             ModeState::PointAdd(_) => Mode::PointAdd,
+            ModeState::PointSelect(_) => Mode::PointSelect,
         }
     }
 }
@@ -82,6 +94,11 @@ impl ModePoint {
     }
 
     #[must_use]
+    pub fn select(self) -> ModePointSelect {
+        ModePointSelect
+    }
+
+    #[must_use]
     pub fn exit(self) -> ModeCurve {
         ModeCurve
     }
@@ -91,6 +108,16 @@ impl ModePoint {
 pub struct ModePointAdd;
 
 impl ModePointAdd {
+    #[must_use]
+    pub fn exit(self) -> ModePoint {
+        ModePoint
+    }
+}
+
+#[derive(Debug)]
+pub struct ModePointSelect;
+
+impl ModePointSelect {
     #[must_use]
     pub fn exit(self) -> ModePoint {
         ModePoint

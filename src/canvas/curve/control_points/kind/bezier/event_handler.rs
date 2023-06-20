@@ -49,7 +49,7 @@ delegate_handlers! {
         canvas::RotateCurve,
         canvas::MoveCurve,
         canvas::GetCurveCenter,
-
+        canvas::SelectPoint,
         curve::GetPoint
     }
 }

@@ -167,6 +167,11 @@ impl Canvas {
     }
 
     #[must_use]
+    pub fn properties_mut(&mut self) -> &mut CanvasProperties {
+        &mut self.properties
+    }
+
+    #[must_use]
     pub fn size(&self) -> Rectangle<f32> {
         self.size
     }

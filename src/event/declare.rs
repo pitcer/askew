@@ -75,6 +75,7 @@ pub mod canvas {
             GetCurveCenter () -> Option<Point<f32>>,
 
             GetCurrentPoint () -> Point<f32>,
+            SelectPoint { guess: Point<f32>, radius: f32 } -> Option<PointId>,
         }
     }
 }
@@ -100,6 +101,7 @@ pub mod curve {
                 canvas::RotateCurve,
                 canvas::MoveCurve,
                 canvas::GetCurveCenter,
+                canvas::SelectPoint,
             }
 
             GetPoint (PointId) -> Point<f32>
@@ -164,7 +166,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
             }
@@ -181,7 +183,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
 
@@ -202,7 +204,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
 
@@ -227,7 +229,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
 
@@ -251,7 +253,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
 
@@ -269,7 +271,7 @@ pub mod curve {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
                     canvas::GetCurveCenter,
-
+                    canvas::SelectPoint,
                     curve::GetPoint
                 }
 
@@ -295,7 +297,7 @@ pub mod curve {
                         canvas::RotateCurve,
                         canvas::MoveCurve,
                         canvas::GetCurveCenter,
-
+                        canvas::SelectPoint,
                         curve::GetPoint
                     }
 

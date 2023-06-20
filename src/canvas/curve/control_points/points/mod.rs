@@ -1,5 +1,6 @@
-use num_traits::{Float, Num, NumCast};
 use std::fmt::Debug;
+
+use num_traits::{Float, Num, NumCast};
 
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::math::point::Point;
@@ -88,6 +89,19 @@ impl<T> ControlPoints<T> {
             .reduce(|accumulator, point| accumulator + point)
             .map(|center| center / length)
             .map(|center| center.into_point(Point::zero()))
+    }
+
+    #[must_use]
+    pub fn select_point(&self, guess: Point<f32>, radius: f32) -> Option<usize>
+    where
+        T: AsRef<Point<f32>> + Copy,
+    {
+        let radius_squared = radius * radius;
+        self.points
+            .iter()
+            .enumerate()
+            .find(|(_id, point)| guess.distance_squared(*point.as_ref()) <= radius_squared)
+            .map(|(id, _)| id)
     }
 
     #[must_use]

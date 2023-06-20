@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
-use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve};
+use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
 use crate::event::curve::control_points::{
     AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
 };
@@ -94,5 +94,14 @@ where
             .ok_or_else(|| Error::NoSuchPoint(event.0))?
             .as_ref();
         Ok(point)
+    }
+}
+
+impl<P> EventHandler<SelectPoint> for ControlPointsEventHandler<'_, P>
+where
+    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Copy,
+{
+    fn handle(&mut self, event: SelectPoint) -> HandlerResult<SelectPoint> {
+        Ok(self.points.select_point(event.guess, event.radius))
     }
 }

@@ -102,7 +102,8 @@ impl WindowEventHandler {
             Some(VirtualKeyCode::Return) => Some(InputEvent::ExecuteCommand),
             Some(VirtualKeyCode::Escape) => Some(InputEvent::ExitMode),
 
-            Some(VirtualKeyCode::C) => Some(InputEvent::ChangeMode(Mode::Point)),
+            Some(VirtualKeyCode::P) => Some(InputEvent::ChangeMode(Mode::Point)),
+            Some(VirtualKeyCode::S) => Some(InputEvent::ChangeMode(Mode::PointSelect)),
             Some(VirtualKeyCode::A) => Some(InputEvent::AddCurve(Add)),
             Some(VirtualKeyCode::D) => Some(InputEvent::Delete(Delete)),
 

@@ -62,6 +62,7 @@ impl<'a> InputHandler<'a> {
             Mode::Curve => self.state.mode.exit(),
             Mode::Point => self.state.mode.enter_point(),
             Mode::PointAdd => self.state.mode.enter_add(),
+            Mode::PointSelect => self.state.mode.select(),
         }
     }
 }

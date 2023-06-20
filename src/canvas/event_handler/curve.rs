@@ -135,7 +135,7 @@ delegate_handlers! {
         canvas::MoveCurve,
         canvas::RotateCurve,
         canvas::GetCurveCenter,
-
+        canvas::SelectPoint,
         curve::GetPoint,
     }
 }
