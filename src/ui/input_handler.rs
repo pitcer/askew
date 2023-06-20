@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::event::{canvas, input, EventHandler};
+use crate::event::{input, EventHandler};
 use crate::ui::command::CommandState;
 use crate::ui::mode::Mode;
 use crate::ui::state::ProgramState;
@@ -19,13 +19,13 @@ impl<'a> InputHandler<'a> {
         log::debug!("Event received from input: {event:?}");
 
         let command_closed = self.command.is_closed();
-        let mode = self.state.mode.as_mode();
-        let mut handler = self.state.frame.event_handler(mode);
+        let mut handler = self.state.frame.event_handler(self.state.mode);
         match event {
             InputEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
             InputEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
             InputEvent::MovePoint(event) if command_closed => handler.handle(event)?,
             InputEvent::MouseClick(event) if command_closed => handler.handle(event)?,
+            InputEvent::MousePress(event) if command_closed => handler.handle(event)?,
             InputEvent::AddCurve(event) if command_closed => handler.handle(event)?,
             InputEvent::Delete(event) if command_closed => handler.handle(event)?,
             InputEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
@@ -61,6 +61,7 @@ impl<'a> InputHandler<'a> {
         match mode {
             Mode::Curve => self.state.mode.exit(),
             Mode::Point => self.state.mode.enter_point(),
+            Mode::PointAdd => self.state.mode.enter_add(),
         }
     }
 }
@@ -71,7 +72,8 @@ pub enum InputEvent {
     ChangeWeight(input::ChangeWeight),
     MovePoint(input::MovePoint),
     MouseClick(input::MouseClick),
-    AddCurve(canvas::AddCurve),
+    MousePress(input::MousePress),
+    AddCurve(input::Add),
     Delete(input::Delete),
     ChangeIndex(input::ChangeIndex),
     EnterCommand,

@@ -59,7 +59,7 @@ impl Painter {
             .setup(&self.font_loader)
             .append_text(&format!(
                 "{} {} {}/{} {}",
-                view.mode,
+                view.mode.as_mode(),
                 name,
                 canvas.properties().current_curve + 1,
                 canvas.curves().len(),

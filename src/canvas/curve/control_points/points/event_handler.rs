@@ -3,10 +3,11 @@ use std::fmt::Debug;
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
-use crate::event::canvas::{MoveCurve, RotateCurve};
+use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve};
 use crate::event::curve::control_points::{
     AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
 };
+use crate::event::curve::GetPoint;
 use crate::event::{Error, EventHandler, HandlerResult};
 
 pub struct ControlPointsEventHandler<'a, P = CurvePoint> {
@@ -70,5 +71,28 @@ where
     fn handle(&mut self, event: RotateCurve) -> HandlerResult<RotateCurve> {
         self.points.rotate_all(event.angle);
         Ok(())
+    }
+}
+
+impl<P> EventHandler<GetCurveCenter> for ControlPointsEventHandler<'_, P>
+where
+    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
+{
+    fn handle(&mut self, _event: GetCurveCenter) -> HandlerResult<GetCurveCenter> {
+        Ok(self.points.center_of_mass())
+    }
+}
+
+impl<P> EventHandler<GetPoint> for ControlPointsEventHandler<'_, P>
+where
+    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
+{
+    fn handle(&mut self, event: GetPoint) -> HandlerResult<GetPoint> {
+        let point = *self
+            .points
+            .get(event.0)
+            .ok_or_else(|| Error::NoSuchPoint(event.0))?
+            .as_ref();
+        Ok(point)
     }
 }

@@ -1,9 +1,10 @@
-use crate::ipc::{STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use std::io::{Read, Write};
 use std::net::Shutdown;
 use std::os::unix::net::UnixStream;
 use std::path::Path;
 use std::{io, slice};
+
+use crate::ipc::{STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 
 pub struct IpcClient {
     stream: UnixStream,

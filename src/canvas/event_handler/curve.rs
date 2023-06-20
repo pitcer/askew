@@ -2,8 +2,8 @@ use crate::canvas::curve::control_points::WeightedPoint;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math;
 use crate::event::canvas::{
-    AddPoint, ChangeCurrentPointIndex, ChangeCurrentPointWeight, DeleteCurrentPoint, GetCurveType,
-    MoveCurrentPoint, SetCurveType,
+    AddPoint, ChangeCurrentPointIndex, ChangeCurrentPointWeight, DeleteCurrentPoint,
+    GetCurrentPoint, GetCurveType, MoveCurrentPoint, SetCurveType,
 };
 use crate::event::curve::control_points::weighted::{
     AddWeightedControlPoint, ChangeWeight, GetWeight,
@@ -11,6 +11,7 @@ use crate::event::curve::control_points::weighted::{
 use crate::event::curve::control_points::{
     AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
 };
+use crate::event::curve::GetPoint;
 use crate::event::macros::delegate_handlers;
 use crate::event::{canvas, curve, DelegateEventHandler, Error, EventHandler, HandlerResult};
 
@@ -97,6 +98,13 @@ impl EventHandler<GetCurveType> for CanvasEventHandler<'_> {
     }
 }
 
+impl EventHandler<GetCurrentPoint> for CanvasEventHandler<'_> {
+    fn handle(&mut self, _event: GetCurrentPoint) -> HandlerResult<GetCurrentPoint> {
+        let point = self.delegate(GetPoint(self.canvas.properties.current_point_index))?;
+        Ok(point)
+    }
+}
+
 delegate_handlers! {
     CanvasEventHandler<'_> {
         curve::SetSamples,
@@ -107,5 +115,8 @@ delegate_handlers! {
 
         canvas::MoveCurve,
         canvas::RotateCurve,
+        canvas::GetCurveCenter,
+
+        curve::GetPoint,
     }
 }

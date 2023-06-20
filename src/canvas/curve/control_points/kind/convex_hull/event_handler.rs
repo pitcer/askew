@@ -34,6 +34,9 @@ delegate_handlers! {
 
         canvas::RotateCurve,
         canvas::MoveCurve,
+        canvas::GetCurveCenter,
+
+        curve::GetPoint,
     }
 }
 

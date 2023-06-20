@@ -27,8 +27,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn command_handler(&mut self) -> CommandEventHandler<'_> {
-        let mode = self.state.mode.as_mode();
-        self.state.frame.event_handler(mode)
+        self.state.frame.event_handler(self.state.mode)
     }
 
     pub fn interpret(&mut self, command: Command<'_>) -> Result<Option<Message>, Error> {

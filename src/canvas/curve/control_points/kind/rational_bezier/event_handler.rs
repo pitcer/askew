@@ -7,7 +7,9 @@ use crate::event::curve::control_points::weighted::{
 };
 use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{canvas, DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
+use crate::event::{
+    canvas, curve, DelegateEventHandler, Error, Event, EventHandler, HandlerResult,
+};
 
 pub struct RationalBezierEventHandler<'a> {
     curve: &'a mut RationalBezier,
@@ -85,6 +87,9 @@ delegate_handlers! {
 
         canvas::RotateCurve,
         canvas::MoveCurve,
+        canvas::GetCurveCenter,
+
+        curve::GetPoint,
     }
 }
 

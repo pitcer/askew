@@ -30,15 +30,13 @@ pub mod input {
 
     declare_events! {
         CommandEventHandler<'_> {
-            ~ {
-                canvas::AddCurve,
-            }
-
             ToggleConvexHull () -> (),
             ChangeWeight (Change) -> (),
             MouseClick (PhysicalPosition<f64>) -> (),
+            MousePress (PhysicalPosition<f64>) -> (),
             MovePoint (Direction) -> (),
             Delete () -> (),
+            Add () -> (),
             ChangeIndex (Change) -> (),
         }
     }
@@ -54,6 +52,7 @@ pub mod canvas {
                 curve::GetSamples,
                 curve::control_points::SetInterpolationNodes,
                 curve::control_points::GetInterpolationNodes,
+                curve::GetPoint,
             }
 
             ChangeCurrentPointWeight { weight: f32 } -> (),
@@ -73,6 +72,9 @@ pub mod canvas {
 
             RotateCurve { angle: f32 } -> (),
             MoveCurve { shift: Vector<f32> } -> (),
+            GetCurveCenter () -> Option<Point<f32>>,
+
+            GetCurrentPoint () -> Point<f32>,
         }
     }
 }
@@ -97,7 +99,10 @@ pub mod curve {
 
                 canvas::RotateCurve,
                 canvas::MoveCurve,
+                canvas::GetCurveCenter,
             }
+
+            GetPoint (PointId) -> Point<f32>
         }
 
         SamplesEventHandler<'_> {
@@ -158,6 +163,9 @@ pub mod curve {
 
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
             }
 
@@ -172,6 +180,9 @@ pub mod curve {
 
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
 
                 ! {
@@ -190,6 +201,9 @@ pub mod curve {
 
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
 
                 ! {
@@ -212,6 +226,9 @@ pub mod curve {
 
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
 
                 ! {
@@ -233,6 +250,9 @@ pub mod curve {
 
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
 
                 ! {
@@ -248,6 +268,9 @@ pub mod curve {
                 ~ {
                     canvas::RotateCurve,
                     canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+
+                    curve::GetPoint
                 }
 
                 GetControlPointsLength () -> usize,
@@ -271,6 +294,9 @@ pub mod curve {
 
                         canvas::RotateCurve,
                         canvas::MoveCurve,
+                        canvas::GetCurveCenter,
+
+                        curve::GetPoint
                     }
 
                     ! {

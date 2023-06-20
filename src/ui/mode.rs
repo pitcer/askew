@@ -4,18 +4,30 @@ use std::fmt::{Display, Formatter};
 pub enum Mode {
     Curve,
     Point,
+    PointAdd,
+}
+
+impl Display for Mode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Mode::Curve => write!(f, "Curve"),
+            Mode::Point => write!(f, "Point"),
+            Mode::PointAdd => write!(f, "PointAdd"),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum ModeState {
     Curve(ModeCurve),
     Point(ModePoint),
+    PointAdd(ModePointAdd),
 }
 
 impl ModeState {
     #[must_use]
     pub fn initial() -> Self {
-        ModeState::Curve(ModeCurve::new())
+        ModeState::Curve(ModeCurve)
     }
 
     pub fn enter_point(&mut self) {
@@ -25,9 +37,17 @@ impl ModeState {
         });
     }
 
+    pub fn enter_add(&mut self) {
+        replace_with::replace_with_or_abort(self, |state| match state {
+            ModeState::Point(mode) => ModeState::PointAdd(mode.add()),
+            other => other,
+        });
+    }
+
     pub fn exit(&mut self) {
         replace_with::replace_with_or_abort(self, |state| match state {
             ModeState::Point(mode) => ModeState::Curve(mode.exit()),
+            ModeState::PointAdd(mode) => ModeState::Point(mode.exit()),
             other => other,
         });
     }
@@ -37,45 +57,42 @@ impl ModeState {
         match self {
             ModeState::Curve(_) => Mode::Curve,
             ModeState::Point(_) => Mode::Point,
-        }
-    }
-}
-
-impl Display for ModeState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ModeState::Curve(_) => write!(f, "Curve"),
-            ModeState::Point(_) => write!(f, "Point"),
+            ModeState::PointAdd(_) => Mode::PointAdd,
         }
     }
 }
 
 #[derive(Debug)]
-pub struct ModeCurve {}
+pub struct ModeCurve;
 
 impl ModeCurve {
     #[must_use]
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    #[must_use]
     pub fn into_point(self) -> ModePoint {
-        ModePoint::new()
+        ModePoint
     }
 }
 
 #[derive(Debug)]
-pub struct ModePoint {}
+pub struct ModePoint;
 
 impl ModePoint {
     #[must_use]
-    pub fn new() -> Self {
-        Self {}
+    pub fn add(self) -> ModePointAdd {
+        ModePointAdd
     }
 
     #[must_use]
     pub fn exit(self) -> ModeCurve {
-        ModeCurve::new()
+        ModeCurve
+    }
+}
+
+#[derive(Debug)]
+pub struct ModePointAdd;
+
+impl ModePointAdd {
+    #[must_use]
+    pub fn exit(self) -> ModePoint {
+        ModePoint
     }
 }

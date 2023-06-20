@@ -14,7 +14,7 @@ use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::properties::FrameProperties;
-use crate::ui::mode::Mode;
+use crate::ui::mode::ModeState;
 
 pub mod event_handler;
 pub mod panel;
@@ -73,7 +73,7 @@ impl Frame {
         self.size = size;
     }
 
-    pub fn event_handler(&mut self, mode: Mode) -> CommandEventHandler<'_> {
+    pub fn event_handler<'a>(&'a mut self, mode: &'a mut ModeState) -> CommandEventHandler<'a> {
         CommandEventHandler::new(self, mode)
     }
 

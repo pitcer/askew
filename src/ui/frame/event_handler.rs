@@ -5,24 +5,24 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
-    DeleteCurrentPoint, DeleteCurve, GetConvexHull, MoveCurrentPoint, SetConvexHull,
+    DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveCenter,
+    MoveCurrentPoint, MoveCurve, SetConvexHull,
 };
 use crate::event::input::{
-    ChangeIndex, ChangeWeight, Delete, MouseClick, MovePoint, ToggleConvexHull,
+    Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
 };
-use crate::event::macros::delegate_handlers;
 use crate::event::{Change, DelegateEventHandler, Direction, Event};
 use crate::event::{EventHandler, HandlerResult};
 use crate::ui::frame::Frame;
-use crate::ui::mode::Mode;
+use crate::ui::mode::{Mode, ModeState};
 
 pub struct CommandEventHandler<'a> {
     frame: &'a mut Frame,
-    mode: Mode,
+    mode: &'a mut ModeState,
 }
 
 impl<'a> CommandEventHandler<'a> {
-    pub fn new(frame: &'a mut Frame, mode: Mode) -> Self {
+    pub fn new(frame: &'a mut Frame, mode: &'a mut ModeState) -> Self {
         Self { frame, mode }
     }
 }
@@ -60,10 +60,43 @@ impl EventHandler<ChangeWeight> for CommandEventHandler<'_> {
 
 impl EventHandler<MouseClick> for CommandEventHandler<'_> {
     fn handle(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
-        fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
-            Point::new(position.x as f32, position.y as f32)
+        let click_point = scale_position(event.0);
+        match self.mode.as_mode() {
+            Mode::Curve => {
+                let Some(center) = self.delegate(GetCurveCenter)? else { return Ok(()) };
+                let shift = click_point - center;
+                self.delegate(MoveCurve::new(shift))?;
+            }
+            Mode::Point => {
+                let point = self.delegate(GetCurrentPoint)?;
+                let shift = click_point - point;
+                self.delegate(MoveCurrentPoint::new(shift))?;
+            }
+            Mode::PointAdd => {
+                self.delegate(AddPoint::new(click_point))?;
+            }
         }
-        self.delegate(AddPoint::new(scale_position(event.0)))
+        Ok(())
+    }
+}
+
+impl EventHandler<MousePress> for CommandEventHandler<'_> {
+    fn handle(&mut self, event: MousePress) -> HandlerResult<MousePress> {
+        let click_point = scale_position(event.0);
+        match self.mode.as_mode() {
+            Mode::Curve => {
+                let Some(center) = self.delegate(GetCurveCenter)? else { return Ok(()) };
+                let shift = click_point - center;
+                self.delegate(MoveCurve::new(shift))?;
+            }
+            Mode::Point => {
+                let point = self.delegate(GetCurrentPoint)?;
+                let shift = click_point - point;
+                self.delegate(MoveCurrentPoint::new(shift))?;
+            }
+            Mode::PointAdd => {}
+        }
+        Ok(())
     }
 }
 
@@ -75,16 +108,21 @@ impl EventHandler<MovePoint> for CommandEventHandler<'_> {
             Direction::Left => Vector::new(-4.0, 0.0),
             Direction::Right => Vector::new(4.0, 0.0),
         };
-        self.delegate(MoveCurrentPoint::new(direction))?;
+        match self.mode.as_mode() {
+            Mode::Curve => self.delegate(MoveCurve::new(direction))?,
+            Mode::Point => self.delegate(MoveCurrentPoint::new(direction))?,
+            Mode::PointAdd => {}
+        }
         Ok(())
     }
 }
 
 impl EventHandler<Delete> for CommandEventHandler<'_> {
     fn handle(&mut self, _event: Delete) -> HandlerResult<Delete> {
-        match self.mode {
+        match self.mode.as_mode() {
             Mode::Curve => self.delegate(DeleteCurve)?,
             Mode::Point => self.delegate(DeleteCurrentPoint)?,
+            Mode::PointAdd => {}
         }
         Ok(())
     }
@@ -96,16 +134,26 @@ impl EventHandler<ChangeIndex> for CommandEventHandler<'_> {
             Change::Decrease => -1,
             Change::Increase => 1,
         };
-        match self.mode {
+        match self.mode.as_mode() {
             Mode::Curve => self.delegate(ChangeCurrentCurveIndex::new(change))?,
             Mode::Point => self.delegate(ChangeCurrentPointIndex::new(change))?,
+            Mode::PointAdd => {}
         }
         Ok(())
     }
 }
 
-delegate_handlers! {
-    CommandEventHandler<'_> {
-        AddCurve,
+impl EventHandler<Add> for CommandEventHandler<'_> {
+    fn handle(&mut self, _event: Add) -> HandlerResult<Add> {
+        match self.mode.as_mode() {
+            Mode::Curve => self.delegate(AddCurve)?,
+            Mode::Point => self.mode.enter_add(),
+            Mode::PointAdd => {}
+        }
+        Ok(())
     }
+}
+
+fn scale_position(position: PhysicalPosition<f64>) -> Point<f32> {
+    Point::new(position.x as f32, position.y as f32)
 }

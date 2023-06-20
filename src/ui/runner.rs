@@ -58,7 +58,10 @@ impl WindowRunner {
                 if let Some(event) = event {
                     let state = ProgramState::new(&mut self.mode, &mut self.frame);
                     let handler = InputHandler::new(&mut self.command, state);
-                    handler.handle_input(event)?;
+                    let result = handler.handle_input(event);
+                    if let Err(error) = result {
+                        log::debug!("{error}");
+                    }
                     self.window.request_redraw();
                 }
             }
