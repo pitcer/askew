@@ -6,7 +6,7 @@ use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveCenter,
-    MoveCurrentPoint, MoveCurve, SelectPoint, SetConvexHull,
+    MoveCurrentPoint, MoveCurve, RotateCurve, SelectPoint, SetConvexHull,
 };
 use crate::event::input::{
     Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
@@ -53,7 +53,18 @@ impl EventHandler<ChangeWeight> for CommandEventHandler<'_> {
             Change::Decrease => 1.5,
             Change::Increase => -1.5,
         };
-        self.delegate(ChangeCurrentPointWeight::new(factor))?;
+        match self.mode.as_mode() {
+            Mode::Curve => {
+                self.delegate(RotateCurve::new(
+                    std::f32::consts::PI * factor * 4.0 / 180.0,
+                ))?;
+            }
+            Mode::Point => {
+                self.delegate(ChangeCurrentPointWeight::new(factor))?;
+            }
+            Mode::PointSelect | Mode::PointAdd => {}
+        }
+
         Ok(())
     }
 }
