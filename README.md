@@ -9,7 +9,7 @@ First, you need to install the latest stable [Rust toolchain](https://www.rust-l
 
 * `git clone https://github.com/pitcer/askew.git`
 * `cd askew`
-* (download)[https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip] and unzip here a `JetBrainsMonoNL-Regular.ttf` font file
+* [download](https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip) and unzip here a `JetBrainsMonoNL-Regular.ttf` font file
 * `cargo run --release -- run`
 
 Initial settings are available under `cargo run --release -- run --help`.
