@@ -2,7 +2,7 @@ use std::fs;
 use std::num::NonZeroUsize;
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use fontdue::layout::{CoordinateSystem, GlyphRasterConfig, TextStyle};
 use fontdue::{Font, FontSettings, Metrics};
 use lru::LruCache;
@@ -18,7 +18,12 @@ pub struct FontLoader {
 impl FontLoader {
     pub fn new(font_path: impl AsRef<Path>) -> Result<Self> {
         let font_settings = FontSettings::default();
-        let font_data = fs::read(font_path)?;
+        let font_data = fs::read(&font_path).with_context(|| {
+            format!(
+                "Failed to read font file '{}'",
+                font_path.as_ref().display()
+            )
+        })?;
         let font = Font::from_bytes(font_data, font_settings).map_err(|error| anyhow!(error))?;
         Ok(Self { font })
     }

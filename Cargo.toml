@@ -1,9 +1,13 @@
 [package]
 name = "askew"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Piotr Dobiech"]
 edition = "2021"
+rust-version = "1.70"
 description = "Curves editor"
+repository = "https://github.com/pitcer/askew"
+license = "MIT"
+publish = false
 
 [features]
 default = ["x11"]
