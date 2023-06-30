@@ -3,7 +3,7 @@ use crate::canvas::curve::control_points::{
 };
 use crate::canvas::curve::CurveKind;
 use crate::canvas::event_handler::CanvasEventHandler;
-use crate::canvas::math;
+use crate::canvas::{math, Canvas};
 use crate::event::canvas::{
     AddPoint, ChangeCurrentPointIndex, ChangeCurrentPointWeight, DeleteCurrentPoint,
     GetCurrentPoint, GetCurveType, MoveCurrentPoint, RotateCurve, RotateCurveById, SetCurveType,
@@ -76,37 +76,37 @@ impl EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'_> {
 
 impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: SetCurveType) -> HandlerResult<SetCurveType> {
-        // TODO: remove those clones
         let curve = &mut self.canvas.curves[self.canvas.properties.current_curve];
-        let points = match curve {
-            CurveKind::ControlPoints(curve) => {
-                let points = match curve {
-                    ControlPointsCurveKind::Polyline(curve) => {
-                        curve.control_points().clone().into_inner()
-                    }
-                    ControlPointsCurveKind::ConvexHull(curve) => {
-                        curve.control_points().clone().into_inner()
-                    }
-                    ControlPointsCurveKind::Interpolation(curve) => {
-                        curve.control_points().clone().into_inner()
-                    }
-                    ControlPointsCurveKind::Bezier(curve) => {
-                        curve.control_points().clone().into_inner()
-                    }
-                    ControlPointsCurveKind::RationalBezier(curve) => curve
-                        .control_points()
-                        .iterator()
-                        .map(AsRef::as_ref)
-                        .copied()
-                        .collect::<Vec<_>>(),
-                };
-                Some(points)
-            }
-            CurveKind::Formula(_) => None,
-        };
-        let samples = curve.event_handler().handle(GetSamples).ok();
-        let new_curve = self.canvas.create_curve(event.0, points, samples);
-        self.canvas.curves[self.canvas.properties.current_curve] = new_curve;
+        replace_with::replace_with_or_abort(curve, |mut curve| {
+            let samples = curve.event_handler().handle(GetSamples).ok();
+            let points = match curve {
+                CurveKind::ControlPoints(curve) => {
+                    let points = match curve {
+                        ControlPointsCurveKind::Polyline(curve) => {
+                            curve.into_control_points().into_inner()
+                        }
+                        ControlPointsCurveKind::ConvexHull(curve) => {
+                            curve.into_control_points().into_inner()
+                        }
+                        ControlPointsCurveKind::Interpolation(curve) => {
+                            curve.into_control_points().into_inner()
+                        }
+                        ControlPointsCurveKind::Bezier(curve) => {
+                            curve.into_control_points().into_inner()
+                        }
+                        ControlPointsCurveKind::RationalBezier(curve) => curve
+                            .into_control_points()
+                            .iterator()
+                            .map(AsRef::as_ref)
+                            .copied()
+                            .collect::<Vec<_>>(),
+                    };
+                    Some(points)
+                }
+                CurveKind::Formula(_) => None,
+            };
+            Canvas::create_curve(&self.canvas.properties, event.0, points, samples)
+        });
         Ok(())
     }
 }

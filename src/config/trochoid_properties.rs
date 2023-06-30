@@ -27,6 +27,7 @@ impl Display for TrochoidProperties {
     }
 }
 
+#[must_use]
 pub fn parser<'a, E>() -> impl Parser<'a, &'a [u8], TrochoidProperties, E> + Copy
 where
     E: ParserExtra<'a, &'a [u8]>,

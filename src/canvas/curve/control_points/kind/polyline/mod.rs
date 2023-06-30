@@ -35,4 +35,8 @@ impl GetControlPoints for Polyline {
     fn control_points(&self) -> &ControlPoints<Self::Point> {
         &self.points
     }
+
+    fn into_control_points(self) -> ControlPoints<Self::Point> {
+        self.points
+    }
 }

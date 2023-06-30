@@ -20,6 +20,8 @@ pub trait GetControlPoints {
     type Point: AsRef<CurvePoint>;
 
     fn control_points(&self) -> &ControlPoints<Self::Point>;
+
+    fn into_control_points(self) -> ControlPoints<Self::Point>;
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]

@@ -73,6 +73,10 @@ impl GetControlPoints for Interpolation {
     fn control_points(&self) -> &ControlPoints<Self::Point> {
         &self.points
     }
+
+    fn into_control_points(self) -> ControlPoints<Self::Point> {
+        self.points
+    }
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, clap::ValueEnum)]

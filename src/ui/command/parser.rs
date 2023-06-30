@@ -136,7 +136,7 @@ impl<'a> CommandParser<'a> {
             just(b"trochoid_properties")
                 .padded()
                 .ignore_then(config::trochoid_properties::parser())
-                .map(|p| Command::TrochoidProperties(p)),
+                .map(Command::TrochoidProperties),
         ))
     }
 
