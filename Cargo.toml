@@ -15,17 +15,17 @@ x11 = ["softbuffer/x11", "winit/x11"]
 wayland = ["softbuffer/wayland", "winit/wayland"]
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.75"
 atoi = "2.0.0"
 fontdue = "0.7.3"
-log = "0.4.19"
-num-traits = "0.2.15"
+log = "0.4.20"
+num-traits = "0.2.16"
 rand = "0.8.5"
 replace_with = "0.1.7"
-serde_json = "1.0.99"
+serde_json = "1.0.105"
 static_assertions = "1.1.0"
-thiserror = "1.0.40"
-time = "0.3.22"
+thiserror = "1.0.47"
+time = "0.3.28"
 
 [dependencies.bytemuck]
 version = "1.13.1"
@@ -37,20 +37,20 @@ default-features = false
 features = ["std"]
 
 [dependencies.clap]
-version = "4.3.10"
+version = "4.4.2"
 features = ["derive"]
 
 [dependencies.image]
-version = "0.24.6"
+version = "0.24.7"
 default-features = false
 features = ["png"]
 
 [dependencies.lru]
-version = "0.10.1"
+version = "0.11.0"
 default-features = false
 
 [dependencies.serde]
-version = "1.0.164"
+version = "1.0.188"
 features = ["derive"]
 
 [dependencies.simplelog]
