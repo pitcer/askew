@@ -57,7 +57,9 @@ impl IpcServer {
 
             let message = IpcMessage::new(message);
             self.proxy.send_event(message)?;
-            let Some((status, reply)) = self.receiver.recv()? else { break; };
+            let Some((status, reply)) = self.receiver.recv()? else {
+                break;
+            };
 
             stream.write_all(slice::from_ref(&status))?;
             if let Some(reply) = reply {

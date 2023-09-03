@@ -74,7 +74,9 @@ impl EventHandler<MouseClick> for CommandEventHandler<'_> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
             Mode::Curve => {
-                let Some(center) = self.delegate(GetCurveCenter)? else { return Ok(()) };
+                let Some(center) = self.delegate(GetCurveCenter)? else {
+                    return Ok(());
+                };
                 let shift = click_point - center;
                 self.delegate(MoveCurve::new(shift))?;
             }
@@ -105,7 +107,9 @@ impl EventHandler<MousePress> for CommandEventHandler<'_> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
             Mode::Curve => {
-                let Some(center) = self.delegate(GetCurveCenter)? else { return Ok(()) };
+                let Some(center) = self.delegate(GetCurveCenter)? else {
+                    return Ok(());
+                };
                 let shift = click_point - center;
                 self.delegate(MoveCurve::new(shift))?;
             }

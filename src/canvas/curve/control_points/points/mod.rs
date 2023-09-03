@@ -65,7 +65,9 @@ impl<T> ControlPoints<T> {
     {
         let cos_angle = V::cos(angle);
         let sin_angle = V::sin(angle);
-        let Some(center) = self.center_of_mass() else { return; };
+        let Some(center) = self.center_of_mass() else {
+            return;
+        };
         for point in &mut self.points {
             let vector = *point.as_ref() - center;
             let rotated_horizontal =
