@@ -8,30 +8,27 @@ use std::thread::JoinHandle;
 use std::{fs, io, slice, thread};
 
 use anyhow::Result;
-use winit::event_loop::EventLoopProxy;
 
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::message::{Message, MessageType};
 use crate::ui::command::parser::CommandParser;
 use crate::ui::state::ProgramState;
+use crate::window_request::{EventLoopProxy, WindowRequest};
 
 pub type IpcReply = Option<(Status, Option<String>)>;
 
 pub struct IpcServer {
-    proxy: EventLoopProxy<IpcMessage>,
+    proxy: EventLoopProxy,
     receiver: Receiver<IpcReply>,
 }
 
 impl IpcServer {
-    fn new(proxy: EventLoopProxy<IpcMessage>, receiver: Receiver<IpcReply>) -> Self {
+    fn new(proxy: EventLoopProxy, receiver: Receiver<IpcReply>) -> Self {
         Self { proxy, receiver }
     }
 
-    pub fn run(
-        path: impl AsRef<Path>,
-        proxy: EventLoopProxy<IpcMessage>,
-    ) -> Result<IpcServerHandle> {
+    pub fn run(path: impl AsRef<Path>, proxy: EventLoopProxy) -> Result<IpcServerHandle> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -56,7 +53,7 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy.send_event(message)?;
+            self.proxy.send_event(WindowRequest::IpcMessage(message))?;
             let Some((status, reply)) = self.receiver.recv()? else {
                 break;
             };

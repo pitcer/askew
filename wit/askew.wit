@@ -1,0 +1,11 @@
+package pitcer:askew
+
+world askew {
+  import askew: interface {
+    type curve-id = u64
+
+    rotate-curve: func(id: curve-id, angle-radians: float32)
+  }
+
+  export run: func() -> result
+}

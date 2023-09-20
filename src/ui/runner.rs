@@ -1,8 +1,10 @@
+use crate::event::canvas::RotateCurveById;
+use crate::event::DelegateEventHandler;
 use anyhow::{anyhow, Result};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::ControlFlow;
 
-use crate::ipc::server::{IpcMessage, IpcServerHandle};
+use crate::ipc::server::IpcServerHandle;
 use crate::ui::command::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
@@ -14,6 +16,8 @@ use crate::ui::painter::Painter;
 use crate::ui::state::ProgramState;
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
+use crate::wasm::request::Request;
+use crate::window_request::{EventLoopProxy, WindowRequest};
 
 pub struct WindowRunner {
     window: Window,
@@ -23,11 +27,18 @@ pub struct WindowRunner {
     mode: ModeState,
     event_handler: WindowEventHandler,
     handle: Option<IpcServerHandle>,
+    proxy: EventLoopProxy,
 }
 
 impl WindowRunner {
     #[must_use]
-    pub fn new(window: Window, frame: Frame, painter: Painter, handle: IpcServerHandle) -> Self {
+    pub fn new(
+        window: Window,
+        frame: Frame,
+        painter: Painter,
+        handle: IpcServerHandle,
+        proxy: EventLoopProxy,
+    ) -> Self {
         let command = CommandState::initial();
         let mode = ModeState::initial();
         let event_handler = WindowEventHandler::new();
@@ -39,12 +50,13 @@ impl WindowRunner {
             mode,
             event_handler,
             handle: Some(handle),
+            proxy,
         }
     }
 
     pub fn run(
         &mut self,
-        event: Event<'_, IpcMessage>,
+        event: Event<'_, WindowRequest>,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
         control_flow.set_wait();
@@ -56,7 +68,7 @@ impl WindowRunner {
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
                 let event = self.handle_window_event(event, control_flow)?;
                 if let Some(event) = event {
-                    let state = ProgramState::new(&mut self.mode, &mut self.frame);
+                    let state = ProgramState::new(&mut self.mode, &mut self.frame, &self.proxy);
                     let handler = InputHandler::new(&mut self.command, state);
                     let result = handler.handle_input(event);
                     if let Err(error) = result {
@@ -65,13 +77,7 @@ impl WindowRunner {
                     self.window.request_redraw();
                 }
             }
-            Event::UserEvent(message) => {
-                let state = ProgramState::new(&mut self.mode, &mut self.frame);
-                let reply = message.handle(state);
-                let handle = self.handle.as_ref().expect("handle should exist");
-                handle.send(reply)?;
-                self.window.request_redraw();
-            }
+            Event::UserEvent(request) => self.handle_request(request, control_flow)?,
             Event::LoopDestroyed => {
                 let handle = self.handle.take().expect("handle should exist");
                 handle.close()?;
@@ -112,6 +118,32 @@ impl WindowRunner {
                 Ok(None)
             }
             _ => self.event_handler.handle(event),
+        }
+    }
+
+    fn handle_request(
+        &mut self,
+        request: WindowRequest,
+        _control_flow: &mut ControlFlow,
+    ) -> Result<()> {
+        match request {
+            WindowRequest::IpcMessage(message) => {
+                let state = ProgramState::new(&mut self.mode, &mut self.frame, &self.proxy);
+                let reply = message.handle(state);
+                let handle = self.handle.as_ref().expect("handle should exist");
+                handle.send(reply)?;
+                self.window.request_redraw();
+                Ok(())
+            }
+            WindowRequest::WasmRequest(request) => match request {
+                Request::RotateCurve { id, angle } => {
+                    self.frame
+                        .event_handler(&mut self.mode)
+                        .delegate(RotateCurveById::new(angle, id))?;
+                    self.window.request_redraw();
+                    Ok(())
+                }
+            },
         }
     }
 }

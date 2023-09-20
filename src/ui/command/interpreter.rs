@@ -19,6 +19,7 @@ use crate::ui::command::parser::{Command, Get, Set, Toggle};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
 use crate::ui::state::ProgramState;
+use crate::wasm::Runtime;
 
 #[derive(Debug)]
 pub struct CommandInterpreter<'a> {
@@ -52,6 +53,7 @@ impl<'a> CommandInterpreter<'a> {
             Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(prop) => self.trochoid(prop),
+            Command::Execute(path) => Runtime::new().run(path, self.state.proxy).map(|_| None),
         };
         result.map_err(Error::OtherError)
     }

@@ -70,6 +70,8 @@ pub mod event;
 pub mod ipc;
 pub mod parser;
 pub mod ui;
+pub mod wasm;
+pub mod window_request;
 
 pub fn main() -> Result<()> {
     let command = cli::Command::parse();
@@ -99,7 +101,8 @@ fn run(config: Config) -> Result<()> {
     let proxy = event_loop.create_proxy();
     let handle = IpcServer::run(config.ipc_path, proxy)?;
 
-    let mut handler = WindowRunner::new(window, frame, painter, handle);
+    let proxy = event_loop.create_proxy();
+    let mut handler = WindowRunner::new(window, frame, painter, handle, proxy);
 
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);

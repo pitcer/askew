@@ -36,11 +36,11 @@ impl<'a> CommandParser<'a> {
 
     fn parser() -> impl Parser<'a, &'a [u8], Command<'a>, ParserError<'a>> {
         let bool = choice((Self::value(b"true", true), Self::value(b"false", false)));
-        let maybe_word = any()
+        let word = any()
             .repeated()
             .at_least(1)
-            .map_slice(|slice| str::from_utf8(slice).expect("slice should be an utf8 string"))
-            .or_not();
+            .map_slice(|slice| str::from_utf8(slice).expect("slice should be an utf8 string"));
+        let maybe_word = word.or_not();
 
         let interpolation_nodes = choice((
             Self::value(b"equally_spaced", InterpolationNodes::EquallySpaced),
@@ -137,6 +137,10 @@ impl<'a> CommandParser<'a> {
                 .padded()
                 .ignore_then(config::trochoid_properties::parser())
                 .map(Command::TrochoidProperties),
+            just(b"execute")
+                .padded()
+                .ignore_then(word)
+                .map(Command::Execute),
         ))
     }
 
@@ -182,6 +186,7 @@ pub enum Command<'a> {
     GetPoint(usize, usize),
     MovePoint(usize, usize, f32, f32),
     TrochoidProperties(TrochoidProperties),
+    Execute(&'a str),
 }
 
 #[derive(Debug)]

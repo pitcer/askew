@@ -11,6 +11,7 @@ pub struct Command {
 pub enum SubCommands {
     /// Run and open editor's window
     Run(Config),
+
     /// Execute commands on running editor instance
     Ipc(IpcArguments),
 }
