@@ -98,7 +98,7 @@ impl Frame {
                 let size = self.size.size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
                     .ok_or_else(|| anyhow!("image should fit"))?;
-                image.save_with_format("../../../.playground/curve.png", ImageFormat::Png)?;
+                image.save_with_format("curve.png", ImageFormat::Png)?;
             }
         }
         Ok(())
