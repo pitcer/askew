@@ -73,7 +73,13 @@ pub struct Config {
     pub save_format: Option<SaveFormat>,
 
     #[arg(short, long)]
-    pub background_path: Option<String>,
+    pub background_path: Option<PathBuf>,
+
+    #[arg(long)]
+    pub open_path: Option<PathBuf>,
+
+    #[arg(long)]
+    pub command: Option<String>,
 
     #[arg(short = 'n', long, default_value_t = 0)]
     pub random_points: u32,
@@ -97,7 +103,7 @@ pub struct Config {
     pub current_control_point_color: Rgb,
 
     #[arg(long, default_value = "/tmp/askew.socket")]
-    pub ipc_path: String,
+    pub ipc_path: PathBuf,
 
     #[arg(
         long = UiBackgroundColor.name(), default_value_t = UiBackgroundColor.value(),

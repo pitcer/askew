@@ -16,10 +16,12 @@ wayland = ["softbuffer/wayland", "winit/wayland"]
 
 [dependencies]
 anyhow = "1.0.75"
+async-trait = "0.1.73"
 atoi = "2.0.0"
 fontdue = "0.7.3"
 log = "0.4.20"
 num-traits = "0.2.16"
+pollster = "0.3.0"
 rand = "0.8.5"
 replace_with = "0.1.7"
 serde_json = "1.0.107"

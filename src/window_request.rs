@@ -7,6 +7,7 @@ pub type EventLoopProxy = event_loop::EventLoopProxy<WindowRequest>;
 
 #[derive(Debug)]
 pub enum WindowRequest {
+    NoReplyCommand(String),
     IpcMessage(IpcMessage),
     WasmRequest(Request),
 }

@@ -1,4 +1,5 @@
 use std::f32::consts;
+use std::thread;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::math::point::Point;
@@ -53,7 +54,15 @@ impl<'a> CommandInterpreter<'a> {
             Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(prop) => self.trochoid(prop),
-            Command::Execute(path) => Runtime::new().run(path, self.state.proxy).map(|_| None),
+            Command::Execute(path) => {
+                let proxy = self.state.proxy.clone();
+                let path = path.to_owned();
+                let _handle = thread::spawn(move || {
+                    pollster::block_on(Runtime::new().run(&path, &proxy))
+                        .map::<Option<Message>, _>(|_| None)
+                });
+                Ok(None)
+            }
         };
         result.map_err(Error::OtherError)
     }

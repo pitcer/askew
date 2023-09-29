@@ -32,7 +32,10 @@ impl Frame {
     pub fn new(size: Rectangle<u32>, config: &Config) -> Result<Self> {
         let background = Self::load_background(config)?;
 
-        let mut canvas = Canvas::new(size.into(), config);
+        let mut canvas = config
+            .open_path
+            .as_ref()
+            .map_or_else(|| Ok(Canvas::new(size.into(), config)), Self::open_canvas)?;
         let properties = FrameProperties::new(config);
 
         if config.random_points > 0 {

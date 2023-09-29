@@ -62,6 +62,7 @@ use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
 use crate::ui::runner::WindowRunner;
 use crate::ui::window::Window;
+use crate::window_request::WindowRequest;
 
 pub mod canvas;
 pub mod cli;
@@ -99,6 +100,10 @@ fn run(config: Config) -> Result<()> {
     let painter = Painter::new(&config)?;
 
     let proxy = event_loop.create_proxy();
+    if let Some(command) = config.command {
+        proxy.send_event(WindowRequest::NoReplyCommand(command))?;
+    }
+
     let handle = IpcServer::run(config.ipc_path, proxy)?;
 
     let proxy = event_loop.create_proxy();

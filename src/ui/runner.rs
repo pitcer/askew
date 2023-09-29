@@ -5,6 +5,8 @@ use winit::event::{Event, WindowEvent};
 use winit::event_loop::ControlFlow;
 
 use crate::ipc::server::IpcServerHandle;
+use crate::ui::command::interpreter::CommandInterpreter;
+use crate::ui::command::parser::CommandParser;
 use crate::ui::command::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
@@ -127,6 +129,14 @@ impl WindowRunner {
         _control_flow: &mut ControlFlow,
     ) -> Result<()> {
         match request {
+            WindowRequest::NoReplyCommand(command) => {
+                let state = ProgramState::new(&mut self.mode, &mut self.frame, &self.proxy);
+                let mut parser = CommandParser::new(&command);
+                let result = parser.parse()?;
+                let mut interpreter = CommandInterpreter::new(state);
+                let _ = interpreter.interpret(result)?;
+                Ok(())
+            }
             WindowRequest::IpcMessage(message) => {
                 let state = ProgramState::new(&mut self.mode, &mut self.frame, &self.proxy);
                 let reply = message.handle(state);
