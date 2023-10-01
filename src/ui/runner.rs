@@ -1,9 +1,15 @@
-use crate::event::canvas::RotateCurveById;
-use crate::event::DelegateEventHandler;
+use std::sync::Arc;
+use std::time::Duration;
+
 use anyhow::{anyhow, Result};
-use winit::event::{Event, WindowEvent};
+use async_channel::{Receiver, Sender};
+use async_task::Task;
+use futures_lite::future;
+use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::ControlFlow;
 
+use crate::event::canvas::RotateCurveById;
+use crate::event::DelegateEventHandler;
 use crate::ipc::server::IpcServerHandle;
 use crate::ui::command::interpreter::CommandInterpreter;
 use crate::ui::command::parser::CommandParser;
@@ -18,7 +24,8 @@ use crate::ui::painter::Painter;
 use crate::ui::state::ProgramState;
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
-use crate::wasm::request::Request;
+use crate::wasm::request::{Request, Response};
+use crate::wasm::WasmRuntime;
 use crate::window_request::{EventLoopProxy, WindowRequest};
 
 pub struct WindowRunner {
@@ -30,21 +37,28 @@ pub struct WindowRunner {
     event_handler: WindowEventHandler,
     handle: Option<IpcServerHandle>,
     proxy: EventLoopProxy,
+    request_sender: Sender<Request>,
+    _request_receiver: Receiver<Request>,
+    response_sender: Sender<Response>,
+    response_receiver: Receiver<Response>,
+    wasm_runtime: Arc<WasmRuntime>,
+    current_task: Option<Task<Result<u32>>>,
 }
 
 impl WindowRunner {
-    #[must_use]
     pub fn new(
         window: Window,
         frame: Frame,
         painter: Painter,
         handle: IpcServerHandle,
         proxy: EventLoopProxy,
-    ) -> Self {
+    ) -> Result<Self> {
         let command = CommandState::initial();
         let mode = ModeState::initial();
         let event_handler = WindowEventHandler::new();
-        Self {
+        let (request_sender, request_receiver) = async_channel::unbounded();
+        let (response_sender, response_receiver) = async_channel::unbounded();
+        Ok(Self {
             window,
             frame,
             painter,
@@ -53,7 +67,13 @@ impl WindowRunner {
             event_handler,
             handle: Some(handle),
             proxy,
-        }
+            request_sender,
+            _request_receiver: request_receiver,
+            response_sender,
+            response_receiver,
+            wasm_runtime: Arc::new(WasmRuntime::new()?),
+            current_task: None,
+        })
     }
 
     pub fn run(
@@ -61,8 +81,6 @@ impl WindowRunner {
         event: Event<'_, WindowRequest>,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
-        control_flow.set_wait();
-
         match event {
             Event::RedrawRequested(window_id) if self.window.has_id(window_id) => {
                 self.paint()?;
@@ -80,6 +98,13 @@ impl WindowRunner {
                 }
             }
             Event::UserEvent(request) => self.handle_request(request, control_flow)?,
+            Event::NewEvents(StartCause::Init) => {
+                control_flow.set_wait();
+            }
+            Event::NewEvents(StartCause::ResumeTimeReached { .. }) => {
+                self.response_sender.send_blocking(Response::Empty)?;
+                control_flow.set_wait();
+            }
             Event::LoopDestroyed => {
                 let handle = self.handle.take().expect("handle should exist");
                 handle.close()?;
@@ -126,7 +151,7 @@ impl WindowRunner {
     fn handle_request(
         &mut self,
         request: WindowRequest,
-        _control_flow: &mut ControlFlow,
+        control_flow: &mut ControlFlow,
     ) -> Result<()> {
         match request {
             WindowRequest::NoReplyCommand(command) => {
@@ -150,10 +175,48 @@ impl WindowRunner {
                     self.frame
                         .event_handler(&mut self.mode)
                         .delegate(RotateCurveById::new(angle, id))?;
+                    self.response_sender.send_blocking(Response::Empty)?;
                     self.window.request_redraw();
                     Ok(())
                 }
+                Request::Sleep { seconds } => {
+                    control_flow.set_wait_timeout(Duration::from_secs(seconds));
+                    Ok(())
+                }
             },
+            WindowRequest::WasmRun { path } => {
+                let runtime = Arc::clone(&self.wasm_runtime);
+                let proxy = self.proxy.clone();
+                let sender = self.request_sender.clone();
+                let receiver = self.response_receiver.clone();
+                let future = async move { runtime.run(path, proxy, sender, receiver).await };
+
+                let proxy = self.proxy.clone();
+                let schedule =
+                    move |runnable| proxy.send_event(WindowRequest::Progress(runnable)).unwrap();
+
+                let (runnable, task) = async_task::spawn(future, schedule);
+
+                self.current_task = Some(task);
+                runnable.schedule();
+
+                Ok(())
+            }
+            WindowRequest::Progress(runnable) => {
+                runnable.run();
+
+                if self.current_task.as_ref().unwrap().is_finished() {
+                    let result = future::block_on(self.current_task.take().unwrap())?;
+                    log::debug!("task result: {result}");
+                }
+                Ok(())
+            }
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Channel {
+    pub sender: Sender<WindowRequest>,
+    pub receiver: Receiver<Response>,
 }

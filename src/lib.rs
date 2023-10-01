@@ -107,7 +107,7 @@ fn run(config: Config) -> Result<()> {
     let handle = IpcServer::run(config.ipc_path, proxy)?;
 
     let proxy = event_loop.create_proxy();
-    let mut handler = WindowRunner::new(window, frame, painter, handle, proxy);
+    let mut handler = WindowRunner::new(window, frame, painter, handle, proxy)?;
 
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);

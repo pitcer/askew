@@ -1,10 +1,9 @@
 use std::f32::consts;
-use std::thread;
+
+use anyhow::{anyhow, Result};
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::math::point::Point;
-use anyhow::Result;
-
 use crate::canvas::math::vector::Vector;
 use crate::config::CurveType;
 use crate::event::canvas::{
@@ -20,7 +19,7 @@ use crate::ui::command::parser::{Command, Get, Set, Toggle};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
 use crate::ui::state::ProgramState;
-use crate::wasm::Runtime;
+use crate::window_request::WindowRequest;
 
 #[derive(Debug)]
 pub struct CommandInterpreter<'a> {
@@ -54,15 +53,14 @@ impl<'a> CommandInterpreter<'a> {
             Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(prop) => self.trochoid(prop),
-            Command::Execute(path) => {
-                let proxy = self.state.proxy.clone();
-                let path = path.to_owned();
-                let _handle = thread::spawn(move || {
-                    pollster::block_on(Runtime::new().run(&path, &proxy))
-                        .map::<Option<Message>, _>(|_| None)
-                });
-                Ok(None)
-            }
+            Command::Execute(path) => self
+                .state
+                .proxy
+                .send_event(WindowRequest::WasmRun {
+                    path: String::from(path),
+                })
+                .map::<Option<Message>, _>(|_| None)
+                .map_err(|err| anyhow!(err)),
         };
         result.map_err(Error::OtherError)
     }

@@ -1,3 +1,4 @@
+use async_task::Runnable;
 use winit::event_loop;
 
 use crate::ipc::server::IpcMessage;
@@ -10,4 +11,6 @@ pub enum WindowRequest {
     NoReplyCommand(String),
     IpcMessage(IpcMessage),
     WasmRequest(Request),
+    WasmRun { path: String },
+    Progress(Runnable),
 }
