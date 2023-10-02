@@ -6,5 +6,5 @@ pub enum Request {
 
 #[derive(Debug)]
 pub enum Response {
-    Empty
+    Empty,
 }

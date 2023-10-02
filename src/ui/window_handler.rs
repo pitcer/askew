@@ -1,8 +1,7 @@
 use anyhow::Result;
 use winit::dpi::PhysicalPosition;
-use winit::event::{
-    DeviceId, ElementState, KeyboardInput, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent,
-};
+use winit::event::{DeviceId, ElementState, KeyEvent, Modifiers, MouseButton, WindowEvent};
+use winit::keyboard::Key;
 
 use input::Add;
 
@@ -10,12 +9,12 @@ use crate::event::input::{
     ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
 };
 use crate::event::{input, Change, Direction};
-use crate::ui::input_handler::InputEvent;
+use crate::ui::input_handler::{Input, InputEvent};
 use crate::ui::mode::Mode;
 
 pub struct WindowEventHandler {
     cursor_position: PhysicalPosition<f64>,
-    modifiers: ModifiersState,
+    modifiers: Modifiers,
     mouse_left_state: ElementState,
 }
 
@@ -23,7 +22,7 @@ impl WindowEventHandler {
     #[must_use]
     pub fn new() -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
-        let modifiers = ModifiersState::empty();
+        let modifiers = Modifiers::default();
         let mouse_left_state = ElementState::Released;
         Self {
             cursor_position,
@@ -32,14 +31,11 @@ impl WindowEventHandler {
         }
     }
 
-    pub fn handle(&mut self, event: WindowEvent<'_>) -> Result<Option<InputEvent>> {
+    pub fn handle(&mut self, event: WindowEvent) -> Result<Option<Input>> {
         match event {
-            WindowEvent::ReceivedCharacter(character) => {
-                return Ok(Some(InputEvent::ReceiveCharacter(character)));
-            }
             WindowEvent::KeyboardInput {
-                device_id, input, ..
-            } => return Ok(self.handle_keyboard_input(device_id, input)),
+                device_id, event, ..
+            } => return Ok(self.handle_keyboard_input(device_id, event)),
             WindowEvent::ModifiersChanged(modifiers) => {
                 self.modifiers = modifiers;
             }
@@ -47,13 +43,21 @@ impl WindowEventHandler {
                 device_id,
                 position,
                 ..
-            } => return Ok(self.handle_cursor_moved(device_id, position)),
+            } => {
+                return Ok(self
+                    .handle_cursor_moved(device_id, position)
+                    .map(|event| Input::new(Some(event), None)))
+            }
             WindowEvent::MouseInput {
                 device_id,
                 state,
                 button,
                 ..
-            } => return Ok(self.handle_mouse_input(device_id, state, button)),
+            } => {
+                return Ok(self
+                    .handle_mouse_input(device_id, state, button)
+                    .map(|event| Input::new(Some(event), None)))
+            }
             _ => {}
         }
         Ok(None)
@@ -86,45 +90,42 @@ impl WindowEventHandler {
         None
     }
 
-    fn handle_keyboard_input(
-        &mut self,
-        _device_id: DeviceId,
-        input: KeyboardInput,
-    ) -> Option<InputEvent> {
-        log::debug!("keyboard_input: {input:?}");
+    fn handle_keyboard_input(&mut self, _device_id: DeviceId, input: KeyEvent) -> Option<Input> {
+        log::debug!("<cyan><b>Keyboard input:</>\n<bright_black>{input:?}</>");
 
         if input.state != ElementState::Pressed {
             return None;
         }
 
-        match input.virtual_keycode {
-            Some(VirtualKeyCode::Colon) => Some(InputEvent::EnterCommand),
-            Some(VirtualKeyCode::Return) => Some(InputEvent::ExecuteCommand),
-            Some(VirtualKeyCode::Escape) => Some(InputEvent::ExitMode),
+        let event = 'map_event: {
+            let event = match input.logical_key.as_ref() {
+                Key::Character(":") => InputEvent::EnterCommand,
+                Key::Enter => InputEvent::ExecuteCommand,
+                Key::Escape => InputEvent::ExitMode,
 
-            Some(VirtualKeyCode::P) => Some(InputEvent::ChangeMode(Mode::Point)),
-            Some(VirtualKeyCode::S) => Some(InputEvent::ChangeMode(Mode::PointSelect)),
-            Some(VirtualKeyCode::A) => Some(InputEvent::AddCurve(Add)),
-            Some(VirtualKeyCode::D) => Some(InputEvent::Delete(Delete)),
+                Key::Character("p") => InputEvent::ChangeMode(Mode::Point),
+                Key::Character("s") => InputEvent::ChangeMode(Mode::PointSelect),
+                Key::Character("a") => InputEvent::AddCurve(Add),
+                Key::Character("d") => InputEvent::Delete(Delete),
 
-            Some(VirtualKeyCode::J) => Some(InputEvent::ChangeIndex(ChangeIndex(Change::Decrease))),
-            Some(VirtualKeyCode::K) => Some(InputEvent::ChangeIndex(ChangeIndex(Change::Increase))),
+                Key::Character("j") => InputEvent::ChangeIndex(ChangeIndex(Change::Decrease)),
+                Key::Character("k") => InputEvent::ChangeIndex(ChangeIndex(Change::Increase)),
 
-            Some(VirtualKeyCode::I) => {
-                Some(InputEvent::ChangeWeight(ChangeWeight(Change::Increase)))
-            }
-            Some(VirtualKeyCode::O) => {
-                Some(InputEvent::ChangeWeight(ChangeWeight(Change::Decrease)))
-            }
+                Key::Character("i") => InputEvent::ChangeWeight(ChangeWeight(Change::Increase)),
+                Key::Character("o") => InputEvent::ChangeWeight(ChangeWeight(Change::Decrease)),
 
-            Some(VirtualKeyCode::H) => Some(InputEvent::ToggleConvexHull(ToggleConvexHull)),
+                Key::Character("h") => InputEvent::ToggleConvexHull(ToggleConvexHull),
 
-            Some(VirtualKeyCode::Up) => Some(InputEvent::MovePoint(MovePoint(Direction::Up))),
-            Some(VirtualKeyCode::Down) => Some(InputEvent::MovePoint(MovePoint(Direction::Down))),
-            Some(VirtualKeyCode::Left) => Some(InputEvent::MovePoint(MovePoint(Direction::Left))),
-            Some(VirtualKeyCode::Right) => Some(InputEvent::MovePoint(MovePoint(Direction::Right))),
-            _ => None,
-        }
+                Key::ArrowUp => InputEvent::MovePoint(MovePoint(Direction::Up)),
+                Key::ArrowDown => InputEvent::MovePoint(MovePoint(Direction::Down)),
+                Key::ArrowLeft => InputEvent::MovePoint(MovePoint(Direction::Left)),
+                Key::ArrowRight => InputEvent::MovePoint(MovePoint(Direction::Right)),
+
+                _ => break 'map_event None,
+            };
+            Some(event)
+        };
+        Some(Input::new(event, input.text))
     }
 }
 

@@ -90,7 +90,7 @@ fn run(config: Config) -> Result<()> {
     };
     initialize_logger(filter)?;
 
-    let event_loop = EventLoopBuilder::with_user_event().build();
+    let event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new()
         .with_title("askew")
         .build(&event_loop)?;
@@ -112,11 +112,14 @@ fn run(config: Config) -> Result<()> {
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);
         result.expect("Error in event loop");
-    });
+    })?;
+
+    Ok(())
 }
 
 fn initialize_logger(filter: LevelFilter) -> Result<()> {
     let logger_config = ConfigBuilder::new()
+        .set_enable_paris_formatting(true)
         .set_time_format_custom(simplelog::format_description!(
             "[hour]:[minute]:[second].[subsecond digits:3]"
         ))

@@ -44,16 +44,6 @@ impl CommandState {
             other => other,
         });
     }
-
-    #[must_use]
-    pub fn is_closed(&self) -> bool {
-        matches!(self, CommandState::Closed(_))
-    }
-
-    #[must_use]
-    pub fn is_open(&self) -> bool {
-        matches!(self, CommandState::Open(_))
-    }
 }
 
 #[derive(Debug)]
@@ -93,6 +83,12 @@ impl CommandOpen {
     #[must_use]
     pub fn new(buffer: String) -> Self {
         Self { buffer }
+    }
+
+    pub fn receive_text(&mut self, text: &str) {
+        for character in text.chars() {
+            self.receive_character(character);
+        }
     }
 
     pub fn receive_character(&mut self, character: char) {

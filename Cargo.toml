@@ -59,16 +59,18 @@ version = "1.0.188"
 features = ["derive"]
 
 [dependencies.simplelog]
-version = "0.12.1"
+# Git version used for better paris integration
+git = "https://github.com/drakulix/simplelog.rs"
+rev = "2c98e48114aa95a62b2860e05f1f275bced41e74"
 default-features = false
-features = ["termcolor", "local-offset"]
+features = ["termcolor", "local-offset", "paris"]
 
 [dependencies.softbuffer]
 version = "0.3.1"
 default-features = false
 
 [dependencies.tiny-skia]
-version = "0.11.1"
+version = "0.11.2"
 default-features = false
 features = ["std", "simd"]
 
@@ -77,7 +79,7 @@ version = "13.0.0"
 features = ["component-model"]
 
 [dependencies.winit]
-version = "0.28.7"
+version = "0.29.1-beta"
 default-features = false
 
 [dev-dependencies]

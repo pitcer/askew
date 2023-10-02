@@ -1,4 +1,5 @@
 use anyhow::Result;
+use winit::keyboard::SmolStr;
 
 use crate::event::{input, EventHandler};
 use crate::ui::command::CommandState;
@@ -15,37 +16,53 @@ impl<'a> InputHandler<'a> {
         Self { command, state }
     }
 
-    pub fn handle_input(self, event: InputEvent) -> Result<()> {
-        log::debug!("Event received from input: {event:?}");
+    pub fn handle_input(self, input: Input) -> Result<()> {
+        log::debug!("<cyan><b>Event received from input:</>\n<bright_black>{input:?}</>");
 
-        let command_closed = self.command.is_closed();
         let mut handler = self.state.frame.event_handler(self.state.mode);
-        match event {
-            InputEvent::ToggleConvexHull(event) if command_closed => handler.handle(event)?,
-            InputEvent::ChangeWeight(event) if command_closed => handler.handle(event)?,
-            InputEvent::MovePoint(event) if command_closed => handler.handle(event)?,
-            InputEvent::MouseClick(event) if command_closed => handler.handle(event)?,
-            InputEvent::MousePress(event) if command_closed => handler.handle(event)?,
-            InputEvent::AddCurve(event) if command_closed => handler.handle(event)?,
-            InputEvent::Delete(event) if command_closed => handler.handle(event)?,
-            InputEvent::ChangeIndex(event) if command_closed => handler.handle(event)?,
 
-            InputEvent::ChangeMode(mode) if command_closed => self.change_mode(mode),
-            InputEvent::EnterCommand => self.command.open(),
-            InputEvent::ReceiveCharacter(character) => self.receive_character(character),
-            InputEvent::ExecuteCommand => self.command.execute(self.state),
-            InputEvent::ExitMode => self.exit_mode(),
-
-            _ => {}
+        match self.command {
+            CommandState::Closed(_) => {
+                if let Some(event) = input.event {
+                    match event {
+                        InputEvent::ToggleConvexHull(event) => handler.handle(event)?,
+                        InputEvent::ChangeWeight(event) => handler.handle(event)?,
+                        InputEvent::MovePoint(event) => handler.handle(event)?,
+                        InputEvent::MouseClick(event) => handler.handle(event)?,
+                        InputEvent::MousePress(event) => handler.handle(event)?,
+                        InputEvent::AddCurve(event) => handler.handle(event)?,
+                        InputEvent::Delete(event) => handler.handle(event)?,
+                        InputEvent::ChangeIndex(event) => handler.handle(event)?,
+                        InputEvent::ChangeMode(mode) => self.change_mode(mode),
+                        InputEvent::EnterCommand => {
+                            self.command.open();
+                            if let CommandState::Open(command) = self.command {
+                                if let Some(text) = input.text {
+                                    command.receive_text(&text);
+                                }
+                            }
+                        }
+                        InputEvent::ExitMode => self.exit_mode(),
+                        event => {
+                            log::debug!(
+                                "<cyan><b>Cannot handle event in CommandClosed state:</> {event:?}"
+                            );
+                        }
+                    }
+                }
+            }
+            CommandState::Open(command) => match input.event {
+                Some(InputEvent::ExecuteCommand) => self.command.execute(self.state),
+                Some(InputEvent::ExitMode) => self.exit_mode(),
+                _ => {
+                    if let Some(text) = input.text {
+                        command.receive_text(&text);
+                    }
+                }
+            },
         }
 
         Ok(())
-    }
-
-    fn receive_character(self, character: char) {
-        if let CommandState::Open(command) = self.command {
-            command.receive_character(character);
-        }
     }
 
     fn exit_mode(self) {
@@ -68,6 +85,19 @@ impl<'a> InputHandler<'a> {
 }
 
 #[derive(Debug)]
+pub struct Input {
+    event: Option<InputEvent>,
+    text: Option<SmolStr>,
+}
+
+impl Input {
+    #[must_use]
+    pub fn new(event: Option<InputEvent>, text: Option<SmolStr>) -> Self {
+        Self { event, text }
+    }
+}
+
+#[derive(Debug)]
 pub enum InputEvent {
     ToggleConvexHull(input::ToggleConvexHull),
     ChangeWeight(input::ChangeWeight),
@@ -78,7 +108,6 @@ pub enum InputEvent {
     Delete(input::Delete),
     ChangeIndex(input::ChangeIndex),
     EnterCommand,
-    ReceiveCharacter(char),
     ExecuteCommand,
     ExitMode,
     ChangeMode(Mode),

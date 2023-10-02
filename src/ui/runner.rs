@@ -16,7 +16,7 @@ use crate::ui::command::parser::CommandParser;
 use crate::ui::command::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
-use crate::ui::input_handler::InputEvent;
+use crate::ui::input_handler::Input;
 use crate::ui::input_handler::InputHandler;
 use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
@@ -78,7 +78,7 @@ impl WindowRunner {
 
     pub fn run(
         &mut self,
-        event: Event<'_, WindowRequest>,
+        event: Event<WindowRequest>,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
         match event {
@@ -86,11 +86,11 @@ impl WindowRunner {
                 self.paint()?;
             }
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
-                let event = self.handle_window_event(event, control_flow)?;
-                if let Some(event) = event {
+                let input = self.handle_window_event(event, control_flow)?;
+                if let Some(input) = input {
                     let state = ProgramState::new(&mut self.mode, &mut self.frame, &self.proxy);
                     let handler = InputHandler::new(&mut self.command, state);
-                    let result = handler.handle_input(event);
+                    let result = handler.handle_input(input);
                     if let Err(error) = result {
                         log::debug!("{error}");
                     }
@@ -127,9 +127,9 @@ impl WindowRunner {
 
     pub fn handle_window_event(
         &mut self,
-        event: WindowEvent<'_>,
+        event: WindowEvent,
         control_flow: &mut ControlFlow,
-    ) -> Result<Option<InputEvent>> {
+    ) -> Result<Option<Input>> {
         match event {
             WindowEvent::Resized(size) => {
                 self.window.resize_surface(size)?;
