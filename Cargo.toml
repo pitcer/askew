@@ -76,7 +76,9 @@ features = ["std", "simd"]
 
 [dependencies.wasmtime]
 version = "13.0.0"
-features = ["component-model"]
+default-features = false
+# Disables 'cache', 'jitdump', 'parallel-compilation', 'pooling-allocator', 'vtune', 'wat'
+features = ["async", "component-model", "cranelift"]
 
 [dependencies.winit]
 version = "0.29.1-beta"
