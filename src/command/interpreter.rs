@@ -1,4 +1,5 @@
 use std::f32::consts;
+use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 
@@ -19,7 +20,7 @@ use crate::event::{DelegateEventHandler, EventHandler};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
 use crate::ui::state::ProgramState;
-use crate::window_request::WindowRequest;
+use crate::ui::runner::window_request::WindowRequest;
 
 #[derive(Debug)]
 pub struct CommandInterpreter<'a> {
@@ -38,27 +39,33 @@ impl<'a> CommandInterpreter<'a> {
         self.state.frame.event_handler(self.state.mode)
     }
 
-    pub fn interpret(&mut self, command: Command<'_>) -> Result<Option<Message>, Error> {
+    pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {
         let result = match command {
             Command::Get(get) => self.interpret_get(get),
             Command::Set(set) => self.interpret_set(set),
             Command::Toggle(toggle) => self.interpret_toggle(toggle),
-            Command::Rotate(angle, curve) => self.interpret_rotate(angle, curve),
-            Command::Move(horizontal, vertical) => self.interpret_move(horizontal, vertical),
-            Command::Save(path) => self.interpret_save(path),
-            Command::Open(path) => self.interpret_open(path),
-            Command::SetCurveType(curve_type) => self.interpret_set_curve_type(curve_type),
-            Command::GetLength(curve_id) => self.get_length(curve_id),
-            Command::GetPoint(curve_id, id) => self.get_point(curve_id, id),
-            Command::MovePoint(curve_id, id, x, y) => self.move_point(curve_id, id, x, y),
+            Command::Rotate { angle, curve_id } => self.interpret_rotate(angle, curve_id),
+            Command::Move {
+                horizontal,
+                vertical,
+            } => self.interpret_move(horizontal, vertical),
+            Command::Save { path } => self.interpret_save(path.as_ref()),
+            Command::Open { path } => self.interpret_open(path.as_ref()),
+            Command::SetCurveType { curve_type } => self.interpret_set_curve_type(curve_type),
+            Command::GetLength { curve_id } => self.get_length(curve_id),
+            Command::GetPoint { curve_id, point_id } => self.get_point(curve_id, point_id),
+            Command::MovePoint {
+                curve_id,
+                point_id,
+                horizontal,
+                vertical,
+            } => self.move_point(curve_id, point_id, horizontal, vertical),
             Command::GetCurvesLength => self.get_curves_length(),
-            Command::TrochoidProperties(prop) => self.trochoid(prop),
-            Command::Execute(path) => self
+            Command::TrochoidProperties(properties) => self.trochoid(properties),
+            Command::Execute { path } => self
                 .state
                 .proxy
-                .send_event(WindowRequest::WasmRun {
-                    path: String::from(path),
-                })
+                .send_event(WindowRequest::WasmRun { path })
                 .map::<Option<Message>, _>(|_| None)
                 .map_err(|err| anyhow!(err)),
         };
@@ -89,11 +96,11 @@ impl<'a> CommandInterpreter<'a> {
         let mut handler = self.command_handler();
 
         match set {
-            Set::ConvexHull(value) => handler.delegate(SetConvexHull(value))?,
-            Set::InterpolationNodes(value) => {
+            Set::ConvexHull { value } => handler.delegate(SetConvexHull(value))?,
+            Set::InterpolationNodes { value } => {
                 handler.delegate(SetInterpolationNodes::new(value))?;
             }
-            Set::Samples(value) => handler.delegate(SetSamples(value))?,
+            Set::Samples { value } => handler.delegate(SetSamples(value))?,
         }
         Ok(None)
     }
@@ -134,15 +141,17 @@ impl<'a> CommandInterpreter<'a> {
         ))))
     }
 
-    fn interpret_save(&mut self, path: Option<&str>) -> InterpretResult {
+    fn interpret_save(&mut self, path: Option<&PathBuf>) -> InterpretResult {
         let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
         self.state.frame.save_canvas(path)?;
+        let path = path.display();
         Ok(Some(Message::info(format!("Project saved into {path}"))))
     }
 
-    fn interpret_open(&mut self, path: Option<&str>) -> InterpretResult {
+    fn interpret_open(&mut self, path: Option<&PathBuf>) -> InterpretResult {
         let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
         let canvas = Frame::open_canvas(path)?;
+        let path = path.display();
         let message = Message::info(format!("Project opened from {path}"));
         self.state.frame.load_canvas(canvas);
         Ok(Some(message))

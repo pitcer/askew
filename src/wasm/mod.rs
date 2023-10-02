@@ -1,3 +1,4 @@
+use std::path::Path;
 use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
 use wasmtime::component::{Component, Linker};
@@ -7,7 +8,7 @@ use askew::Host;
 
 use crate::wasm::askew::CurveId;
 use crate::wasm::request::{Request, Response};
-use crate::window_request::{EventLoopProxy, WindowRequest};
+use crate::ui::runner::window_request::{EventLoopProxy, WindowRequest};
 
 pub mod request;
 
@@ -33,7 +34,7 @@ impl WasmRuntime {
 
     pub async fn run(
         &self,
-        path: String,
+        path: impl AsRef<Path>,
         proxy: EventLoopProxy,
         sender: Sender<Request>,
         receiver: Receiver<Response>,

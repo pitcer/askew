@@ -55,6 +55,7 @@ use winit::window::WindowBuilder;
 
 use ipc::client::IpcClient;
 use ipc::server::IpcServer;
+use ui::runner::window_request::WindowRequest;
 
 use crate::cli::SubCommands;
 use crate::config::Config;
@@ -62,7 +63,6 @@ use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
 use crate::ui::runner::WindowRunner;
 use crate::ui::window::Window;
-use crate::window_request::WindowRequest;
 
 pub mod canvas;
 pub mod cli;
@@ -70,10 +70,8 @@ pub mod command;
 pub mod config;
 pub mod event;
 pub mod ipc;
-pub mod parser;
 pub mod ui;
 pub mod wasm;
-pub mod window_request;
 
 pub fn main() -> Result<()> {
     let command = cli::Command::parse();

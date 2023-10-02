@@ -1,6 +1,6 @@
 use crate::ui::frame::Frame;
 use crate::ui::mode::ModeState;
-use crate::window_request::EventLoopProxy;
+use crate::ui::runner::window_request::EventLoopProxy;
 
 #[derive(Debug)]
 pub struct ProgramState<'a> {

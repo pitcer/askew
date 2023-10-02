@@ -13,7 +13,7 @@ use crate::command::message::{Message, MessageType};
 use crate::command::parser::CommandParser;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::ui::state::ProgramState;
-use crate::window_request::{EventLoopProxy, WindowRequest};
+use crate::ui::runner::window_request::{EventLoopProxy, WindowRequest};
 
 pub type IpcReply = (Status, Option<String>);
 

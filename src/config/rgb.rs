@@ -1,10 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use anyhow::anyhow;
-use anyhow::Result;
-use chumsky::Parser;
-
-use crate::parser;
+use anyhow::{anyhow, Result};
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Rgb {
@@ -20,11 +16,14 @@ impl Rgb {
     }
 
     pub fn parse(input: &str) -> Result<Self> {
-        let result = parser::rgb_parser()
-            .parse(input.as_bytes())
-            .into_result()
-            .map_err(|error| anyhow!("{:?}", error))?;
-        Ok(result)
+        let ("#", input) = input.split_at(1) else {
+            return Err(anyhow!("Rgb color should start with '#'"));
+        };
+        let color = u32::from_str_radix(input, 16)?;
+        let red = (color & 0x00ff_0000) >> 16;
+        let green = (color & 0x0000_ff00) >> 8;
+        let blue = color & 0x0000_00ff;
+        Ok(Self::new(red as u8, green as u8, blue as u8))
     }
 
     #[must_use]

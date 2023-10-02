@@ -28,7 +28,8 @@ impl Trochoid {
 impl ToPath for Trochoid {
     fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
         let TrochoidProperties {
-            range,
+            range_start,
+            range_end,
             r_1,
             r_2,
             w_1,
@@ -38,27 +39,35 @@ impl ToPath for Trochoid {
         let y = move |t| r_1 * f32::sin(w_1 * t) + r_2 * f32::sin(w_2 * t);
         let path = self
             .samples
-            .equally_spaced(range.0..=range.1)
+            .equally_spaced(range_start..=range_end)
             .map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0));
         let path = CurvePath::new_open(path);
         converter.to_path(path)
     }
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, clap::Args)]
 pub struct TrochoidProperties {
-    pub range: (f32, f32),
+    #[arg()]
+    pub range_start: f32,
+    #[arg()]
+    pub range_end: f32,
+    #[arg()]
     pub r_1: f32,
+    #[arg()]
     pub r_2: f32,
+    #[arg()]
     pub w_1: f32,
+    #[arg()]
     pub w_2: f32,
 }
 
 impl TrochoidProperties {
     #[must_use]
-    pub fn new(range: (f32, f32), r_1: f32, r_2: f32, w_1: f32, w_2: f32) -> Self {
+    pub fn new(range_start: f32, range_end: f32, r_1: f32, r_2: f32, w_1: f32, w_2: f32) -> Self {
         Self {
-            range,
+            range_start,
+            range_end,
             r_1,
             r_2,
             w_1,

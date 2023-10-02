@@ -21,12 +21,14 @@ use crate::ui::input_handler::InputHandler;
 use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
+use crate::ui::runner::window_request::{EventLoopProxy, WindowRequest};
 use crate::ui::state::ProgramState;
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::WasmRuntime;
-use crate::window_request::{EventLoopProxy, WindowRequest};
+
+pub mod window_request;
 
 pub struct WindowRunner {
     window: Window,

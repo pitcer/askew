@@ -3,18 +3,24 @@ use std::fmt::{Display, Formatter};
 use std::str;
 
 use anyhow::{anyhow, Result};
-use chumsky::extra::ParserExtra;
-use chumsky::prelude::*;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
-use crate::parser;
 
 pub fn parse(input: &str) -> Result<TrochoidProperties> {
-    let result = parser::<extra::Default>()
-        .parse(input.as_bytes())
-        .into_result()
-        .map_err(|error| anyhow!("{:?}", error))?;
-    Ok(result)
+    let properties = input
+        .split(',')
+        .map(str::parse)
+        .collect::<Result<Vec<_>, _>>()?;
+    let [range_start, range_end, r_1, r_2, w_1, w_2] =
+        <[f32; 6]>::try_from(properties).map_err(|_properties| anyhow!("6 properties required"))?;
+    Ok(TrochoidProperties::new(
+        range_start,
+        range_end,
+        r_1,
+        r_2,
+        w_1,
+        w_2,
+    ))
 }
 
 impl Display for TrochoidProperties {
@@ -22,23 +28,7 @@ impl Display for TrochoidProperties {
         write!(
             f,
             "{},{},{},{},{},{}",
-            self.range.0, self.range.1, self.r_1, self.r_2, self.w_1, self.w_2
+            self.range_start, self.range_end, self.r_1, self.r_2, self.w_1, self.w_2
         )
     }
-}
-
-#[must_use]
-pub fn parser<'a, E>() -> impl Parser<'a, &'a [u8], TrochoidProperties, E> + Copy
-where
-    E: ParserExtra<'a, &'a [u8]>,
-{
-    let number = parser::f32_parser();
-    let comma = just(b',');
-
-    group((
-        number, comma, number, comma, number, comma, number, comma, number, comma, number,
-    ))
-    .map(|(range_0, _, range_1, _, r_1, _, r_2, _, w_1, _, w_2)| {
-        TrochoidProperties::new((range_0, range_1), r_1, r_2, w_1, w_2)
-    })
 }

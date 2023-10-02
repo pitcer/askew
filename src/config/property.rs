@@ -53,7 +53,7 @@ declare_properties! {
         RationalBezierAlgorithm::DeCasteljau
     ),
     DefaultTrochoidProperties("trochoid_properties", TrochoidProperties,
-        TrochoidProperties::new((10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI),
+        TrochoidProperties::new(10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI,
             0.3, 0.8, 0.3, 0.7,)
     ),
 

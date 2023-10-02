@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use async_task::Runnable;
 use winit::event_loop;
 
@@ -11,7 +13,7 @@ pub enum WindowRequest {
     NoReplyCommand(String),
     IpcMessage(IpcMessage),
     WasmRequest(Request),
-    WasmRun { path: String },
+    WasmRun { path: PathBuf },
     Progress(Runnable),
     ProgressIpcServer(Runnable),
 }
