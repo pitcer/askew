@@ -13,4 +13,5 @@ pub enum WindowRequest {
     WasmRequest(Request),
     WasmRun { path: String },
     Progress(Runnable),
+    ProgressIpcServer(Runnable),
 }

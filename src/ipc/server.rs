@@ -1,13 +1,12 @@
-use std::io::Write;
 use std::net::Shutdown;
-use std::os::unix::net::{SocketAddr, UnixListener, UnixStream};
 use std::path::Path;
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
-use std::thread::JoinHandle;
-use std::{fs, io, slice, thread};
+use std::{fs, slice};
 
 use anyhow::Result;
+use async_channel::{Receiver, Sender};
+use async_net::unix::UnixListener;
+use async_task::Task;
+use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::ui::command::interpreter::CommandInterpreter;
@@ -16,7 +15,9 @@ use crate::ui::command::parser::CommandParser;
 use crate::ui::state::ProgramState;
 use crate::window_request::{EventLoopProxy, WindowRequest};
 
-pub type IpcReply = Option<(Status, Option<String>)>;
+pub type IpcReply = (Status, Option<String>);
+
+pub type ServerTask = Task<Result<()>>;
 
 pub struct IpcServer {
     proxy: EventLoopProxy,
@@ -34,35 +35,39 @@ impl IpcServer {
             fs::remove_file(path)?;
         }
 
-        let (sender, receiver) = mpsc::channel();
-        let server = Self::new(proxy, receiver);
+        let (sender, receiver) = async_channel::unbounded();
+        let server = Self::new(proxy.clone(), receiver);
 
         let listener = UnixListener::bind(path)?;
-        let address = listener.local_addr()?;
 
-        let handle = thread::spawn(|| server.listen(listener));
-        let handle = IpcServerHandle::new(address, handle, sender);
+        let future = async move { server.listen(listener).await };
+        let schedule = move |runnable| {
+            proxy
+                .send_event(WindowRequest::ProgressIpcServer(runnable))
+                .unwrap();
+        };
+        let (runnable, task) = async_task::spawn(future, schedule);
+        runnable.schedule();
+
+        let handle = IpcServerHandle::new(task, sender);
         Ok(handle)
     }
 
-    fn listen(self, listener: UnixListener) -> Result<()> {
-        loop {
-            let (mut stream, _) = listener.accept()?;
-
-            let message = io::read_to_string(&stream)?;
+    async fn listen(self, listener: UnixListener) -> Result<()> {
+        while let Some(mut stream) = listener.incoming().next().await.transpose()? {
+            let mut message = String::new();
+            stream.read_to_string(&mut message).await?;
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
             self.proxy.send_event(WindowRequest::IpcMessage(message))?;
-            let Some((status, reply)) = self.receiver.recv()? else {
-                break;
-            };
+            let (status, reply) = self.receiver.recv().await?;
 
-            stream.write_all(slice::from_ref(&status))?;
+            stream.write_all(slice::from_ref(&status)).await?;
             if let Some(reply) = reply {
-                stream.write_all(reply.as_bytes())?;
+                stream.write_all(reply.as_bytes()).await?;
             }
-            stream.flush()?;
+            stream.flush().await?;
             stream.shutdown(Shutdown::Write)?;
         }
         Ok(())
@@ -83,7 +88,7 @@ impl IpcMessage {
     pub fn handle(mut self, state: ProgramState<'_>) -> IpcReply {
         let result = self.interpret(state).transpose();
         let Some(message) = result else {
-            return Some((STATUS_EMPTY, None));
+            return (STATUS_EMPTY, None);
         };
         let message =
             message.unwrap_or_else(|error| Message::new(error.to_string(), MessageType::Error));
@@ -92,7 +97,7 @@ impl IpcMessage {
             MessageType::Error => STATUS_ERROR,
         };
         let message = message.into_text();
-        Some((status, Some(message)))
+        (status, Some(message))
     }
 
     fn interpret(&mut self, state: ProgramState<'_>) -> Result<Option<Message>> {
@@ -105,40 +110,21 @@ impl IpcMessage {
 }
 
 pub struct IpcServerHandle {
-    address: SocketAddr,
-    join_handle: JoinHandle<Result<()>>,
+    task: ServerTask,
     sender: Sender<IpcReply>,
 }
 
 impl IpcServerHandle {
-    fn new(
-        address: SocketAddr,
-        join_handle: JoinHandle<Result<()>>,
-        sender: Sender<IpcReply>,
-    ) -> Self {
-        Self {
-            address,
-            join_handle,
-            sender,
-        }
+    fn new(task: ServerTask, sender: Sender<IpcReply>) -> Self {
+        Self { task, sender }
     }
 
     pub fn send(&self, reply: IpcReply) -> Result<()> {
-        self.sender.send(reply)?;
+        self.sender.send_blocking(reply)?;
         Ok(())
     }
 
-    pub fn close(self) -> Result<()> {
-        // Connect and shutdown to pass blocking accept and read calls in listen function.
-        let stream = UnixStream::connect_addr(&self.address)?;
-        stream.shutdown(Shutdown::Both)?;
-
-        // Causes break in listen loop.
-        self.sender.send(None)?;
-
-        self.join_handle
-            .join()
-            .expect("handle should not fail on join")?;
-        Ok(())
+    pub fn close(self) {
+        drop(self.task);
     }
 }

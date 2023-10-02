@@ -105,10 +105,6 @@ impl WindowRunner {
                 self.response_sender.send_blocking(Response::Empty)?;
                 control_flow.set_wait();
             }
-            Event::LoopDestroyed => {
-                let handle = self.handle.take().expect("handle should exist");
-                handle.close()?;
-            }
             _ => {}
         }
 
@@ -141,6 +137,10 @@ impl WindowRunner {
             }
             WindowEvent::CloseRequested => {
                 self.frame.handle_close()?;
+
+                let handle = self.handle.take().expect("handle should exist");
+                handle.close();
+
                 control_flow.set_exit();
                 Ok(None)
             }
@@ -209,6 +209,10 @@ impl WindowRunner {
                     let result = future::block_on(self.current_task.take().unwrap())?;
                     log::debug!("task result: {result}");
                 }
+                Ok(())
+            }
+            WindowRequest::ProgressIpcServer(runnable) => {
+                runnable.run();
                 Ok(())
             }
         }
