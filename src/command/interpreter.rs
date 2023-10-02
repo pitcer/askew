@@ -5,6 +5,8 @@ use anyhow::{anyhow, Result};
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
+use crate::command::message::Message;
+use crate::command::parser::{Command, Get, Set, Toggle};
 use crate::config::CurveType;
 use crate::event::canvas::{
     GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve,
@@ -14,8 +16,6 @@ use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolatio
 use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{DelegateEventHandler, EventHandler};
-use crate::ui::command::message::Message;
-use crate::ui::command::parser::{Command, Get, Set, Toggle};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
 use crate::ui::state::ProgramState;

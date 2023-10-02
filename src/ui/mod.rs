@@ -1,5 +1,4 @@
 pub mod color_scheme;
-pub mod command;
 pub mod frame;
 pub mod input_handler;
 pub mod mode;

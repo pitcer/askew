@@ -66,6 +66,7 @@ use crate::window_request::WindowRequest;
 
 pub mod canvas;
 pub mod cli;
+pub mod command;
 pub mod config;
 pub mod event;
 pub mod ipc;

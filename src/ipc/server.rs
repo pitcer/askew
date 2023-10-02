@@ -8,10 +8,10 @@ use async_net::unix::UnixListener;
 use async_task::Task;
 use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 
+use crate::command::interpreter::CommandInterpreter;
+use crate::command::message::{Message, MessageType};
+use crate::command::parser::CommandParser;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::command::interpreter::CommandInterpreter;
-use crate::ui::command::message::{Message, MessageType};
-use crate::ui::command::parser::CommandParser;
 use crate::ui::state::ProgramState;
 use crate::window_request::{EventLoopProxy, WindowRequest};
 

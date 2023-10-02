@@ -1,4 +1,4 @@
-use crate::ui::command::CommandState;
+use crate::command::CommandState;
 use crate::ui::frame::Frame;
 use crate::ui::mode::ModeState;
 

@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use message::{Message, MessageType};
 
-use crate::ui::command::interpreter::CommandInterpreter;
-use crate::ui::command::parser::CommandParser;
+use crate::command::interpreter::CommandInterpreter;
+use crate::command::parser::CommandParser;
 use crate::ui::state::ProgramState;
 
 pub mod interpreter;

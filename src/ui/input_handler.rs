@@ -1,8 +1,8 @@
 use anyhow::Result;
 use winit::keyboard::SmolStr;
 
+use crate::command::CommandState;
 use crate::event::{input, EventHandler};
-use crate::ui::command::CommandState;
 use crate::ui::mode::Mode;
 use crate::ui::state::ProgramState;
 
