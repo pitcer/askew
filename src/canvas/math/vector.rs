@@ -1,6 +1,8 @@
-use crate::canvas::math::point::Point;
-use num_traits::Num;
 use std::ops::{Add, Div, Mul, Sub};
+
+use num_traits::Num;
+
+use crate::canvas::math::point::Point;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector<T> {

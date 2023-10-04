@@ -3,10 +3,10 @@ use std::fmt::{Debug, Write};
 use anyhow::Result;
 
 use message::{Message, MessageType};
+use program_view::ProgramView;
 
 use crate::command::interpreter::CommandInterpreter;
 use crate::command::parser::CommandParser;
-use program_view::ProgramView;
 
 pub mod interpreter;
 pub mod message;

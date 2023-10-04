@@ -121,8 +121,9 @@ pub mod curve {
     }
 
     pub mod formula {
-        use super::*;
         use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+
+        use super::*;
 
         declare_events! {
             FormulaCurveEventHandler<'_> {

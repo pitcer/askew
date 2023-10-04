@@ -1,6 +1,7 @@
-use num_traits::Num;
 use std::num::NonZeroU32;
 use std::ops::{Add, Sub};
+
+use num_traits::Num;
 
 use crate::canvas::math::vector::Vector;
 

@@ -11,9 +11,9 @@ use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 use crate::command::interpreter::CommandInterpreter;
 use crate::command::message::{Message, MessageType};
 use crate::command::parser::CommandParser;
-use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::command::program_view::ProgramView;
-use crate::ui::runner::window_request::{EventLoopSender, EventLoopRequest};
+use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
+use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
 
 pub type IpcReply = (Status, Option<String>);
 
@@ -60,7 +60,8 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy.send_event(EventLoopRequest::IpcMessage(message))?;
+            self.proxy
+                .send_event(EventLoopRequest::IpcMessage(message))?;
             let (status, reply) = self.receiver.recv().await?;
 
             stream.write_all(slice::from_ref(&status)).await?;
