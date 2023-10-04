@@ -3,20 +3,15 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 use async_channel::Sender;
 use wasmtime::component::{Component, Linker};
-use wasmtime::{component, Config, Engine, Store};
-
-use askew::Host;
+use wasmtime::{Config, Engine, Store};
 
 use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
-use crate::wasm::askew::CurveId;
 use crate::wasm::request::{Request, Response};
+use crate::wasm::wit::curve::CurveId;
+use crate::wasm::wit::{control, curve, Askew};
 
 pub mod request;
-
-component::bindgen!({
-    path: "wit/askew.wit",
-    async: true,
-});
+pub mod wit;
 
 pub struct WasmRuntime {
     engine: Engine,
@@ -79,18 +74,43 @@ impl RequestHandle {
     pub fn new(request: Request, response_sender: Sender<Response>) -> Self {
         Self { request, response_sender }
     }
+
+    pub fn respond(&self, response: Response) -> Result<()> {
+        self.response_sender.send_blocking(response)?;
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
-impl Host for State {
-    async fn rotate_curve(&mut self, id: CurveId, angle_radians: f32) -> Result<()> {
-        let request = Request::RotateCurve { id, angle_radians };
+impl curve::Host for State {
+    async fn get_position(&mut self, id: CurveId) -> Result<(f32, f32)> {
+        let request = Request::GetPosition { id };
+        let Response::GetPosition { horizontal, vertical } = self.send_request(request).await?
+        else {
+            return Err(anyhow!("Invalid response"));
+        };
+        Ok((horizontal, vertical))
+    }
+
+    async fn move_by(&mut self, id: CurveId, horizontal: f32, vertical: f32) -> Result<()> {
+        let request = Request::MoveCurve { id, horizontal, vertical };
         let Response::Empty = self.send_request(request).await? else {
             return Err(anyhow!("Invalid response"));
         };
         Ok(())
     }
 
+    async fn rotate_by(&mut self, id: CurveId, angle_radians: f32) -> Result<()> {
+        let request = Request::RotateCurve { id, angle_radians };
+        let Response::Empty = self.send_request(request).await? else {
+            return Err(anyhow!("Invalid response"));
+        };
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl control::Host for State {
     async fn sleep(&mut self, seconds: u64, nanoseconds: u32) -> Result<()> {
         let request = Request::Sleep { seconds, nanoseconds };
         let Response::Sleep = self.send_request(request).await? else {

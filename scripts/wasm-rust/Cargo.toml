@@ -1,5 +1,5 @@
 [workspace]
-members = ["rotate"]
+members = ["move", "rotate"]
 resolver = "2"
 
 [workspace.package]

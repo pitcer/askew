@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use crate::canvas::math::point::Point;
+use crate::canvas::math::vector::Vector;
 use anyhow::{anyhow, Result};
 use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::ControlFlow;
@@ -8,7 +10,7 @@ use crate::command::interpreter::CommandInterpreter;
 use crate::command::parser::CommandParser;
 use crate::command::program_view::ProgramView;
 use crate::command::CommandState;
-use crate::event::canvas::RotateCurveById;
+use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
 use crate::event::DelegateEventHandler;
 use crate::ipc::server::IpcServerHandle;
 use crate::ui::frame::panel::Panel;
@@ -190,20 +192,38 @@ impl WindowRunner {
         request: RequestHandle,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
-        let RequestHandle { request, response_sender } = request;
-        match request {
+        match request.request {
+            Request::MoveCurve { id: _id, horizontal, vertical } => {
+                // TODO: move curve specified by id
+                let shift = Vector::new(horizontal, vertical);
+                self.frame.event_handler(&mut self.mode).delegate(MoveCurve::new(shift))?;
+                request.respond(Response::Empty)?;
+                self.window.request_redraw();
+                Ok(())
+            }
             Request::RotateCurve { id, angle_radians } => {
                 self.frame
                     .event_handler(&mut self.mode)
                     .delegate(RotateCurveById::new(angle_radians, id as usize))?;
-                response_sender.send_blocking(Response::Empty)?;
+                request.respond(Response::Empty)?;
                 self.window.request_redraw();
                 Ok(())
             }
             Request::Sleep { seconds, nanoseconds } => {
                 let duration = Duration::new(seconds, nanoseconds);
-                let wake_time = self.sleeping_tasks.sleep(response_sender, duration);
+                let wake_time = self.sleeping_tasks.sleep(request.response_sender, duration);
                 control_flow.set_wait_until(wake_time);
+                Ok(())
+            }
+            Request::GetPosition { id: _id } => {
+                // TODO: get position of curve specified by id
+                let center = self.frame.event_handler(&mut self.mode).delegate(GetCurveCenter)?;
+                // TODO: return None instead of (0, 0)
+                let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
+                request.respond(Response::GetPosition {
+                    horizontal: center.horizontal(),
+                    vertical: center.vertical(),
+                })?;
                 Ok(())
             }
         }

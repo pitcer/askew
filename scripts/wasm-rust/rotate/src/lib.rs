@@ -5,7 +5,7 @@ wit_bindgen::generate!({
 
     exports: {
         world: Rotate,
-    },
+    }
 });
 
 struct Rotate;
@@ -13,8 +13,8 @@ struct Rotate;
 impl Guest for Rotate {
     fn run() -> Result<(), ()> {
         loop {
-            // askew::rotate_curve(0, 2.0 * consts::PI * 1.0 / 360.0);
-            askew::sleep(0, 10_000_000);
+            curve::rotate_by(0, 2.0 * consts::PI * 1.0 / 360.0);
+            control::sleep(0, 10_000_000);
         }
     }
 }
