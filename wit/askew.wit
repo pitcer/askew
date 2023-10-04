@@ -6,7 +6,7 @@ world askew {
 
     rotate-curve: func(id: curve-id, angle-radians: float32)
 
-    sleep: func()
+    sleep: func(seconds: u64, nanoseconds: u32)
   }
 
   export run: func() -> result

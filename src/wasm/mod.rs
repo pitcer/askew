@@ -15,7 +15,7 @@ pub mod request;
 
 component::bindgen!({
     path: "wit/askew.wit",
-    async: true
+    async: true,
 });
 
 pub struct WasmRuntime {
@@ -91,8 +91,8 @@ impl Host for State {
         Ok(())
     }
 
-    async fn sleep(&mut self) -> Result<()> {
-        let request = Request::Sleep { seconds: 3, nanoseconds: 0 };
+    async fn sleep(&mut self, seconds: u64, nanoseconds: u32) -> Result<()> {
+        let request = Request::Sleep { seconds, nanoseconds };
         let Response::Sleep = self.send_request(request).await? else {
             return Err(anyhow!("Invalid response"));
         };
