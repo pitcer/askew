@@ -19,6 +19,7 @@ use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
 use crate::ui::runner::task::Tasks;
+use crate::ui::runner::task_sleep::SleepingTasks;
 use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
@@ -26,7 +27,7 @@ use crate::wasm::request::{Request, Response};
 use crate::wasm::RequestHandle;
 
 pub mod task;
-pub mod waker;
+pub mod task_sleep;
 pub mod window_request;
 
 pub struct WindowRunner {
@@ -38,6 +39,7 @@ pub struct WindowRunner {
     event_handler: WindowEventHandler,
     ipc_server: Option<IpcServerHandle>,
     tasks: Tasks,
+    sleeping_tasks: SleepingTasks,
 }
 
 impl WindowRunner {
@@ -53,6 +55,7 @@ impl WindowRunner {
         let event_handler = WindowEventHandler::new();
         let ipc_server = Some(handle);
         let tasks = Tasks::new(sender.clone())?;
+        let sleeping_tasks = SleepingTasks::new();
 
         Ok(Self {
             window,
@@ -63,6 +66,7 @@ impl WindowRunner {
             event_handler,
             ipc_server,
             tasks,
+            sleeping_tasks,
         })
     }
 
@@ -91,9 +95,15 @@ impl WindowRunner {
             Event::NewEvents(StartCause::Init) => {
                 control_flow.set_wait();
             }
-            Event::NewEvents(StartCause::ResumeTimeReached { .. }) => {
-                // TODO: wake task from sleep
-                control_flow.set_wait();
+            Event::NewEvents(StartCause::ResumeTimeReached {
+                start: _start,
+                requested_resume,
+            }) => {
+                let wake_time = self.sleeping_tasks.wake(requested_resume)?;
+                match wake_time {
+                    None => control_flow.set_wait(),
+                    Some(wake_time) => control_flow.set_wait_until(wake_time),
+                }
             }
             _ => {}
         }
@@ -188,18 +198,21 @@ impl WindowRunner {
             response_sender,
         } = request;
         match request {
-            Request::RotateCurve { id, angle } => {
+            Request::RotateCurve { id, angle_radians } => {
                 self.frame
                     .event_handler(&mut self.mode)
-                    .delegate(RotateCurveById::new(angle, id))?;
+                    .delegate(RotateCurveById::new(angle_radians, id as usize))?;
                 response_sender.send_blocking(Response::Empty)?;
                 self.window.request_redraw();
                 Ok(())
             }
-            Request::Sleep { seconds } => {
-                // TODO: register that this task is sleeping
-                control_flow.set_wait_timeout(Duration::from_secs(seconds));
-                response_sender.send_blocking(Response::Empty)?;
+            Request::Sleep {
+                seconds,
+                nanoseconds,
+            } => {
+                let duration = Duration::new(seconds, nanoseconds);
+                let wake_time = self.sleeping_tasks.sleep(response_sender, duration);
+                control_flow.set_wait_until(wake_time);
                 Ok(())
             }
         }

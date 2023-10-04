@@ -39,27 +39,29 @@ impl Tasks {
 
     pub fn register_task(&mut self, path: impl AsRef<Path> + Send + 'static) -> TaskId {
         let runtime = Arc::clone(&self.runtime);
+        let task_id = self.task_id_mask.crate_task_id();
         let proxy = EventLoopProxy::clone(&self.event_loop_sender);
         let future = async move { runtime.run(path, proxy).await };
 
-        let task_id = self.task_id_mask.crate_task_id();
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {
+            let request = EventLoopRequest::ProgressTask(TaskHandle::new(task_id, runnable));
             proxy
-                .send_event(EventLoopRequest::ProgressTask(TaskHandle::new(
-                    task_id, runnable,
-                )))
+                .send_event(request)
                 .expect("event loop should not be closed");
         };
 
         let (runnable, task) = async_task::spawn(future, schedule);
         runnable.schedule();
 
-        let task = Task::new(task_id, task);
+        let task = Task::new(task);
 
-        let None = self.tasks.insert(task_id, task) else {
-            panic!("task with id {task_id} is already in tasks map");
-        };
+        let result = self.tasks.insert(task_id, task);
+        debug_assert!(
+            result.is_none(),
+            "task with id {task_id} is already in tasks map"
+        );
+
         task_id
     }
 
@@ -110,18 +112,19 @@ impl TaskIdMask {
         if free_task_id == self.0.len() {
             self.0.push(true);
         } else {
-            let false = self.0.replace(free_task_id, true) else {
-                panic!("task with id {free_task_id} is already in task mask");
-            };
+            let result = self.0.replace(free_task_id, true);
+            debug_assert!(
+                !result,
+                "task with id {free_task_id} is already in task mask"
+            );
         }
         free_task_id
     }
 
     /// Assumes that given `task_id` is valid
     pub fn remove_task_id(&mut self, task_id: TaskId) {
-        let true = self.0.replace(task_id, false) else {
-            panic!("task with id {task_id} is not in task mask");
-        };
+        let result = self.0.replace(task_id, false);
+        debug_assert!(result, "task with id {task_id} is not in task mask");
         self.truncate();
     }
 
@@ -132,19 +135,24 @@ impl TaskIdMask {
     }
 }
 
+impl Default for TaskIdMask {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub type AsyncTask = async_task::Task<TaskResult>;
 pub type TaskResult = Result<u32>;
 pub type TaskId = usize;
 
 pub struct Task {
-    id: TaskId,
     task: AsyncTask,
 }
 
 impl Task {
     #[must_use]
-    pub fn new(id: TaskId, task: AsyncTask) -> Self {
-        Self { id, task }
+    pub fn new(task: AsyncTask) -> Self {
+        Self { task }
     }
 
     #[must_use]

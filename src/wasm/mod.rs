@@ -1,6 +1,7 @@
+use std::path::Path;
+
 use anyhow::{anyhow, Result};
 use async_channel::Sender;
-use std::path::Path;
 use wasmtime::component::{Component, Linker};
 use wasmtime::{component, Config, Engine, Store};
 
@@ -60,8 +61,8 @@ impl State {
     pub async fn send_request(&mut self, request: Request) -> Result<Response> {
         let (response_sender, response_receiver) = async_channel::bounded(1);
         let request = RequestHandle::new(request, response_sender);
-        self.sender
-            .send_event(EventLoopRequest::TaskRequest(request))?;
+        let request = EventLoopRequest::TaskRequest(request);
+        self.sender.send_event(request)?;
         let response = response_receiver.recv().await?;
         Ok(response)
     }
@@ -86,17 +87,21 @@ impl RequestHandle {
 #[async_trait::async_trait]
 impl Host for State {
     async fn rotate_curve(&mut self, id: CurveId, angle_radians: f32) -> Result<()> {
-        let Response::Empty = self
-            .send_request(Request::RotateCurve {
-                id: id as usize,
-                angle: angle_radians,
-            })
-            .await?;
+        let request = Request::RotateCurve { id, angle_radians };
+        let Response::Empty = self.send_request(request).await? else {
+            return Err(anyhow!("Invalid response"));
+        };
         Ok(())
     }
 
     async fn sleep(&mut self) -> Result<()> {
-        let Response::Empty = self.send_request(Request::Sleep { seconds: 3 }).await?;
+        let request = Request::Sleep {
+            seconds: 3,
+            nanoseconds: 0,
+        };
+        let Response::Sleep = self.send_request(request).await? else {
+            return Err(anyhow!("Invalid response"));
+        };
         Ok(())
     }
 }
