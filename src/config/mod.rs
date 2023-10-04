@@ -78,8 +78,9 @@ pub struct Config {
     #[arg(long)]
     pub open_path: Option<PathBuf>,
 
+    /// Command to execute on start, can be specified multiple times
     #[arg(long)]
-    pub command: Option<String>,
+    pub command: Vec<String>,
 
     #[arg(short = 'n', long, default_value_t = 0)]
     pub random_points: u32,
