@@ -83,9 +83,6 @@ default-features = false
 [dev-dependencies]
 criterion = "0.5.1"
 
-[workspace]
-members = ["scripts/wasm/rust/rotate"]
-
 [[bench]]
 name = "convex_hull"
 harness = false

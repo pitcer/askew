@@ -9,6 +9,13 @@ clippy-wayland:
 build-release:
     RUSTFLAGS="-Clink-arg=-fuse-ld=lld" cargo build --release
 
-build-wasm-rust-example name:
-    cargo build --package {{name}} --target wasm32-unknown-unknown
-    wasm-tools component new target/wasm32-unknown-unknown/debug/{{name}}.wasm -o {{name}}.wasm
+build-wasm-rust-scripts:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+
+    cd scripts/wasm-rust/
+    cargo build
+
+    for file in $(cd target/wasm32-unknown-unknown/debug/ && ls *.wasm); do
+        wasm-tools component new target/wasm32-unknown-unknown/debug/$file -o $file
+    done

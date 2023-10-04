@@ -1,0 +1,10 @@
+[package]
+name = "rotate"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+wit-bindgen = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
