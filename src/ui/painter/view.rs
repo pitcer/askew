@@ -11,10 +11,6 @@ pub struct WindowView<'a> {
 impl<'a> WindowView<'a> {
     #[must_use]
     pub fn new(frame: &'a Frame, command: &'a CommandState, mode: &'a ModeState) -> Self {
-        Self {
-            frame,
-            command,
-            mode,
-        }
+        Self { frame, command, mode }
     }
 }

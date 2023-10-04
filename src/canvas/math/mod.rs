@@ -32,10 +32,7 @@ pub fn lagrange(t: f32, xs: &[f32], ys: &[f32]) -> f32 {
 
 #[must_use]
 pub fn lambda(k: usize, t: f32, xs: &[f32]) -> f32 {
-    (0..xs.len())
-        .filter(|i| *i != k)
-        .map(|i| (t - xs[i]) / (xs[k] - xs[i]))
-        .product()
+    (0..xs.len()).filter(|i| *i != k).map(|i| (t - xs[i]) / (xs[k] - xs[i])).product()
 }
 
 #[must_use]
@@ -61,10 +58,8 @@ pub fn de_casteljau(points: &[CurvePoint], t: f32) -> CurvePoint {
 #[must_use]
 pub fn rational_de_casteljau(points: &[RationalBezierPoint], t: f32) -> CurvePoint {
     let t_1 = 1.0 - t;
-    let (mut q, mut w): (Vec<Point<f32>>, Vec<f32>) = points
-        .iter()
-        .map(|point| (point.point(), point.weight()))
-        .unzip();
+    let (mut q, mut w): (Vec<Point<f32>>, Vec<f32>) =
+        points.iter().map(|point| (point.point(), point.weight())).unzip();
     for k in 1..(points.len()) {
         for i in 0..(points.len() - k) {
             let u = t_1 * w[i];

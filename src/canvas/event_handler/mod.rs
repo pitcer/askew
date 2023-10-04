@@ -76,9 +76,7 @@ impl EventHandler<ChangeCurrentCurveIndex> for CanvasEventHandler<'_> {
 
 impl EventHandler<GetLength> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: GetLength) -> HandlerResult<GetLength> {
-        let length = self.canvas.curves[event.0]
-            .event_handler()
-            .handle(GetControlPointsLength)?;
+        let length = self.canvas.curves[event.0].event_handler().handle(GetControlPointsLength)?;
         Ok(length)
     }
 }
@@ -92,22 +90,16 @@ impl EventHandler<GetCurvesLength> for CanvasEventHandler<'_> {
 
 impl EventHandler<GetPointOnCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: GetPointOnCurve) -> HandlerResult<GetPointOnCurve> {
-        let point = self.canvas.curves[event.0]
-            .event_handler()
-            .handle(GetPoint(event.1))?;
+        let point = self.canvas.curves[event.0].event_handler().handle(GetPoint(event.1))?;
         Ok(point)
     }
 }
 
 impl EventHandler<MovePointOnCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: MovePointOnCurve) -> HandlerResult<MovePointOnCurve> {
-        let point = self.canvas.curves[event.0]
-            .event_handler()
-            .handle(GetPoint(event.1))?;
+        let point = self.canvas.curves[event.0].event_handler().handle(GetPoint(event.1))?;
         let shift = event.2 - point;
-        self.canvas.curves[event.0]
-            .event_handler()
-            .handle(MovePoint::new(event.1, shift))?;
+        self.canvas.curves[event.0].event_handler().handle(MovePoint::new(event.1, shift))?;
         Ok(())
     }
 }

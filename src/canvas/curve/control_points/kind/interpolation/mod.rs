@@ -20,11 +20,7 @@ pub struct Interpolation {
 impl Interpolation {
     #[must_use]
     pub fn new(points: CurvePoints, samples: Samples, nodes: InterpolationNodes) -> Self {
-        Self {
-            points,
-            samples,
-            nodes,
-        }
+        Self { points, samples, nodes }
     }
 
     pub fn event_handler(&mut self) -> InterpolationEventHandler<'_> {
@@ -41,17 +37,15 @@ impl ToPath for Interpolation {
 
         let (ts, first, last) = match self.nodes {
             InterpolationNodes::Chebyshev => {
-                let ts = (1..=length)
-                    .map(|index| math::chebyshev(length, index))
-                    .collect::<Vec<_>>();
+                let ts =
+                    (1..=length).map(|index| math::chebyshev(length, index)).collect::<Vec<_>>();
                 let first = ts[0];
                 let last = ts[length - 1];
                 (ts, first, last)
             }
             InterpolationNodes::EquallySpaced => {
-                let ts = (0..length)
-                    .map(|index| index as f32 / (length - 1) as f32)
-                    .collect::<Vec<_>>();
+                let ts =
+                    (0..length).map(|index| index as f32 / (length - 1) as f32).collect::<Vec<_>>();
                 (ts, 0.0, 1.0)
             }
         };

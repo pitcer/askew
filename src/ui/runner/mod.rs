@@ -95,10 +95,7 @@ impl WindowRunner {
             Event::NewEvents(StartCause::Init) => {
                 control_flow.set_wait();
             }
-            Event::NewEvents(StartCause::ResumeTimeReached {
-                start: _start,
-                requested_resume,
-            }) => {
+            Event::NewEvents(StartCause::ResumeTimeReached { start: _start, requested_resume }) => {
                 let wake_time = self.sleeping_tasks.wake(requested_resume)?;
                 match wake_time {
                     None => control_flow.set_wait(),
@@ -193,10 +190,7 @@ impl WindowRunner {
         request: RequestHandle,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
-        let RequestHandle {
-            request,
-            response_sender,
-        } = request;
+        let RequestHandle { request, response_sender } = request;
         match request {
             Request::RotateCurve { id, angle_radians } => {
                 self.frame
@@ -206,10 +200,7 @@ impl WindowRunner {
                 self.window.request_redraw();
                 Ok(())
             }
-            Request::Sleep {
-                seconds,
-                nanoseconds,
-            } => {
+            Request::Sleep { seconds, nanoseconds } => {
                 let duration = Duration::new(seconds, nanoseconds);
                 let wake_time = self.sleeping_tasks.sleep(response_sender, duration);
                 control_flow.set_wait_until(wake_time);

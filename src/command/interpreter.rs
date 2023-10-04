@@ -44,21 +44,15 @@ impl<'a> CommandInterpreter<'a> {
             Command::Set(set) => self.interpret_set(set),
             Command::Toggle(toggle) => self.interpret_toggle(toggle),
             Command::Rotate { angle, curve_id } => self.interpret_rotate(angle, curve_id),
-            Command::Move {
-                horizontal,
-                vertical,
-            } => self.interpret_move(horizontal, vertical),
+            Command::Move { horizontal, vertical } => self.interpret_move(horizontal, vertical),
             Command::Save { path } => self.interpret_save(path.as_ref()),
             Command::Open { path } => self.interpret_open(path.as_ref()),
             Command::SetCurveType { curve_type } => self.interpret_set_curve_type(curve_type),
             Command::GetLength { curve_id } => self.get_length(curve_id),
             Command::GetPoint { curve_id, point_id } => self.get_point(curve_id, point_id),
-            Command::MovePoint {
-                curve_id,
-                point_id,
-                horizontal,
-                vertical,
-            } => self.move_point(curve_id, point_id, horizontal, vertical),
+            Command::MovePoint { curve_id, point_id, horizontal, vertical } => {
+                self.move_point(curve_id, point_id, horizontal, vertical)
+            }
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(properties) => self.trochoid(properties),
             Command::Execute { path } => self.execute(path),
@@ -131,9 +125,7 @@ impl<'a> CommandInterpreter<'a> {
         let mut handler = self.command_handler();
         let shift = Vector::new(horizontal, vertical);
         handler.delegate(MoveCurve::new(shift))?;
-        Ok(Some(Message::info(format!(
-            "Curve moved by ({horizontal}, {vertical})"
-        ))))
+        Ok(Some(Message::info(format!("Curve moved by ({horizontal}, {vertical})"))))
     }
 
     fn interpret_save(&mut self, path: Option<&PathBuf>) -> InterpretResult {
@@ -154,9 +146,7 @@ impl<'a> CommandInterpreter<'a> {
 
     fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {
         self.command_handler().delegate(SetCurveType(curve_type))?;
-        Ok(Some(Message::info(format!(
-            "Set curve type to {curve_type}"
-        ))))
+        Ok(Some(Message::info(format!("Set curve type to {curve_type}"))))
     }
 
     fn get_curves_length(&mut self) -> InterpretResult {
@@ -170,19 +160,12 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn get_point(&mut self, curve_id: usize, point_id: usize) -> InterpretResult {
-        let result = self
-            .command_handler()
-            .delegate(GetPointOnCurve(curve_id, point_id))?;
-        Ok(Some(Message::info(format!(
-            "{},{}",
-            result.horizontal(),
-            result.vertical()
-        ))))
+        let result = self.command_handler().delegate(GetPointOnCurve(curve_id, point_id))?;
+        Ok(Some(Message::info(format!("{},{}", result.horizontal(), result.vertical()))))
     }
 
     fn move_point(&mut self, curve_id: usize, point_id: usize, x: f32, y: f32) -> InterpretResult {
-        self.command_handler()
-            .delegate(MovePointOnCurve(curve_id, point_id, Point::new(x, y)))?;
+        self.command_handler().delegate(MovePointOnCurve(curve_id, point_id, Point::new(x, y)))?;
         Ok(None)
     }
 
@@ -213,9 +196,7 @@ impl<'a> CommandInterpreter<'a> {
             }
             Task::Kill { task_id } => {
                 if !self.state.tasks.task_exists(task_id) {
-                    return Ok(Some(Message::error(format!(
-                        "Task {task_id} does not exist"
-                    ))));
+                    return Ok(Some(Message::error(format!("Task {task_id} does not exist"))));
                 }
 
                 self.state.tasks.kill_task(task_id);

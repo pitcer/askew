@@ -25,12 +25,7 @@ impl Tasks {
         let runtime = WasmRuntime::new()?;
         let runtime = Arc::new(runtime);
         let task_id_mask = TaskIdMask::new();
-        Ok(Self {
-            tasks,
-            task_id_mask,
-            runtime,
-            event_loop_sender,
-        })
+        Ok(Self { tasks, task_id_mask, runtime, event_loop_sender })
     }
 
     pub fn list_tasks(&self) -> impl Iterator<Item = &TaskId> {
@@ -46,9 +41,7 @@ impl Tasks {
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {
             let request = EventLoopRequest::ProgressTask(TaskHandle::new(task_id, runnable));
-            proxy
-                .send_event(request)
-                .expect("event loop should not be closed");
+            proxy.send_event(request).expect("event loop should not be closed");
         };
 
         let (runnable, task) = async_task::spawn(future, schedule);
@@ -57,10 +50,7 @@ impl Tasks {
         let task = Task::new(task);
 
         let result = self.tasks.insert(task_id, task);
-        debug_assert!(
-            result.is_none(),
-            "task with id {task_id} is already in tasks map"
-        );
+        debug_assert!(result.is_none(), "task with id {task_id} is already in tasks map");
 
         task_id
     }
@@ -113,10 +103,7 @@ impl TaskIdMask {
             self.0.push(true);
         } else {
             let result = self.0.replace(free_task_id, true);
-            debug_assert!(
-                !result,
-                "task with id {free_task_id} is already in task mask"
-            );
+            debug_assert!(!result, "task with id {free_task_id} is already in task mask");
         }
         free_task_id
     }

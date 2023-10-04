@@ -66,13 +66,11 @@ impl<'a> Panel<'a> {
     }
 
     pub fn draw_stroke_path(&mut self, path: &Path, paint: &Paint<'_>, stroke: &Stroke) {
-        self.as_pixmap_mut()
-            .stroke_path(path, paint, stroke, Transform::identity(), None);
+        self.as_pixmap_mut().stroke_path(path, paint, stroke, Transform::identity(), None);
     }
 
     pub fn draw_fill_path(&mut self, path: &Path, paint: &Paint<'_>, fill_rule: FillRule) {
-        self.as_pixmap_mut()
-            .fill_path(path, paint, fill_rule, Transform::identity(), None);
+        self.as_pixmap_mut().fill_path(path, paint, fill_rule, Transform::identity(), None);
     }
 
     pub fn blend_pixel(&mut self, pixel: Point<usize>, foreground: Pixel) {

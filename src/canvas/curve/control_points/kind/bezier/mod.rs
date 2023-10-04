@@ -24,11 +24,7 @@ pub enum BezierAlgorithm {
 impl Bezier {
     #[must_use]
     pub fn new(points: CurvePoints, samples: Samples, algorithm: BezierAlgorithm) -> Self {
-        Self {
-            points,
-            samples,
-            algorithm,
-        }
+        Self { points, samples, algorithm }
     }
 
     pub fn event_handler(&mut self) -> BezierEventHandler<'_> {

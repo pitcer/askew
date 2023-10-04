@@ -77,10 +77,7 @@ pub struct RequestHandle {
 impl RequestHandle {
     #[must_use]
     pub fn new(request: Request, response_sender: Sender<Response>) -> Self {
-        Self {
-            request,
-            response_sender,
-        }
+        Self { request, response_sender }
     }
 }
 
@@ -95,10 +92,7 @@ impl Host for State {
     }
 
     async fn sleep(&mut self) -> Result<()> {
-        let request = Request::Sleep {
-            seconds: 3,
-            nanoseconds: 0,
-        };
+        let request = Request::Sleep { seconds: 3, nanoseconds: 0 };
         let Response::Sleep = self.send_request(request).await? else {
             return Err(anyhow!("Invalid response"));
         };

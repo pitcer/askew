@@ -12,11 +12,7 @@ pub struct TextPanel<'a> {
 impl<'a> TextPanel<'a> {
     #[must_use]
     pub fn new(panel: Panel<'a>, text_color: Rgb, background_color: Rgb) -> Self {
-        Self {
-            panel,
-            text_color,
-            background_color,
-        }
+        Self { panel, text_color, background_color }
     }
 
     pub fn fill(&mut self) {

@@ -10,9 +10,7 @@ pub struct PaintBuilder<'a> {
 impl<'a> PaintBuilder<'a> {
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            paint: Paint::default(),
-        }
+        Self { paint: Paint::default() }
     }
 
     #[must_use]

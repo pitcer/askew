@@ -27,15 +27,11 @@ impl Window {
     pub fn resize_surface(&mut self, size: PhysicalSize<u32>) -> Result<()> {
         let width = NonZeroU32::new(size.width).expect("size width should be non zero");
         let height = NonZeroU32::new(size.height).expect("size height should be non zero");
-        self.surface
-            .resize(width, height)
-            .map_err(|error| anyhow!(error.to_string()))
+        self.surface.resize(width, height).map_err(|error| anyhow!(error.to_string()))
     }
 
     pub fn buffer_mut(&mut self) -> Result<Buffer<'_>> {
-        self.surface
-            .buffer_mut()
-            .map_err(|error| anyhow!(error.to_string()))
+        self.surface.buffer_mut().map_err(|error| anyhow!(error.to_string()))
     }
 
     pub fn request_redraw(&self) {

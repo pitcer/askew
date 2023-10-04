@@ -82,17 +82,11 @@ pub fn main() -> Result<()> {
 }
 
 fn run(config: Config) -> Result<()> {
-    let filter = if config.debug {
-        LevelFilter::Debug
-    } else {
-        LevelFilter::Info
-    };
+    let filter = if config.debug { LevelFilter::Debug } else { LevelFilter::Info };
     initialize_logger(filter)?;
 
     let event_loop = EventLoopBuilder::with_user_event().build()?;
-    let window = WindowBuilder::new()
-        .with_title("askew")
-        .build(&event_loop)?;
+    let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
     let window = Window::from_winit(window)?;
     let size = window.size_rectangle();
     let frame = Frame::new(size, &config)?;
@@ -126,11 +120,6 @@ fn initialize_logger(filter: LevelFilter) -> Result<()> {
         .set_time_offset_to_local()
         .unwrap_or_else(convert::identity)
         .build();
-    TermLogger::init(
-        filter,
-        logger_config,
-        TerminalMode::Stdout,
-        ColorChoice::Auto,
-    )?;
+    TermLogger::init(filter, logger_config, TerminalMode::Stdout, ColorChoice::Auto)?;
     Ok(())
 }

@@ -111,9 +111,7 @@ impl CommandOpen {
         let result = self.execute_command(state);
         let message = result.unwrap_or_else(|error| {
             self.buffer.clear();
-            self.buffer
-                .write_fmt(format_args!("{error}"))
-                .expect("formatting should not fail");
+            self.buffer.write_fmt(format_args!("{error}")).expect("formatting should not fail");
             let message = Message::new(self.buffer, MessageType::Error);
             Some(message)
         });

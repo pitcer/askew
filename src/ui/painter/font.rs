@@ -19,10 +19,7 @@ impl FontLoader {
     pub fn new(font_path: impl AsRef<Path>) -> Result<Self> {
         let font_settings = FontSettings::default();
         let font_data = fs::read(&font_path).with_context(|| {
-            format!(
-                "Failed to read font file '{}'",
-                font_path.as_ref().display()
-            )
+            format!("Failed to read font file '{}'", font_path.as_ref().display())
         })?;
         let font = Font::from_bytes(font_data, font_settings).map_err(|error| anyhow!(error))?;
         Ok(Self { font })
@@ -62,9 +59,8 @@ impl GlyphRasterizer {
         position: &'a GlyphPosition,
     ) -> GlyphRaster<'a> {
         let config = position.key;
-        let (metrics, raster) = self
-            .cache
-            .get_or_insert(config, || font.font().rasterize_config(config));
+        let (metrics, raster) =
+            self.cache.get_or_insert(config, || font.font().rasterize_config(config));
         GlyphRaster::new(position, metrics, raster)
     }
 }
@@ -85,10 +81,7 @@ impl FontLayout {
     pub fn new(default_font_size: u32) -> Self {
         let layout = Layout::new(CoordinateSystem::PositiveYDown);
         let default_font_size = default_font_size as f32;
-        Self {
-            layout,
-            default_font_size,
-        }
+        Self { layout, default_font_size }
     }
 
     pub fn setup<'a>(&'a mut self, font: &'a FontLoader) -> LayoutSetup<'a> {
@@ -115,11 +108,7 @@ pub struct LayoutSetup<'a> {
 
 impl<'a> LayoutSetup<'a> {
     fn new(font: &'a Font, layout: &'a mut Layout, default_font_size: f32) -> Self {
-        Self {
-            layout,
-            default_font_size,
-            font,
-        }
+        Self { layout, default_font_size, font }
     }
 
     pub fn append_color_text(&mut self, text: &str, color: Rgb) {
@@ -152,11 +141,7 @@ pub struct GlyphRaster<'a> {
 impl<'a> GlyphRaster<'a> {
     #[must_use]
     pub fn new(position: &'a GlyphPosition, metrics: &'a Metrics, raster: &'a [u8]) -> Self {
-        Self {
-            position,
-            metrics,
-            raster,
-        }
+        Self { position, metrics, raster }
     }
 
     pub fn iterator(&'a self) -> impl Iterator<Item = GlyphPixel> + 'a {

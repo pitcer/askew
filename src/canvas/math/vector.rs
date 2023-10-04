@@ -12,10 +12,7 @@ pub struct Vector<T> {
 
 impl<T> Vector<T> {
     pub fn new(horizontal: T, vertical: T) -> Self {
-        Self {
-            horizontal,
-            vertical,
-        }
+        Self { horizontal, vertical }
     }
 }
 
@@ -77,10 +74,7 @@ where
     type Output = Vector<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
-        Self {
-            horizontal: self.horizontal * rhs,
-            vertical: self.vertical * rhs,
-        }
+        Self { horizontal: self.horizontal * rhs, vertical: self.vertical * rhs }
     }
 }
 
@@ -91,9 +85,6 @@ where
     type Output = Vector<T>;
 
     fn div(self, rhs: T) -> Self::Output {
-        Self {
-            horizontal: self.horizontal / rhs,
-            vertical: self.vertical / rhs,
-        }
+        Self { horizontal: self.horizontal / rhs, vertical: self.vertical / rhs }
     }
 }

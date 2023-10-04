@@ -38,18 +38,14 @@ where
     P: AsRef<Point<f32>> + AsMut<Point<f32>>,
 {
     fn handle(&mut self, event: MovePoint) -> HandlerResult<MovePoint> {
-        self.points
-            .shift(event.id, event.shift)
-            .ok_or_else(|| Error::NoSuchPoint(event.id))?;
+        self.points.shift(event.id, event.shift).ok_or_else(|| Error::NoSuchPoint(event.id))?;
         Ok(())
     }
 }
 
 impl<P> EventHandler<DeletePoint> for ControlPointsEventHandler<'_, P> {
     fn handle(&mut self, event: DeletePoint) -> HandlerResult<DeletePoint> {
-        self.points
-            .remove(event.id)
-            .ok_or_else(|| Error::NoSuchPoint(event.id))?;
+        self.points.remove(event.id).ok_or_else(|| Error::NoSuchPoint(event.id))?;
         Ok(())
     }
 }
@@ -88,11 +84,7 @@ where
     P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
 {
     fn handle(&mut self, event: GetPoint) -> HandlerResult<GetPoint> {
-        let point = *self
-            .points
-            .get(event.0)
-            .ok_or_else(|| Error::NoSuchPoint(event.0))?
-            .as_ref();
+        let point = *self.points.get(event.0).ok_or_else(|| Error::NoSuchPoint(event.0))?.as_ref();
         Ok(point)
     }
 }

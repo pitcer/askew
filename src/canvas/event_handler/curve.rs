@@ -40,11 +40,7 @@ impl EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'_> {
         let current_weight = self.delegate(GetWeight::new(point_id))?;
 
         let change = event.weight;
-        let weight = if change < 0.0 {
-            current_weight / -change
-        } else {
-            current_weight * change
-        };
+        let weight = if change < 0.0 { current_weight / -change } else { current_weight * change };
 
         self.delegate(ChangeWeight::new(point_id, weight))
     }
@@ -131,9 +127,7 @@ impl EventHandler<RotateCurveById> for CanvasEventHandler<'_> {
             .curves
             .get_mut(event.curve)
             .ok_or_else(|| Error::NoSuchCurve(event.curve))?;
-        curve
-            .event_handler()
-            .handle(RotateCurve::new(event.angle))?;
+        curve.event_handler().handle(RotateCurve::new(event.angle))?;
         Ok(())
     }
 }

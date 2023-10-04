@@ -75,11 +75,7 @@ struct CurveRasterizer<'a, 'b, T> {
 
 impl<'a, 'b, T> CurveRasterizer<'a, 'b, T> {
     pub fn new(curve: &'a T, properties: &'a CanvasProperties, panel: &'a mut Panel<'b>) -> Self {
-        Self {
-            curve,
-            properties,
-            panel,
-        }
+        Self { curve, properties, panel }
     }
 }
 
@@ -89,13 +85,8 @@ where
 {
     fn draw_curve(&mut self) {
         if let Some(path) = self.curve.to_path(TinySkiaPathConverter) {
-            let paint = PaintBuilder::new()
-                .rgb_color(self.properties.line_color)
-                .build();
-            let stroke = Stroke {
-                width: self.properties.line_width,
-                ..Stroke::default()
-            };
+            let paint = PaintBuilder::new().rgb_color(self.properties.line_color).build();
+            let stroke = Stroke { width: self.properties.line_width, ..Stroke::default() };
             self.panel.draw_stroke_path(&path, &paint, &stroke);
         }
     }
@@ -108,13 +99,9 @@ where
     fn draw_convex_hull(&mut self) {
         if self.properties.show_convex_hull && self.curve.control_points().length() >= 3 {
             if let Some(path) = self.create_convex_hull_path() {
-                let paint = PaintBuilder::new()
-                    .rgb_color(self.properties.convex_hull_color)
-                    .build();
-                let stroke = Stroke {
-                    width: self.properties.line_width,
-                    ..Stroke::default()
-                };
+                let paint =
+                    PaintBuilder::new().rgb_color(self.properties.convex_hull_color).build();
+                let stroke = Stroke { width: self.properties.line_width, ..Stroke::default() };
                 self.panel.draw_stroke_path(&path, &paint, &stroke);
             }
         }
@@ -122,24 +109,17 @@ where
 
     fn draw_control_points(&mut self) {
         if let Some(points_path) = self.create_points_path(self.properties) {
-            let points_paint = PaintBuilder::new()
-                .rgb_color(self.properties.control_points_color)
-                .build();
-            self.panel
-                .draw_fill_path(&points_path, &points_paint, FillRule::Winding);
+            let points_paint =
+                PaintBuilder::new().rgb_color(self.properties.control_points_color).build();
+            self.panel.draw_fill_path(&points_path, &points_paint, FillRule::Winding);
         }
     }
 
     fn draw_current_control_point(&mut self) {
-        if let Some(point) = self
-            .curve
-            .control_points()
-            .get(self.properties.current_point_index)
-        {
+        if let Some(point) = self.curve.control_points().get(self.properties.current_point_index) {
             let point = point.as_ref();
-            let points_paint = PaintBuilder::new()
-                .rgb_color(self.properties.current_control_point_color)
-                .build();
+            let points_paint =
+                PaintBuilder::new().rgb_color(self.properties.current_control_point_color).build();
             let mut path = PathBuilder::new();
             path.push_circle(
                 point.horizontal(),
@@ -148,8 +128,7 @@ where
             );
             let path = path.finish();
             if let Some(path) = path {
-                self.panel
-                    .draw_fill_path(&path, &points_paint, FillRule::Winding);
+                self.panel.draw_fill_path(&path, &points_paint, FillRule::Winding);
             }
         }
     }
@@ -157,47 +136,30 @@ where
     fn draw_center_of_mass(&mut self) {
         if let Some(center) = self.curve.control_points().center_of_mass() {
             let center = *center.as_ref();
-            let points_paint = PaintBuilder::new()
-                .color(PaintColor::from_rgb(Rgb::new(0, 255, 0)))
-                .build();
+            let points_paint =
+                PaintBuilder::new().color(PaintColor::from_rgb(Rgb::new(0, 255, 0))).build();
             if let Some(path) = self.create_point_path(center) {
-                self.panel
-                    .draw_fill_path(&path, &points_paint, FillRule::Winding);
+                self.panel.draw_fill_path(&path, &points_paint, FillRule::Winding);
             }
         }
     }
 
     fn draw_control_line_path(&mut self) {
         if self.properties.control_line {
-            let points = self
-                .curve
-                .control_points()
-                .iterator()
-                .map(AsRef::as_ref)
-                .copied();
+            let points = self.curve.control_points().iterator().map(AsRef::as_ref).copied();
             let path = CurvePath::new_open(points);
             let path = TinySkiaPathConverter.to_path(path);
             if let Some(path) = path {
-                let paint = PaintBuilder::new()
-                    .rgb_color(self.properties.convex_hull_color)
-                    .build();
-                let stroke = Stroke {
-                    width: self.properties.line_width,
-                    ..Stroke::default()
-                };
+                let paint =
+                    PaintBuilder::new().rgb_color(self.properties.convex_hull_color).build();
+                let stroke = Stroke { width: self.properties.line_width, ..Stroke::default() };
                 self.panel.draw_stroke_path(&path, &paint, &stroke);
             }
         }
     }
 
     fn create_convex_hull_path(&self) -> Option<Path> {
-        let points = self
-            .curve
-            .control_points()
-            .iterator()
-            .map(AsRef::as_ref)
-            .copied()
-            .collect();
+        let points = self.curve.control_points().iterator().map(AsRef::as_ref).copied().collect();
         ConvexHull::points_to_convex_hull_path(points, TinySkiaPathConverter)
     }
 
@@ -205,11 +167,7 @@ where
         let mut path = PathBuilder::new();
 
         for point in self.curve.control_points().iterator().map(AsRef::as_ref) {
-            path.push_circle(
-                point.horizontal(),
-                point.vertical(),
-                properties.point_radius,
-            );
+            path.push_circle(point.horizontal(), point.vertical(), properties.point_radius);
         }
 
         let path = path.finish()?;
@@ -218,11 +176,7 @@ where
 
     fn create_point_path(&self, point: Point<f32>) -> Option<Path> {
         let mut path = PathBuilder::new();
-        path.push_circle(
-            point.horizontal(),
-            point.vertical(),
-            self.properties.point_radius * 2.0,
-        );
+        path.push_circle(point.horizontal(), point.vertical(), self.properties.point_radius * 2.0);
         path.finish()
     }
 }

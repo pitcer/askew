@@ -42,12 +42,7 @@ impl Frame {
             canvas.generate_random_points(config.random_points)?;
         }
 
-        Ok(Self {
-            canvas,
-            size,
-            properties,
-            background,
-        })
+        Ok(Self { canvas, size, properties, background })
     }
 
     fn load_background(config: &Config) -> Result<Option<Pixmap>> {
@@ -55,16 +50,11 @@ impl Frame {
             let image = image::open(path)?;
             let image = image.into_rgb8();
             let buffer: &[[u8; 3]] = bytemuck::cast_slice(image.as_bytes());
-            let buffer = buffer
-                .iter()
-                .copied()
-                .flat_map(|[r, g, b]| [b, g, r, 255])
-                .collect::<Vec<_>>();
-            let image_pixmap = Pixmap::from_vec(
-                buffer,
-                IntSize::from_wh(image.width(), image.height()).unwrap(),
-            )
-            .unwrap();
+            let buffer =
+                buffer.iter().copied().flat_map(|[r, g, b]| [b, g, r, 255]).collect::<Vec<_>>();
+            let image_pixmap =
+                Pixmap::from_vec(buffer, IntSize::from_wh(image.width(), image.height()).unwrap())
+                    .unwrap();
             Ok(Some(image_pixmap))
         } else {
             Ok(None)
@@ -94,10 +84,8 @@ impl Frame {
                 let mut buffer = vec![EMPTY_PIXEL; self.size.area() as usize];
                 let panel = Panel::new(&mut buffer, self.size);
                 self.canvas.rasterize(panel)?;
-                let buffer = buffer
-                    .iter()
-                    .flat_map(|pixel| pixel.into_rgb_array())
-                    .collect::<Vec<_>>();
+                let buffer =
+                    buffer.iter().flat_map(|pixel| pixel.into_rgb_array()).collect::<Vec<_>>();
                 let size = self.size.size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
                     .ok_or_else(|| anyhow!("image should fit"))?;

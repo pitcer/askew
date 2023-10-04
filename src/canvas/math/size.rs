@@ -30,10 +30,7 @@ where
 
 impl From<Size<NonZeroU32>> for Size<u32> {
     fn from(value: Size<NonZeroU32>) -> Self {
-        Size {
-            width: value.width.get(),
-            height: value.height.get(),
-        }
+        Size { width: value.width.get(), height: value.height.get() }
     }
 }
 
@@ -50,18 +47,12 @@ where
     T: Copy,
 {
     fn from(value: PhysicalSize<T>) -> Self {
-        Size {
-            width: value.width,
-            height: value.height,
-        }
+        Size { width: value.width, height: value.height }
     }
 }
 
 impl From<Size<u32>> for Size<f32> {
     fn from(value: Size<u32>) -> Self {
-        Size {
-            width: value.width as f32,
-            height: value.height as f32,
-        }
+        Size { width: value.width as f32, height: value.height as f32 }
     }
 }

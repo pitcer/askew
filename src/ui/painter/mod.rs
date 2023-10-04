@@ -30,20 +30,11 @@ impl Painter {
         let status_layout = FontLayout::new(config.font_size);
         let command_layout = FontLayout::new(config.font_size);
         let color_scheme = ColorScheme::from_config(config);
-        Ok(Self {
-            font_loader,
-            glyph_rasterizer,
-            status_layout,
-            command_layout,
-            color_scheme,
-        })
+        Ok(Self { font_loader, glyph_rasterizer, status_layout, command_layout, color_scheme })
     }
 
     pub fn paint(&mut self, view: WindowView<'_>, mut panel: Panel<'_>) -> Result<()> {
-        panel.fill(Pixel::from_rgba(
-            self.color_scheme.background_color,
-            Alpha::max(),
-        ));
+        panel.fill(Pixel::from_rgba(self.color_scheme.background_color, Alpha::max()));
         if let Some(background) = &view.frame.background() {
             panel.draw_pixmap(0, 0, background.as_ref());
         }
@@ -55,27 +46,21 @@ impl Painter {
         let canvas = &view.frame.canvas();
         let mut name = canvas.curve_type().to_string();
         name.truncate(6);
-        self.status_layout
-            .setup(&self.font_loader)
-            .append_text(&format!(
-                "{} {} {}/{} {}",
-                view.mode.as_mode(),
-                name,
-                canvas.properties().current_curve + 1,
-                canvas.curves().len(),
-                canvas.properties().current_point_index
-            ));
+        self.status_layout.setup(&self.font_loader).append_text(&format!(
+            "{} {} {}/{} {}",
+            view.mode.as_mode(),
+            name,
+            canvas.properties().current_curve + 1,
+            canvas.curves().len(),
+            canvas.properties().current_point_index
+        ));
         let mut status_bar = TextPanel::new(
             status,
             self.color_scheme.text_color,
             self.color_scheme.status_bar_color,
         );
         status_bar.fill();
-        status_bar.draw_layout(
-            &self.font_loader,
-            &self.status_layout,
-            &mut self.glyph_rasterizer,
-        );
+        status_bar.draw_layout(&self.font_loader, &self.status_layout, &mut self.glyph_rasterizer);
 
         let mut setup = self.command_layout.setup(&self.font_loader);
         match &view.command {

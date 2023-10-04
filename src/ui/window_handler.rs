@@ -24,36 +24,23 @@ impl WindowEventHandler {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
         let modifiers = Modifiers::default();
         let mouse_left_state = ElementState::Released;
-        Self {
-            cursor_position,
-            modifiers,
-            mouse_left_state,
-        }
+        Self { cursor_position, modifiers, mouse_left_state }
     }
 
     pub fn handle(&mut self, event: WindowEvent) -> Result<Option<Input>> {
         match event {
-            WindowEvent::KeyboardInput {
-                device_id, event, ..
-            } => return Ok(self.handle_keyboard_input(device_id, event)),
+            WindowEvent::KeyboardInput { device_id, event, .. } => {
+                return Ok(self.handle_keyboard_input(device_id, event))
+            }
             WindowEvent::ModifiersChanged(modifiers) => {
                 self.modifiers = modifiers;
             }
-            WindowEvent::CursorMoved {
-                device_id,
-                position,
-                ..
-            } => {
+            WindowEvent::CursorMoved { device_id, position, .. } => {
                 return Ok(self
                     .handle_cursor_moved(device_id, position)
                     .map(|event| Input::new(Some(event), None)))
             }
-            WindowEvent::MouseInput {
-                device_id,
-                state,
-                button,
-                ..
-            } => {
+            WindowEvent::MouseInput { device_id, state, button, .. } => {
                 return Ok(self
                     .handle_mouse_input(device_id, state, button)
                     .map(|event| Input::new(Some(event), None)))

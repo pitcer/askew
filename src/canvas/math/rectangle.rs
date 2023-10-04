@@ -58,18 +58,12 @@ where
 
 impl From<Rectangle<NonZeroU32>> for Rectangle<u32> {
     fn from(value: Rectangle<NonZeroU32>) -> Self {
-        Rectangle {
-            origin: value.origin.into(),
-            size: value.size.into(),
-        }
+        Rectangle { origin: value.origin.into(), size: value.size.into() }
     }
 }
 
 impl From<Rectangle<u32>> for Rectangle<f32> {
     fn from(value: Rectangle<u32>) -> Self {
-        Rectangle {
-            origin: value.origin.into(),
-            size: value.size.into(),
-        }
+        Rectangle { origin: value.origin.into(), size: value.size.into() }
     }
 }

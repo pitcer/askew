@@ -38,9 +38,7 @@ impl IpcServer {
 
         let future = async move { server.listen(listener).await };
         let schedule = move |runnable| {
-            proxy
-                .send_event(EventLoopRequest::ProgressIpcServer(runnable))
-                .unwrap();
+            proxy.send_event(EventLoopRequest::ProgressIpcServer(runnable)).unwrap();
         };
         let (runnable, task) = async_task::spawn(future, schedule);
         runnable.schedule();
@@ -60,8 +58,7 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy
-                .send_event(EventLoopRequest::IpcMessage(message))?;
+            self.proxy.send_event(EventLoopRequest::IpcMessage(message))?;
             let (status, reply) = self.receiver.recv().await?;
 
             stream.write_all(slice::from_ref(&status)).await?;

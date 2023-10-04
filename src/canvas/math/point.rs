@@ -13,10 +13,7 @@ pub struct Point<T> {
 
 impl<T> Point<T> {
     pub const fn new(horizontal: T, vertical: T) -> Self {
-        Self {
-            horizontal,
-            vertical,
-        }
+        Self { horizontal, vertical }
     }
 }
 
@@ -70,10 +67,7 @@ where
     type Output = Vector<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vector::new(
-            self.horizontal - rhs.horizontal,
-            self.vertical - rhs.vertical,
-        )
+        Vector::new(self.horizontal - rhs.horizontal, self.vertical - rhs.vertical)
     }
 }
 
@@ -85,27 +79,18 @@ impl<T> From<Point<T>> for (T, T) {
 
 impl<T> From<(T, T)> for Point<T> {
     fn from(value: (T, T)) -> Self {
-        Point {
-            horizontal: value.0,
-            vertical: value.1,
-        }
+        Point { horizontal: value.0, vertical: value.1 }
     }
 }
 
 impl From<Point<NonZeroU32>> for Point<u32> {
     fn from(value: Point<NonZeroU32>) -> Self {
-        Point {
-            horizontal: value.horizontal.get(),
-            vertical: value.vertical.get(),
-        }
+        Point { horizontal: value.horizontal.get(), vertical: value.vertical.get() }
     }
 }
 
 impl From<Point<u32>> for Point<f32> {
     fn from(value: Point<u32>) -> Self {
-        Point {
-            horizontal: value.horizontal as f32,
-            vertical: value.vertical as f32,
-        }
+        Point { horizontal: value.horizontal as f32, vertical: value.vertical as f32 }
     }
 }

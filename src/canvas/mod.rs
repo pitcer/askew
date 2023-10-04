@@ -43,11 +43,7 @@ impl Canvas {
         let properties = CanvasProperties::new(config);
         let curve = Self::create_curve(&properties, config.curve_type, None, None);
         let curves = vec![curve];
-        Self {
-            curves,
-            size,
-            properties,
-        }
+        Self { curves, size, properties }
     }
 
     #[must_use]
@@ -73,13 +69,9 @@ impl Canvas {
                     properties.interpolation_nodes,
                 )))
             }
-            CurveType::Bezier => {
-                CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(Bezier::new(
-                    CurvePoints::new(points),
-                    samples,
-                    properties.bezier_algorithm,
-                )))
-            }
+            CurveType::Bezier => CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
+                Bezier::new(CurvePoints::new(points), samples, properties.bezier_algorithm),
+            )),
             CurveType::RationalBezier => {
                 let points = points
                     .into_iter()

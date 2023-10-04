@@ -30,11 +30,7 @@ impl RationalBezier {
         samples: Samples,
         algorithm: RationalBezierAlgorithm,
     ) -> Self {
-        Self {
-            points,
-            samples,
-            algorithm,
-        }
+        Self { points, samples, algorithm }
     }
 
     pub fn event_handler(&mut self) -> RationalBezierEventHandler<'_> {

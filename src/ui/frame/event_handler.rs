@@ -55,9 +55,7 @@ impl EventHandler<ChangeWeight> for CommandEventHandler<'_> {
         };
         match self.mode.as_mode() {
             Mode::Curve => {
-                self.delegate(RotateCurve::new(
-                    std::f32::consts::PI * factor * 4.0 / 180.0,
-                ))?;
+                self.delegate(RotateCurve::new(std::f32::consts::PI * factor * 4.0 / 180.0))?;
             }
             Mode::Point => {
                 self.delegate(ChangeCurrentPointWeight::new(factor))?;
