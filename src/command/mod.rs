@@ -6,11 +6,12 @@ use message::{Message, MessageType};
 
 use crate::command::interpreter::CommandInterpreter;
 use crate::command::parser::CommandParser;
-use crate::ui::state::ProgramState;
+use program_view::ProgramView;
 
 pub mod interpreter;
 pub mod message;
 pub mod parser;
+pub mod program_view;
 
 #[derive(Debug)]
 pub enum CommandState {
@@ -20,7 +21,7 @@ pub enum CommandState {
 
 impl CommandState {
     #[must_use]
-    pub fn initial() -> Self {
+    pub fn new() -> Self {
         CommandState::Closed(CommandClosed::new(None))
     }
 
@@ -38,11 +39,17 @@ impl CommandState {
         });
     }
 
-    pub fn execute(&mut self, program_state: ProgramState<'_>) {
+    pub fn execute(&mut self, program_state: ProgramView<'_>) {
         replace_with::replace_with_or_abort(self, |state| match state {
             CommandState::Open(command) => CommandState::Closed(command.execute(program_state)),
             other => other,
         });
+    }
+}
+
+impl Default for CommandState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -100,7 +107,7 @@ impl CommandOpen {
     }
 
     #[must_use]
-    pub fn execute(mut self, state: ProgramState<'_>) -> CommandClosed {
+    pub fn execute(mut self, state: ProgramView<'_>) -> CommandClosed {
         let result = self.execute_command(state);
         let message = result.unwrap_or_else(|error| {
             self.buffer.clear();
@@ -113,7 +120,7 @@ impl CommandOpen {
         CommandClosed::new(message)
     }
 
-    fn execute_command(&self, state: ProgramState<'_>) -> Result<Option<Message>> {
+    fn execute_command(&self, state: ProgramView<'_>) -> Result<Option<Message>> {
         let input = &self.buffer[1..];
         let mut parser = CommandParser::new(input);
         let result = parser.parse()?;

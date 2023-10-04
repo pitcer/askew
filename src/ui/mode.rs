@@ -29,7 +29,7 @@ pub enum ModeState {
 
 impl ModeState {
     #[must_use]
-    pub fn initial() -> Self {
+    pub fn new() -> Self {
         ModeState::Curve(ModeCurve)
     }
 
@@ -71,6 +71,12 @@ impl ModeState {
             ModeState::PointAdd(_) => Mode::PointAdd,
             ModeState::PointSelect(_) => Mode::PointSelect,
         }
+    }
+}
+
+impl Default for ModeState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

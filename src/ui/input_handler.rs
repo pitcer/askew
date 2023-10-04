@@ -1,18 +1,18 @@
 use anyhow::Result;
 use winit::keyboard::SmolStr;
 
+use crate::command::program_view::ProgramView;
 use crate::command::CommandState;
 use crate::event::{input, EventHandler};
 use crate::ui::mode::Mode;
-use crate::ui::state::ProgramState;
 
 pub struct InputHandler<'a> {
     command: &'a mut CommandState,
-    state: ProgramState<'a>,
+    state: ProgramView<'a>,
 }
 
 impl<'a> InputHandler<'a> {
-    pub fn new(command: &'a mut CommandState, state: ProgramState<'a>) -> Self {
+    pub fn new(command: &'a mut CommandState, state: ProgramView<'a>) -> Self {
         Self { command, state }
     }
 

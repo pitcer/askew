@@ -1,19 +1,17 @@
-use std::path::PathBuf;
-
 use async_task::Runnable;
 use winit::event_loop;
 
 use crate::ipc::server::IpcMessage;
-use crate::wasm::request::Request;
+use crate::ui::runner::task::TaskHandle;
+use crate::wasm::RequestHandle;
 
-pub type EventLoopProxy = event_loop::EventLoopProxy<WindowRequest>;
+pub type EventLoopSender = event_loop::EventLoopProxy<EventLoopRequest>;
 
 #[derive(Debug)]
-pub enum WindowRequest {
+pub enum EventLoopRequest {
     NoReplyCommand(String),
     IpcMessage(IpcMessage),
-    WasmRequest(Request),
-    WasmRun { path: PathBuf },
-    Progress(Runnable),
+    TaskRequest(RequestHandle),
+    ProgressTask(TaskHandle),
     ProgressIpcServer(Runnable),
 }

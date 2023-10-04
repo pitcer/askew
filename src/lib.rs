@@ -55,7 +55,7 @@ use winit::window::WindowBuilder;
 
 use ipc::client::IpcClient;
 use ipc::server::IpcServer;
-use ui::runner::window_request::WindowRequest;
+use ui::runner::window_request::EventLoopRequest;
 
 use crate::cli::SubCommands;
 use crate::config::Config;
@@ -100,7 +100,8 @@ fn run(config: Config) -> Result<()> {
 
     let proxy = event_loop.create_proxy();
     if let Some(command) = config.command {
-        proxy.send_event(WindowRequest::NoReplyCommand(command))?;
+        // TODO: try to move this to window runner and remove NoReplyCommand
+        proxy.send_event(EventLoopRequest::NoReplyCommand(command))?;
     }
 
     let handle = IpcServer::run(config.ipc_path, proxy)?;

@@ -12,24 +12,20 @@ use crate::command::interpreter::CommandInterpreter;
 use crate::command::message::{Message, MessageType};
 use crate::command::parser::CommandParser;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::state::ProgramState;
-use crate::ui::runner::window_request::{EventLoopProxy, WindowRequest};
+use crate::command::program_view::ProgramView;
+use crate::ui::runner::window_request::{EventLoopSender, EventLoopRequest};
 
 pub type IpcReply = (Status, Option<String>);
 
 pub type ServerTask = Task<Result<()>>;
 
 pub struct IpcServer {
-    proxy: EventLoopProxy,
+    proxy: EventLoopSender,
     receiver: Receiver<IpcReply>,
 }
 
 impl IpcServer {
-    fn new(proxy: EventLoopProxy, receiver: Receiver<IpcReply>) -> Self {
-        Self { proxy, receiver }
-    }
-
-    pub fn run(path: impl AsRef<Path>, proxy: EventLoopProxy) -> Result<IpcServerHandle> {
+    pub fn run(path: impl AsRef<Path>, proxy: EventLoopSender) -> Result<IpcServerHandle> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -43,7 +39,7 @@ impl IpcServer {
         let future = async move { server.listen(listener).await };
         let schedule = move |runnable| {
             proxy
-                .send_event(WindowRequest::ProgressIpcServer(runnable))
+                .send_event(EventLoopRequest::ProgressIpcServer(runnable))
                 .unwrap();
         };
         let (runnable, task) = async_task::spawn(future, schedule);
@@ -53,6 +49,10 @@ impl IpcServer {
         Ok(handle)
     }
 
+    fn new(proxy: EventLoopSender, receiver: Receiver<IpcReply>) -> Self {
+        Self { proxy, receiver }
+    }
+
     async fn listen(self, listener: UnixListener) -> Result<()> {
         while let Some(mut stream) = listener.incoming().next().await.transpose()? {
             let mut message = String::new();
@@ -60,7 +60,7 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy.send_event(WindowRequest::IpcMessage(message))?;
+            self.proxy.send_event(EventLoopRequest::IpcMessage(message))?;
             let (status, reply) = self.receiver.recv().await?;
 
             stream.write_all(slice::from_ref(&status)).await?;
@@ -85,7 +85,7 @@ impl IpcMessage {
     }
 
     #[must_use]
-    pub fn handle(mut self, state: ProgramState<'_>) -> IpcReply {
+    pub fn handle(mut self, state: ProgramView<'_>) -> IpcReply {
         let result = self.interpret(state).transpose();
         let Some(message) = result else {
             return (STATUS_EMPTY, None);
@@ -100,7 +100,7 @@ impl IpcMessage {
         (status, Some(message))
     }
 
-    fn interpret(&mut self, state: ProgramState<'_>) -> Result<Option<Message>> {
+    fn interpret(&mut self, state: ProgramView<'_>) -> Result<Option<Message>> {
         let mut parser = CommandParser::new(&self.message);
         let result = parser.parse()?;
         let mut interpreter = CommandInterpreter::new(state);

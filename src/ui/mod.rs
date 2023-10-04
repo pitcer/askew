@@ -4,6 +4,5 @@ pub mod input_handler;
 pub mod mode;
 pub mod painter;
 pub mod runner;
-pub mod state;
 pub mod window;
 pub mod window_handler;

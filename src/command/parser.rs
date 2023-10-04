@@ -24,7 +24,7 @@ impl<'a> CommandParser<'a> {
         <Command as clap::Parser>::try_parse_from(input).map_err(|error| {
             let error_rendered = error.render();
             let error_printable = error_rendered.ansi();
-            log::debug!("Parse error:\n{error_printable}");
+            log::info!("Parse error:\n{error_printable}");
             Error::ParserInternal(String::from("Parse error"))
         })
     }
@@ -113,11 +113,15 @@ pub enum Command {
     #[command()]
     TrochoidProperties(TrochoidProperties),
 
+    /// Creates new task
     #[command()]
     Execute {
         #[arg()]
         path: PathBuf,
     },
+
+    #[command(subcommand)]
+    Task(Task),
 }
 
 #[derive(Debug, clap::Subcommand)]
@@ -160,4 +164,16 @@ pub enum Toggle {
 
     #[command()]
     ControlLine,
+}
+
+#[derive(Debug, clap::Subcommand)]
+pub enum Task {
+    #[command()]
+    List,
+
+    #[command()]
+    Kill {
+        #[arg()]
+        task_id: usize,
+    },
 }

@@ -16,6 +16,11 @@ impl Message {
     }
 
     #[must_use]
+    pub fn error(message: String) -> Self {
+        Self::new(message, MessageType::Error)
+    }
+
+    #[must_use]
     pub fn into_text(self) -> String {
         self.text
     }

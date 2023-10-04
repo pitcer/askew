@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-len="$(./target/release/askew ipc "/tmp/askew.socket" "get_curves_length")"
+len="$(./target/release/askew ipc "/tmp/askew.socket" "get-curves-length")"
 
 if [ "$len" != 1 ]; then
   exit
@@ -10,11 +10,11 @@ for r_1 in $(seq 0.5 0.02 0.5); do
   for r_2 in $(seq 0.5 0.02 0.5); do
     for w_1 in $(seq 0.1 0.02 0.1); do
       for w_2 in $(seq 0.1 0.02 1); do
-        ./target/release/askew ipc "/tmp/askew.socket" "trochoid_properties -31.415928,31.415928,$r_1,$r_2,$w_1,$w_2"
+        ./target/release/askew ipc "/tmp/askew.socket" "trochoid-properties -31.415928 31.415928 $r_1 $r_2 $w_1 $w_2"
         sleep 0.02
       done
       for w_1 in $(seq 0.1 0.005 1.0); do
-        ./target/release/askew ipc "/tmp/askew.socket" "trochoid_properties -31.415928,31.415928,$r_1,$r_2,$w_1,$w_2"
+        ./target/release/askew ipc "/tmp/askew.socket" "trochoid-properties -31.415928 31.415928 $r_1 $r_2 $w_1 $w_2"
         sleep 0.02
       done
     done

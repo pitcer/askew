@@ -2,12 +2,14 @@ use std::f32::consts;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
+use itertools::Itertools;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::command::message::Message;
-use crate::command::parser::{Command, Get, Set, Toggle};
+use crate::command::parser::{Command, Get, Set, Task, Toggle};
+use crate::command::program_view::ProgramView;
 use crate::config::CurveType;
 use crate::event::canvas::{
     GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve,
@@ -19,19 +21,16 @@ use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{DelegateEventHandler, EventHandler};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
-use crate::ui::state::ProgramState;
-use crate::ui::runner::window_request::WindowRequest;
 
-#[derive(Debug)]
 pub struct CommandInterpreter<'a> {
-    state: ProgramState<'a>,
+    state: ProgramView<'a>,
 }
 
 type InterpretResult<E = anyhow::Error> = Result<Option<Message>, E>;
 
 impl<'a> CommandInterpreter<'a> {
     #[must_use]
-    pub fn new(state: ProgramState<'a>) -> Self {
+    pub fn new(state: ProgramView<'a>) -> Self {
         Self { state }
     }
 
@@ -62,12 +61,8 @@ impl<'a> CommandInterpreter<'a> {
             } => self.move_point(curve_id, point_id, horizontal, vertical),
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(properties) => self.trochoid(properties),
-            Command::Execute { path } => self
-                .state
-                .proxy
-                .send_event(WindowRequest::WasmRun { path })
-                .map::<Option<Message>, _>(|_| None)
-                .map_err(|err| anyhow!(err)),
+            Command::Execute { path } => self.execute(path),
+            Command::Task(task) => self.task(task),
         };
         result.map_err(Error::OtherError)
     }
@@ -199,6 +194,34 @@ impl<'a> CommandInterpreter<'a> {
             .event_handler()
             .handle(SetTrochoidProperties(prop))?;
         Ok(None)
+    }
+
+    fn execute(&mut self, path: PathBuf) -> InterpretResult {
+        if !path.exists() {
+            return Err(anyhow!("File '{}' does not exists", path.display()));
+        }
+
+        let task_id = self.state.tasks.register_task(path);
+        Ok(Some(Message::info(format!("Created task {task_id}"))))
+    }
+
+    fn task(&mut self, task: Task) -> InterpretResult {
+        match task {
+            Task::List => {
+                let tasks = self.state.tasks.list_tasks().join(", ");
+                Ok(Some(Message::info(format!("Tasks: {tasks}"))))
+            }
+            Task::Kill { task_id } => {
+                if !self.state.tasks.task_exists(task_id) {
+                    return Ok(Some(Message::error(format!(
+                        "Task {task_id} does not exist"
+                    ))));
+                }
+
+                self.state.tasks.kill_task(task_id);
+                Ok(Some(Message::info(format!("Task {task_id} killed"))))
+            }
+        }
     }
 }
 
