@@ -232,6 +232,11 @@ impl WindowRunner {
                 Ok(())
             }
             Request::Sleep { seconds, nanoseconds } => {
+                if seconds == 0 && nanoseconds == 0 {
+                    responder.respond(Response::Sleep);
+                    return Ok(());
+                }
+
                 let duration = Duration::new(seconds, nanoseconds);
                 let wake_time = self.sleeping_tasks.sleep(responder, duration);
                 control_flow.set_wait_until(wake_time);
