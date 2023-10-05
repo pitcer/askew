@@ -13,19 +13,19 @@ use crate::command::message::{Message, MessageType};
 use crate::command::parser::CommandParser;
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
+use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
 
 pub type IpcReply = (Status, Option<String>);
 
 pub type ServerTask = Task<Result<()>>;
 
 pub struct IpcServer {
-    proxy: EventLoopSender,
+    proxy: RunnerSender,
     receiver: Receiver<IpcReply>,
 }
 
 impl IpcServer {
-    pub fn run(path: impl AsRef<Path>, proxy: EventLoopSender) -> Result<IpcServerHandle> {
+    pub fn run(path: impl AsRef<Path>, proxy: RunnerSender) -> Result<IpcServerHandle> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -47,7 +47,7 @@ impl IpcServer {
         Ok(handle)
     }
 
-    fn new(proxy: EventLoopSender, receiver: Receiver<IpcReply>) -> Self {
+    fn new(proxy: RunnerSender, receiver: Receiver<IpcReply>) -> Self {
         Self { proxy, receiver }
     }
 

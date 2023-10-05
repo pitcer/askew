@@ -3,9 +3,9 @@ use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
-use async_channel::Sender;
 
 use crate::wasm::request::Response;
+use crate::wasm::Responder;
 
 pub struct SleepingTasks {
     tasks: BinaryHeap<Reverse<SleepingTask>>,
@@ -19,13 +19,13 @@ impl SleepingTasks {
     }
 
     /// Returns new earliest wake time
-    pub fn sleep(&mut self, waker: Sender<Response>, duration: Duration) -> Instant {
+    pub fn sleep(&mut self, waker: Responder, duration: Duration) -> Instant {
         let now = Instant::now();
         let until = now + duration;
         self.sleep_until(waker, until)
     }
 
-    fn sleep_until(&mut self, waker: Sender<Response>, until: Instant) -> Instant {
+    fn sleep_until(&mut self, waker: Responder, until: Instant) -> Instant {
         let task = SleepingTask::new(waker, until);
         let task = Reverse(task);
         self.tasks.push(task);
@@ -57,18 +57,18 @@ impl Default for SleepingTasks {
 }
 
 pub struct SleepingTask {
-    waker: Sender<Response>,
+    waker: Responder,
     wake_time: Instant,
 }
 
 impl SleepingTask {
     #[must_use]
-    pub fn new(waker: Sender<Response>, wake_time: Instant) -> Self {
+    pub fn new(waker: Responder, wake_time: Instant) -> Self {
         Self { waker, wake_time }
     }
 
     pub fn wake(self) -> Result<()> {
-        self.waker.send_blocking(Response::Sleep)?;
+        self.waker.respond(Response::Sleep);
         Ok(())
     }
 

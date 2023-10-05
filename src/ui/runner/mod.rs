@@ -22,7 +22,7 @@ use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
 use crate::ui::runner::task::Tasks;
 use crate::ui::runner::task_sleep::SleepingTasks;
-use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
+use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
@@ -50,7 +50,7 @@ impl WindowRunner {
         frame: Frame,
         painter: Painter,
         handle: IpcServerHandle,
-        sender: EventLoopSender,
+        sender: RunnerSender,
     ) -> Result<Self> {
         let command = CommandState::new();
         let mode = ModeState::new();
@@ -192,12 +192,13 @@ impl WindowRunner {
         request: RequestHandle,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
-        match request.request {
+        let RequestHandle { request, responder } = request;
+        match request {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
                 self.frame.event_handler(&mut self.mode).delegate(MoveCurve::new(shift))?;
-                request.respond(Response::Empty)?;
+                responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
@@ -205,13 +206,13 @@ impl WindowRunner {
                 self.frame
                     .event_handler(&mut self.mode)
                     .delegate(RotateCurveById::new(angle_radians, id as usize))?;
-                request.respond(Response::Empty)?;
+                responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::Sleep { seconds, nanoseconds } => {
                 let duration = Duration::new(seconds, nanoseconds);
-                let wake_time = self.sleeping_tasks.sleep(request.response_sender, duration);
+                let wake_time = self.sleeping_tasks.sleep(responder, duration);
                 control_flow.set_wait_until(wake_time);
                 Ok(())
             }
@@ -220,10 +221,10 @@ impl WindowRunner {
                 let center = self.frame.event_handler(&mut self.mode).delegate(GetCurveCenter)?;
                 // TODO: return None instead of (0, 0)
                 let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
-                request.respond(Response::GetPosition {
+                responder.respond(Response::GetPosition {
                     horizontal: center.horizontal(),
                     vertical: center.vertical(),
-                })?;
+                });
                 Ok(())
             }
         }

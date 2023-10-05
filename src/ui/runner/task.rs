@@ -8,7 +8,7 @@ use bitvec::vec::BitVec;
 use futures_lite::future;
 use winit::event_loop::EventLoopProxy;
 
-use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
+use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
 use crate::wasm::WasmRuntime;
 
 pub struct Tasks {
@@ -16,11 +16,11 @@ pub struct Tasks {
     task_id_mask: TaskIdMask,
 
     runtime: Arc<WasmRuntime>,
-    event_loop_sender: EventLoopSender,
+    event_loop_sender: RunnerSender,
 }
 
 impl Tasks {
-    pub fn new(event_loop_sender: EventLoopSender) -> Result<Self> {
+    pub fn new(event_loop_sender: RunnerSender) -> Result<Self> {
         let tasks = HashMap::new();
         let runtime = WasmRuntime::new()?;
         let runtime = Arc::new(runtime);
@@ -36,7 +36,7 @@ impl Tasks {
         let runtime = Arc::clone(&self.runtime);
         let task_id = self.task_id_mask.crate_task_id();
         let proxy = EventLoopProxy::clone(&self.event_loop_sender);
-        let future = async move { runtime.run(path, proxy).await };
+        let future = async move { runtime.run(path, task_id, proxy).await };
 
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {
@@ -171,6 +171,7 @@ impl TaskHandle {
     pub fn progress(self) {
         self.runnable.run();
     }
+
     #[must_use]
     pub fn task_id(&self) -> TaskId {
         self.task_id

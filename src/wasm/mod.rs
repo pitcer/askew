@@ -1,11 +1,12 @@
 use std::path::Path;
 
+use crate::ui::runner::task::TaskId;
 use anyhow::{anyhow, Result};
-use async_channel::Sender;
+use async_channel::{SendError, Sender};
 use wasmtime::component::{Component, Linker};
 use wasmtime::{Config, Engine, Store};
 
-use crate::ui::runner::window_request::{EventLoopRequest, EventLoopSender};
+use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
 use crate::wasm::request::{Request, Response};
 use crate::wasm::wit::curve::CurveId;
 use crate::wasm::wit::{control, curve, Askew};
@@ -28,11 +29,16 @@ impl WasmRuntime {
         Ok(Self { engine })
     }
 
-    pub async fn run(&self, path: impl AsRef<Path>, sender: EventLoopSender) -> Result<u32> {
+    pub async fn run(
+        &self,
+        path: impl AsRef<Path>,
+        task_id: TaskId,
+        runner_sender: RunnerSender,
+    ) -> Result<u32> {
         let mut linker = Linker::new(&self.engine);
         Askew::add_to_linker(&mut linker, |state: &mut State| state)?;
 
-        let state = State::new(sender);
+        let state = State::new(task_id, runner_sender);
         let mut store = Store::new(&self.engine, state);
 
         let component = Component::from_file(&self.engine, path)?;
@@ -45,39 +51,59 @@ impl WasmRuntime {
 }
 
 struct State {
-    sender: EventLoopSender,
+    task_id: TaskId,
+    runner_sender: RunnerSender,
 }
 
 impl State {
-    pub fn new(sender: EventLoopSender) -> Self {
-        Self { sender }
+    pub fn new(task_id: TaskId, runner_sender: RunnerSender) -> Self {
+        Self { task_id, runner_sender }
     }
 
     pub async fn send_request(&mut self, request: Request) -> Result<Response> {
         let (response_sender, response_receiver) = async_channel::bounded(1);
-        let request = RequestHandle::new(request, response_sender);
+        let responder = Responder::new(self.task_id, response_sender);
+        let request = RequestHandle::new(request, responder);
         let request = EventLoopRequest::TaskRequest(request);
-        self.sender.send_event(request)?;
+        self.runner_sender.send_event(request)?;
         let response = response_receiver.recv().await?;
         Ok(response)
     }
 }
 
 #[derive(Debug)]
+pub struct Responder {
+    task_id: TaskId,
+    response_sender: Sender<Response>,
+}
+
+impl Responder {
+    #[must_use]
+    pub fn new(task_id: TaskId, response_sender: Sender<Response>) -> Self {
+        Self { task_id, response_sender }
+    }
+
+    pub fn respond(&self, response: Response) {
+        let result = self.response_sender.send_blocking(response);
+        if let Err(SendError(response)) = result {
+            log::warn!(
+                "Cannot send response `{response:?}` to task {}, because receiver was closed.",
+                self.task_id
+            );
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct RequestHandle {
     pub request: Request,
-    pub response_sender: Sender<Response>,
+    pub responder: Responder,
 }
 
 impl RequestHandle {
     #[must_use]
-    pub fn new(request: Request, response_sender: Sender<Response>) -> Self {
-        Self { request, response_sender }
-    }
-
-    pub fn respond(&self, response: Response) -> Result<()> {
-        self.response_sender.send_blocking(response)?;
-        Ok(())
+    pub fn new(request: Request, responder: Responder) -> Self {
+        Self { request, responder }
     }
 }
 
