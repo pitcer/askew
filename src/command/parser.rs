@@ -123,6 +123,9 @@ pub enum Command {
 
     #[command(subcommand)]
     Task(Task),
+
+    #[command()]
+    Quit,
 }
 
 #[derive(Debug, clap::Subcommand)]

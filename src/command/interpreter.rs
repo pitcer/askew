@@ -57,6 +57,7 @@ impl<'a> CommandInterpreter<'a> {
             Command::TrochoidProperties(properties) => self.trochoid(properties),
             Command::Execute { path, argument } => self.execute(path, argument),
             Command::Task(task) => self.task(task),
+            Command::Quit => self.quit(),
         };
         result.map_err(Error::OtherError)
     }
@@ -203,6 +204,11 @@ impl<'a> CommandInterpreter<'a> {
                 Ok(Some(Message::info(format!("Task {task_id} killed"))))
             }
         }
+    }
+
+    fn quit(&mut self) -> InterpretResult {
+        self.state.control_flow.set_exit();
+        Ok(Some(Message::info("Quit...".to_owned())))
     }
 }
 

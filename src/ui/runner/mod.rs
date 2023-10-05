@@ -21,17 +21,17 @@ use crate::ui::input_handler::InputHandler;
 use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
+use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::runner::task::Tasks;
 use crate::ui::runner::task_sleep::SleepingTasks;
-use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::RequestHandle;
 
+pub mod request;
 pub mod task;
 pub mod task_sleep;
-pub mod request;
 
 pub struct WindowRunner {
     config: Config,
@@ -90,7 +90,12 @@ impl WindowRunner {
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
                 let input = self.handle_window_event(event, control_flow)?;
                 if let Some(input) = input {
-                    let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
+                    let state = ProgramView::new(
+                        control_flow,
+                        &mut self.mode,
+                        &mut self.frame,
+                        &mut self.tasks,
+                    );
                     let handler = InputHandler::new(&mut self.command, state);
                     let result = handler.handle_input(input);
                     if let Err(error) = result {
@@ -106,7 +111,12 @@ impl WindowRunner {
                 for command in mem::take(&mut self.config.command) {
                     log::debug!("<cyan>Initial command input:</> '{command}'");
 
-                    let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
+                    let state = ProgramView::new(
+                        control_flow,
+                        &mut self.mode,
+                        &mut self.frame,
+                        &mut self.tasks,
+                    );
                     let result = command::execute(&command, state)?;
 
                     log::info!("Initial command result: `{result:?}`");
@@ -168,16 +178,19 @@ impl WindowRunner {
     ) -> Result<()> {
         match request {
             RunnerRequest::IpcMessage(message) => {
-                let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
+                let state = ProgramView::new(
+                    control_flow,
+                    &mut self.mode,
+                    &mut self.frame,
+                    &mut self.tasks,
+                );
                 let reply = message.handle(state);
                 let handle = self.ipc_server.as_ref().expect("IPC server should exist");
                 handle.send(reply)?;
                 self.window.request_redraw();
                 Ok(())
             }
-            RunnerRequest::TaskRequest(request) => {
-                self.handle_task_request(request, control_flow)
-            }
+            RunnerRequest::TaskRequest(request) => self.handle_task_request(request, control_flow),
             RunnerRequest::ProgressTask(task) => {
                 let task_id = task.task_id();
                 task.progress();

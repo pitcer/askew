@@ -97,6 +97,10 @@ impl Input {
     }
 }
 
+// pub struct InputProgramState<'a> {
+//
+// }
+
 #[derive(Debug)]
 pub enum InputEvent {
     ToggleConvexHull(input::ToggleConvexHull),
