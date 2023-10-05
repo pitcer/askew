@@ -3,10 +3,10 @@ use anyhow::Result;
 use view::WindowView;
 
 use crate::command::message::MessageType;
-use crate::command::CommandState;
 use crate::config::rgb::{Alpha, Rgb};
 use crate::config::Config;
 use crate::ui::color_scheme::ColorScheme;
+use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::bar::TextPanel;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;

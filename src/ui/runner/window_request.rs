@@ -9,6 +9,7 @@ pub type RunnerSender = event_loop::EventLoopProxy<EventLoopRequest>;
 
 #[derive(Debug)]
 pub enum EventLoopRequest {
+    #[deprecated]
     NoReplyCommand(String),
     IpcMessage(IpcMessage),
     TaskRequest(RequestHandle),

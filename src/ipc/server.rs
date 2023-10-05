@@ -8,9 +8,8 @@ use async_net::unix::UnixListener;
 use async_task::Task;
 use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 
-use crate::command::interpreter::CommandInterpreter;
+use crate::command;
 use crate::command::message::{Message, MessageType};
-use crate::command::parser::CommandParser;
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
@@ -83,8 +82,8 @@ impl IpcMessage {
     }
 
     #[must_use]
-    pub fn handle(mut self, state: ProgramView<'_>) -> IpcReply {
-        let result = self.interpret(state).transpose();
+    pub fn handle(self, state: ProgramView<'_>) -> IpcReply {
+        let result = command::execute(&self.message, state).transpose();
         let Some(message) = result else {
             return (STATUS_EMPTY, None);
         };
@@ -96,14 +95,6 @@ impl IpcMessage {
         };
         let message = message.into_text();
         (status, Some(message))
-    }
-
-    fn interpret(&mut self, state: ProgramView<'_>) -> Result<Option<Message>> {
-        let mut parser = CommandParser::new(&self.message);
-        let result = parser.parse()?;
-        let mut interpreter = CommandInterpreter::new(state);
-        let message = interpreter.interpret(result)?;
-        Ok(message)
     }
 }
 

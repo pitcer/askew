@@ -1,18 +1,17 @@
 use std::time::Duration;
 
-use crate::canvas::math::point::Point;
-use crate::canvas::math::vector::Vector;
 use anyhow::{anyhow, Result};
 use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::ControlFlow;
 
-use crate::command::interpreter::CommandInterpreter;
-use crate::command::parser::CommandParser;
+use crate::canvas::math::point::Point;
+use crate::canvas::math::vector::Vector;
+use crate::command;
 use crate::command::program_view::ProgramView;
-use crate::command::CommandState;
 use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
 use crate::event::DelegateEventHandler;
 use crate::ipc::server::IpcServerHandle;
+use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
 use crate::ui::input_handler::Input;
@@ -154,10 +153,7 @@ impl WindowRunner {
         match request {
             EventLoopRequest::NoReplyCommand(command) => {
                 let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
-                let mut parser = CommandParser::new(&command);
-                let result = parser.parse()?;
-                let mut interpreter = CommandInterpreter::new(state);
-                let _ = interpreter.interpret(result)?;
+                let _ = command::execute(&command, state)?;
                 Ok(())
             }
             EventLoopRequest::IpcMessage(message) => {

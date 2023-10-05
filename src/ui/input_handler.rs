@@ -2,8 +2,8 @@ use anyhow::Result;
 use winit::keyboard::SmolStr;
 
 use crate::command::program_view::ProgramView;
-use crate::command::CommandState;
 use crate::event::{input, EventHandler};
+use crate::ui::command_state::CommandState;
 use crate::ui::mode::Mode;
 
 pub struct InputHandler<'a> {
