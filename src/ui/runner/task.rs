@@ -9,6 +9,7 @@ use futures_lite::future;
 use winit::event_loop::EventLoopProxy;
 
 use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
+use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
 
 pub struct Tasks {
@@ -32,11 +33,15 @@ impl Tasks {
         self.tasks.keys()
     }
 
-    pub fn register_task(&mut self, path: impl AsRef<Path> + Send + 'static) -> TaskId {
+    pub fn register_task(
+        &mut self,
+        path: impl AsRef<Path> + Send + 'static,
+        argument: Option<String>,
+    ) -> TaskId {
         let runtime = Arc::clone(&self.runtime);
         let task_id = self.task_id_mask.crate_task_id();
         let proxy = EventLoopProxy::clone(&self.event_loop_sender);
-        let future = async move { runtime.run(path, task_id, proxy).await };
+        let future = async move { runtime.run(path, task_id, proxy, argument).await };
 
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {
@@ -129,7 +134,7 @@ impl Default for TaskIdMask {
 }
 
 pub type AsyncTask = async_task::Task<TaskResult>;
-pub type TaskResult = Result<u32>;
+pub type TaskResult = Result<RunResult>;
 pub type TaskId = usize;
 
 pub struct Task {

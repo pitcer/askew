@@ -176,7 +176,8 @@ impl WindowRunner {
                 task.progress();
 
                 if let Some(result) = self.tasks.try_finish_task(task_id) {
-                    log::debug!("task result: {result:?}");
+                    let result = result?;
+                    log::info!("Task {task_id} finished with result: `{result:?}`");
                 }
                 Ok(())
             }

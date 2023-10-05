@@ -15,5 +15,8 @@ world askew {
     sleep: func(seconds: u64, nanoseconds: u32)
   }
 
-  export run: func() -> result
+  type run-argument = option<string>
+  type run-result = result<option<string>, string>
+
+  export run: func(argument: run-argument) -> run-result
 }

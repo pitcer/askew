@@ -9,7 +9,7 @@ wit_bindgen::generate!({
 struct Move;
 
 impl Guest for Move {
-    fn run() -> Result<(), ()> {
+    fn run(_argument: RunArgument) -> RunResult {
         let mut direction_forward = true;
         loop {
             let position = curve::get_position(0);

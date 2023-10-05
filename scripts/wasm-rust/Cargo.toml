@@ -1,5 +1,5 @@
 [workspace]
-members = ["long-sleep", "move", "rotate"]
+members = ["fibonacci", "long-sleep", "move", "rotate"]
 resolver = "2"
 
 [workspace.package]

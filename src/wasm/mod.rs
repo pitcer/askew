@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::ui::runner::task::TaskId;
+use crate::ui::runner::task::{TaskId, TaskResult};
 use anyhow::{anyhow, Result};
 use async_channel::{SendError, Sender};
 use wasmtime::component::{Component, Linker};
@@ -9,7 +9,7 @@ use wasmtime::{Config, Engine, Store};
 use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
 use crate::wasm::request::{Request, Response};
 use crate::wasm::wit::curve::CurveId;
-use crate::wasm::wit::{control, curve, Askew};
+use crate::wasm::wit::{control, curve, Askew, RunArgument};
 
 pub mod request;
 pub mod wit;
@@ -34,7 +34,8 @@ impl WasmRuntime {
         path: impl AsRef<Path>,
         task_id: TaskId,
         runner_sender: RunnerSender,
-    ) -> Result<u32> {
+        argument: RunArgument,
+    ) -> TaskResult {
         let mut linker = Linker::new(&self.engine);
         Askew::add_to_linker(&mut linker, |state: &mut State| state)?;
 
@@ -44,9 +45,8 @@ impl WasmRuntime {
         let component = Component::from_file(&self.engine, path)?;
         let (bindings, _) = Askew::instantiate_async(&mut store, &component, &linker).await?;
 
-        let result = bindings.call_run(&mut store).await?;
-        result.map_err(|_error| anyhow!("script finished with error"))?;
-        Ok(42)
+        let result = bindings.call_run(&mut store, &argument).await?;
+        Ok(result)
     }
 }
 

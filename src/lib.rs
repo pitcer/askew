@@ -93,7 +93,8 @@ fn run(config: Config) -> Result<()> {
     let painter = Painter::new(&config)?;
 
     let proxy = event_loop.create_proxy();
-    // TODO: try to move this to window runner and remove NoReplyCommand
+    // TODO: try to move this to window runner and remove NoReplyCommand;
+    // also don't panic on error, instead send it to stdout
     for command in config.command {
         proxy.send_event(EventLoopRequest::NoReplyCommand(command))?;
     }

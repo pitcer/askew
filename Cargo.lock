@@ -172,6 +172,7 @@ dependencies = [
  "replace_with",
  "serde",
  "serde_json",
+ "shlex",
  "simplelog",
  "softbuffer",
  "static_assertions",
@@ -2039,6 +2040,12 @@ dependencies = [
  "ryu",
  "serde",
 ]
+
+[[package]]
+name = "shlex"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7cee0529a6d40f580e7a5e6c495c8fbfe21b7b52795ed4bb5e62cdf92bc6380"
 
 [[package]]
 name = "simd-adler32"

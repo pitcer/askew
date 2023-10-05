@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::{iter, str};
+use std::str;
 
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
@@ -19,9 +19,9 @@ impl<'a> CommandParser<'a> {
     pub fn parse(&mut self) -> Result<Command, Error> {
         log::debug!("<cyan>Internal command input:</> '{}'", self.input);
 
-        let input = self.input.split_whitespace();
-        let input = iter::once("").chain(input);
-        <Command as clap::Parser>::try_parse_from(input).map_err(|error| {
+        let input_split = shlex::split(self.input)
+            .ok_or_else(|| Error::ParserInternal("Invalid command input".to_owned()))?;
+        <Command as clap::Parser>::try_parse_from(input_split).map_err(|error| {
             let error_rendered = error.render();
             let error_printable = error_rendered.ansi();
             log::info!("Parse error:\n{error_printable}");
@@ -37,6 +37,7 @@ pub enum Error {
 }
 
 #[derive(Debug, clap::Parser)]
+#[command(multicall(true), arg_required_else_help(true))]
 pub enum Command {
     #[command(subcommand)]
     Get(Get),
@@ -118,6 +119,8 @@ pub enum Command {
     Execute {
         #[arg()]
         path: PathBuf,
+        #[arg()]
+        argument: Option<String>,
     },
 
     #[command(subcommand)]

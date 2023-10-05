@@ -55,7 +55,7 @@ impl<'a> CommandInterpreter<'a> {
             }
             Command::GetCurvesLength => self.get_curves_length(),
             Command::TrochoidProperties(properties) => self.trochoid(properties),
-            Command::Execute { path } => self.execute(path),
+            Command::Execute { path, argument } => self.execute(path, argument),
             Command::Task(task) => self.task(task),
         };
         result.map_err(Error::OtherError)
@@ -179,12 +179,12 @@ impl<'a> CommandInterpreter<'a> {
         Ok(None)
     }
 
-    fn execute(&mut self, path: PathBuf) -> InterpretResult {
+    fn execute(&mut self, path: PathBuf, argument: Option<String>) -> InterpretResult {
         if !path.exists() {
             return Err(anyhow!("File '{}' does not exists", path.display()));
         }
 
-        let task_id = self.state.tasks.register_task(path);
+        let task_id = self.state.tasks.register_task(path, argument);
         Ok(Some(Message::info(format!("Created task {task_id}"))))
     }
 
