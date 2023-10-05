@@ -1,3 +1,4 @@
+use std::mem;
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
@@ -8,6 +9,7 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::command;
 use crate::command::program_view::ProgramView;
+use crate::config::Config;
 use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
 use crate::event::DelegateEventHandler;
 use crate::ipc::server::IpcServerHandle;
@@ -21,7 +23,7 @@ use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
 use crate::ui::runner::task::Tasks;
 use crate::ui::runner::task_sleep::SleepingTasks;
-use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
+use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
@@ -29,9 +31,10 @@ use crate::wasm::RequestHandle;
 
 pub mod task;
 pub mod task_sleep;
-pub mod window_request;
+pub mod request;
 
 pub struct WindowRunner {
+    config: Config,
     window: Window,
     frame: Frame,
     painter: Painter,
@@ -45,20 +48,22 @@ pub struct WindowRunner {
 
 impl WindowRunner {
     pub fn new(
+        config: Config,
         window: Window,
         frame: Frame,
         painter: Painter,
-        handle: IpcServerHandle,
+        ipc_server: IpcServerHandle,
         sender: RunnerSender,
     ) -> Result<Self> {
         let command = CommandState::new();
         let mode = ModeState::new();
         let event_handler = WindowEventHandler::new();
-        let ipc_server = Some(handle);
+        let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
         let sleeping_tasks = SleepingTasks::new();
 
         Ok(Self {
+            config,
             window,
             frame,
             painter,
@@ -73,9 +78,11 @@ impl WindowRunner {
 
     pub fn run(
         &mut self,
-        event: Event<EventLoopRequest>,
+        event: Event<RunnerRequest>,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
+        log::debug!("<cyan><b>Event loop:</>\n<bright_black>{event:?}</>");
+
         match event {
             Event::RedrawRequested(window_id) if self.window.has_id(window_id) => {
                 self.paint()?;
@@ -95,6 +102,15 @@ impl WindowRunner {
             Event::UserEvent(request) => self.handle_request(request, control_flow)?,
             Event::NewEvents(StartCause::Init) => {
                 control_flow.set_wait();
+
+                for command in mem::take(&mut self.config.command) {
+                    log::debug!("<cyan>Initial command input:</> '{command}'");
+
+                    let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
+                    let result = command::execute(&command, state)?;
+
+                    log::info!("Initial command result: `{result:?}`");
+                }
             }
             Event::NewEvents(StartCause::ResumeTimeReached { start: _start, requested_resume }) => {
                 let wake_time = self.sleeping_tasks.wake(requested_resume)?;
@@ -147,16 +163,11 @@ impl WindowRunner {
 
     fn handle_request(
         &mut self,
-        request: EventLoopRequest,
+        request: RunnerRequest,
         control_flow: &mut ControlFlow,
     ) -> Result<()> {
         match request {
-            EventLoopRequest::NoReplyCommand(command) => {
-                let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
-                let _ = command::execute(&command, state)?;
-                Ok(())
-            }
-            EventLoopRequest::IpcMessage(message) => {
+            RunnerRequest::IpcMessage(message) => {
                 let state = ProgramView::new(&mut self.mode, &mut self.frame, &mut self.tasks);
                 let reply = message.handle(state);
                 let handle = self.ipc_server.as_ref().expect("IPC server should exist");
@@ -164,10 +175,10 @@ impl WindowRunner {
                 self.window.request_redraw();
                 Ok(())
             }
-            EventLoopRequest::TaskRequest(request) => {
+            RunnerRequest::TaskRequest(request) => {
                 self.handle_task_request(request, control_flow)
             }
-            EventLoopRequest::ProgressTask(task) => {
+            RunnerRequest::ProgressTask(task) => {
                 let task_id = task.task_id();
                 task.progress();
 
@@ -177,7 +188,7 @@ impl WindowRunner {
                 }
                 Ok(())
             }
-            EventLoopRequest::ProgressIpcServer(runnable) => {
+            RunnerRequest::ProgressIpcServer(runnable) => {
                 runnable.run();
                 Ok(())
             }

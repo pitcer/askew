@@ -1,16 +1,14 @@
 use async_task::Runnable;
-use winit::event_loop;
+use winit::event_loop::EventLoopProxy;
 
 use crate::ipc::server::IpcMessage;
 use crate::ui::runner::task::TaskHandle;
 use crate::wasm::RequestHandle;
 
-pub type RunnerSender = event_loop::EventLoopProxy<EventLoopRequest>;
+pub type RunnerSender = EventLoopProxy<RunnerRequest>;
 
 #[derive(Debug)]
-pub enum EventLoopRequest {
-    #[deprecated]
-    NoReplyCommand(String),
+pub enum RunnerRequest {
     IpcMessage(IpcMessage),
     TaskRequest(RequestHandle),
     ProgressTask(TaskHandle),

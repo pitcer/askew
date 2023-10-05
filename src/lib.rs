@@ -44,7 +44,7 @@
     clippy::unnecessary_wraps
 )]
 
-use std::convert;
+use std::{convert, mem};
 
 use anyhow::Result;
 use clap::Parser;
@@ -55,7 +55,6 @@ use winit::window::WindowBuilder;
 
 use ipc::client::IpcClient;
 use ipc::server::IpcServer;
-use ui::runner::window_request::EventLoopRequest;
 
 use crate::cli::SubCommands;
 use crate::config::Config;
@@ -81,9 +80,9 @@ pub fn main() -> Result<()> {
     }
 }
 
-fn run(config: Config) -> Result<()> {
+fn run(mut config: Config) -> Result<()> {
     let filter = if config.debug { LevelFilter::Debug } else { LevelFilter::Info };
-    initialize_logger(filter)?;
+    initialize_logger(filter, mem::take(&mut config.log_ignore))?;
 
     let event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
@@ -93,16 +92,10 @@ fn run(config: Config) -> Result<()> {
     let painter = Painter::new(&config)?;
 
     let proxy = event_loop.create_proxy();
-    // TODO: try to move this to window runner and remove NoReplyCommand;
-    // also don't panic on error, instead send it to stdout
-    for command in config.command {
-        proxy.send_event(EventLoopRequest::NoReplyCommand(command))?;
-    }
-
-    let handle = IpcServer::run(config.ipc_path, proxy)?;
+    let ipc_server = IpcServer::run(&config.ipc_path, proxy)?;
 
     let proxy = event_loop.create_proxy();
-    let mut handler = WindowRunner::new(window, frame, painter, handle, proxy)?;
+    let mut handler = WindowRunner::new(config, window, frame, painter, ipc_server, proxy)?;
 
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);
@@ -112,15 +105,20 @@ fn run(config: Config) -> Result<()> {
     Ok(())
 }
 
-fn initialize_logger(filter: LevelFilter) -> Result<()> {
-    let logger_config = ConfigBuilder::new()
+fn initialize_logger(level_filter: LevelFilter, ignore_filters: Vec<String>) -> Result<()> {
+    let mut builder = ConfigBuilder::new();
+    builder
         .set_enable_paris_formatting(true)
         .set_time_format_custom(simplelog::format_description!(
             "[hour]:[minute]:[second].[subsecond digits:3]"
         ))
         .set_time_offset_to_local()
-        .unwrap_or_else(convert::identity)
-        .build();
-    TermLogger::init(filter, logger_config, TerminalMode::Stdout, ColorChoice::Auto)?;
+        .unwrap_or_else(convert::identity);
+    for filter in ignore_filters {
+        builder.add_filter_ignore(filter);
+    }
+    let config = builder.build();
+
+    TermLogger::init(level_filter, config, TerminalMode::Stdout, ColorChoice::Auto)?;
     Ok(())
 }

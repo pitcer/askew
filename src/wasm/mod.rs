@@ -6,7 +6,7 @@ use async_channel::{SendError, Sender};
 use wasmtime::component::{Component, Linker};
 use wasmtime::{Config, Engine, Store};
 
-use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
+use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::wasm::request::{Request, Response};
 use crate::wasm::wit::curve::CurveId;
 use crate::wasm::wit::{control, curve, Askew, RunArgument};
@@ -64,7 +64,7 @@ impl State {
         let (response_sender, response_receiver) = async_channel::bounded(1);
         let responder = Responder::new(self.task_id, response_sender);
         let request = RequestHandle::new(request, responder);
-        let request = EventLoopRequest::TaskRequest(request);
+        let request = RunnerRequest::TaskRequest(request);
         self.runner_sender.send_event(request)?;
         let response = response_receiver.recv().await?;
         Ok(response)

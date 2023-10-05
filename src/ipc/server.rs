@@ -12,7 +12,7 @@ use crate::command;
 use crate::command::message::{Message, MessageType};
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
+use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 
 pub type IpcReply = (Status, Option<String>);
 
@@ -37,7 +37,7 @@ impl IpcServer {
 
         let future = async move { server.listen(listener).await };
         let schedule = move |runnable| {
-            proxy.send_event(EventLoopRequest::ProgressIpcServer(runnable)).unwrap();
+            proxy.send_event(RunnerRequest::ProgressIpcServer(runnable)).unwrap();
         };
         let (runnable, task) = async_task::spawn(future, schedule);
         runnable.schedule();
@@ -57,7 +57,7 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy.send_event(EventLoopRequest::IpcMessage(message))?;
+            self.proxy.send_event(RunnerRequest::IpcMessage(message))?;
             let (status, reply) = self.receiver.recv().await?;
 
             stream.write_all(slice::from_ref(&status)).await?;
@@ -83,6 +83,8 @@ impl IpcMessage {
 
     #[must_use]
     pub fn handle(self, state: ProgramView<'_>) -> IpcReply {
+        log::debug!("<cyan>IPC command input:</> '{}'", &self.message);
+
         let result = command::execute(&self.message, state).transpose();
         let Some(message) = result else {
             return (STATUS_EMPTY, None);

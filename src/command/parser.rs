@@ -17,8 +17,6 @@ impl<'a> CommandParser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<Command, Error> {
-        log::debug!("<cyan>Internal command input:</> '{}'", self.input);
-
         let input_split = shlex::split(self.input)
             .ok_or_else(|| Error::ParserInternal("Invalid command input".to_owned()))?;
         <Command as clap::Parser>::try_parse_from(input_split).map_err(|error| {

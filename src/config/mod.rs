@@ -20,6 +20,10 @@ pub struct Config {
     #[arg(short, long, default_value_t = false)]
     pub debug: bool,
 
+    /// Simplelog ignore filters
+    #[arg(long)]
+    pub log_ignore: Vec<String>,
+
     #[arg(
         short, long = DefaultCurveType.name(),
         value_enum, default_value_t = DefaultCurveType.value()

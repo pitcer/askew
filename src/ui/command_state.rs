@@ -100,6 +100,8 @@ impl CommandOpen {
     #[must_use]
     pub fn execute(mut self, state: ProgramView<'_>) -> CommandClosed {
         let input = &self.buffer[1..];
+        log::debug!("<cyan>Internal command input:</> '{input}'");
+
         let result = command::execute(input, state);
         let message = result.unwrap_or_else(|error| {
             self.buffer.clear();

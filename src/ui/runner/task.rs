@@ -8,7 +8,7 @@ use bitvec::vec::BitVec;
 use futures_lite::future;
 use winit::event_loop::EventLoopProxy;
 
-use crate::ui::runner::window_request::{EventLoopRequest, RunnerSender};
+use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
 
@@ -45,7 +45,7 @@ impl Tasks {
 
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {
-            let request = EventLoopRequest::ProgressTask(TaskHandle::new(task_id, runnable));
+            let request = RunnerRequest::ProgressTask(TaskHandle::new(task_id, runnable));
             proxy.send_event(request).expect("event loop should not be closed");
         };
 
