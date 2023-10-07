@@ -3,7 +3,7 @@ use crate::canvas::curve::control_points::kind::interpolation::InterpolationNode
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::config::rgb::Rgb;
-use crate::config::{Config, CurveType};
+use crate::config::{CanvasConfig, CurveType};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct CanvasProperties {
@@ -29,23 +29,24 @@ pub struct CanvasProperties {
 
 impl CanvasProperties {
     #[must_use]
-    pub fn new(config: &Config) -> Self {
+    pub fn new(config: CanvasConfig) -> Self {
         Self {
             current_point_index: 0,
             current_curve: 0,
-            default_curve_type: config.curve_type,
-            bezier_algorithm: config.bezier_algorithm,
-            rational_bezier_algorithm: config.rational_bezier_algorithm,
-            trochoid_properties: config.trochoid_properties,
-            line_width: config.line_width,
-            point_radius: config.point_radius,
+            // TODO: separate runtime properties from default config properties (e.g. simply use
+            // CanvasConfig to store them and here store only runtime ones).
+            default_curve_type: config.default_curve_type,
+            bezier_algorithm: config.default_bezier_algorithm,
+            rational_bezier_algorithm: config.default_rational_bezier_algorithm,
+            trochoid_properties: config.default_trochoid_properties,
+            line_width: config.default_line_width,
+            point_radius: config.default_point_radius,
             control_line: config.show_control_line,
             show_convex_hull: config.show_convex_hull,
-            // TODO: use config variable
-            show_center_of_mass: true,
-            interpolation_nodes: config.interpolation_nodes,
-            default_weight: config.default_weight,
-            samples: config.samples,
+            show_center_of_mass: config.show_center_of_mass,
+            interpolation_nodes: config.default_interpolation_nodes,
+            default_weight: config.default_rational_bezier_weight,
+            samples: config.curve_samples,
             line_color: (config.line_color),
             convex_hull_color: (config.convex_hull_color),
             control_points_color: (config.control_points_color),

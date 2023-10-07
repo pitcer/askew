@@ -1,144 +1,199 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use rgb::Rgb;
+use anyhow::Result;
 
+use crate::canvas::curve::control_points::kind::bezier::BezierAlgorithm;
+use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
+use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
+use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::cli::RunArguments;
 use crate::config::property::{
-    ControlLine, ConvexHull, DefaultBezierAlgorithm, DefaultCurveType,
-    DefaultRationalBezierAlgorithm, DefaultTrochoidProperties, DefaultWeight,
-    InterpolationNodesProperty, LineWidth, Property, Samples, UiBackgroundColor, UiCommandBarColor,
-    UiStatusBarColor, UiTextColor, UiTextErrorColor,
+    Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
 };
+use crate::config::rgb::Rgb;
 
 pub mod property;
 pub mod rgb;
 pub mod trochoid_properties;
 
-#[derive(Debug, clap::Args)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Config {
-    #[arg(short, long, default_value_t = false)]
-    pub debug: bool,
+    pub startup_commands: Vec<String>,
+    pub ipc_socket_path: PathBuf,
 
-    /// Simplelog ignore filters
-    #[arg(long)]
-    pub log_ignore: Vec<String>,
+    #[serde(flatten)]
+    pub frame: FrameConfig,
 
-    #[arg(
-        short, long = DefaultCurveType.name(),
-        value_enum, default_value_t = DefaultCurveType.value()
-    )]
-    pub curve_type: <DefaultCurveType as Property>::Type,
+    pub canvas: CanvasConfig,
+    pub ui: UiConfig,
+}
 
-    #[arg(
-        long = DefaultBezierAlgorithm.name(),
-        value_enum, default_value_t = DefaultBezierAlgorithm.value()
-    )]
-    pub bezier_algorithm: <DefaultBezierAlgorithm as Property>::Type,
+impl Config {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let config = if path.exists() {
+            let config_toml = std::fs::read_to_string(path)?;
+            toml::from_str(&config_toml)?
+        } else {
+            let config = Config::default();
+            let config_toml = toml::to_string_pretty(&config)?;
+            std::fs::write(path, config_toml)?;
+            config
+        };
+        Ok(config)
+    }
 
-    #[arg(
-        long = DefaultRationalBezierAlgorithm.name(),
-        value_enum, default_value_t = DefaultRationalBezierAlgorithm.value()
-    )]
-    pub rational_bezier_algorithm: <DefaultRationalBezierAlgorithm as Property>::Type,
+    pub fn overwrite_with_run(&mut self, arguments: RunArguments) {
+        if !arguments.startup_commands.is_empty() {
+            self.startup_commands = arguments.startup_commands;
+        }
+        if let Some(random_points) = arguments.random_points {
+            self.frame.generate_random_points = random_points;
+        }
+        if let Some(project_path) = arguments.project_path {
+            self.frame.project_to_open_path = Some(project_path);
+        }
+        if let Some(canvas_curve_samples) = arguments.canvas_curve_samples {
+            self.canvas.curve_samples = canvas_curve_samples;
+        }
+        if let Some(background_image_path) = arguments.background_image_path {
+            self.frame.background_to_load_path = Some(background_image_path);
+        }
+        if let Some(font_size) = arguments.font_size {
+            self.ui.font_size = font_size;
+        }
+        if let Some(font_path) = arguments.font_path {
+            self.ui.font_path = font_path;
+        }
+        if let Some(ipc_socket_path) = arguments.ipc_socket_path {
+            self.ipc_socket_path = ipc_socket_path;
+        }
+    }
+}
 
-    #[arg(
-        long = DefaultTrochoidProperties.name(),
-        default_value_t = DefaultTrochoidProperties.value(),
-        value_parser = trochoid_properties::parse,
-    )]
-    pub trochoid_properties: <DefaultTrochoidProperties as Property>::Type,
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            startup_commands: vec![],
+            ipc_socket_path: PathBuf::from("/tmp/askew.socket"),
+            frame: FrameConfig::default(),
+            canvas: CanvasConfig::default(),
+            ui: UiConfig::default(),
+        }
+    }
+}
 
-    #[arg(
-        short = 'e', long = InterpolationNodesProperty.name(),
-        value_enum, default_value_t = InterpolationNodesProperty.value()
-    )]
-    pub interpolation_nodes: <InterpolationNodesProperty as Property>::Type,
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct FrameConfig {
+    pub generate_random_points: u32,
 
-    #[arg(short = 'H', long = ConvexHull.name(), default_value_t = ConvexHull.value())]
-    pub show_convex_hull: <ConvexHull as Property>::Type,
+    pub background_to_load_path: Option<PathBuf>,
 
-    #[arg(short = 'L', long = ControlLine.name(), default_value_t = ControlLine.value())]
-    pub show_control_line: <ControlLine as Property>::Type,
+    pub project_to_open_path: Option<PathBuf>,
+}
 
-    #[arg(short, long = Samples.name(), default_value_t = Samples.value())]
-    pub samples: <Samples as Property>::Type,
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct CanvasConfig {
+    pub show_convex_hull: bool,
 
-    #[arg(long = DefaultWeight.name(), default_value_t = DefaultWeight.value())]
-    pub default_weight: <DefaultWeight as Property>::Type,
+    pub show_control_line: bool,
 
-    #[arg(short, long = LineWidth.name(), default_value_t = LineWidth.value())]
-    pub line_width: <LineWidth as Property>::Type,
+    pub show_center_of_mass: bool,
 
-    #[arg(short, long, default_value_t = 4.0)]
-    pub point_radius: f32,
+    pub curve_samples: u32,
 
-    #[arg(short = 'f', long, value_enum)]
-    pub save_format: Option<SaveFormat>,
+    pub default_curve_type: CurveType,
 
-    #[arg(short, long)]
-    pub background_path: Option<PathBuf>,
+    pub default_bezier_algorithm: BezierAlgorithm,
 
-    #[arg(long)]
-    pub open_path: Option<PathBuf>,
+    pub default_rational_bezier_algorithm: RationalBezierAlgorithm,
 
-    /// Command to execute on start, can be specified multiple times
-    #[arg(long)]
-    pub command: Vec<String>,
+    pub default_interpolation_nodes: InterpolationNodes,
 
-    #[arg(short = 'n', long, default_value_t = 0)]
-    pub random_points: u32,
+    pub default_trochoid_properties: TrochoidProperties,
 
-    #[arg(long, default_value_t = 16)]
-    pub font_size: u32,
+    pub default_rational_bezier_weight: f32,
 
-    #[arg(long, default_value = "JetBrainsMonoNL-Regular.ttf")]
-    pub font_path: PathBuf,
+    pub default_line_width: f32,
 
-    #[arg(long, default_value = "#ffff00", value_parser = Rgb::parse)]
+    pub default_point_radius: f32,
+
+    #[serde(with = "rgb::serde_pretty")]
     pub line_color: Rgb,
 
-    #[arg(long, default_value = "#00ffff", value_parser = Rgb::parse)]
+    #[serde(with = "rgb::serde_pretty")]
     pub convex_hull_color: Rgb,
 
-    #[arg(long, default_value = "#ff00ff", value_parser = Rgb::parse)]
+    #[serde(with = "rgb::serde_pretty")]
     pub control_points_color: Rgb,
 
-    #[arg(long, default_value = "#ffffff", value_parser = Rgb::parse)]
+    #[serde(with = "rgb::serde_pretty")]
     pub current_control_point_color: Rgb,
+}
 
-    #[arg(long, default_value = "/tmp/askew.socket")]
-    pub ipc_path: PathBuf,
+impl Default for CanvasConfig {
+    fn default() -> Self {
+        Self {
+            show_convex_hull: false,
+            show_control_line: false,
+            show_center_of_mass: true,
+            curve_samples: 1000,
+            default_curve_type: CurveType::Polyline,
+            default_bezier_algorithm: BezierAlgorithm::ChudyWozny,
+            default_rational_bezier_algorithm: RationalBezierAlgorithm::ChudyWozny,
+            default_interpolation_nodes: InterpolationNodes::Chebyshev,
+            default_trochoid_properties: TrochoidProperties::default(),
+            default_rational_bezier_weight: 1.0,
+            default_line_width: 2.0,
+            default_point_radius: 4.0,
+            line_color: Rgb::new(255, 255, 0),
+            convex_hull_color: Rgb::new(0, 255, 255),
+            control_points_color: Rgb::new(255, 0, 255),
+            current_control_point_color: Rgb::new(255, 255, 255),
+        }
+    }
+}
 
-    #[arg(
-        long = UiBackgroundColor.name(), default_value_t = UiBackgroundColor.value(),
-        value_parser = Rgb::parse
-    )]
-    pub ui_background_color: <UiBackgroundColor as Property>::Type,
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct UiConfig {
+    pub font_path: PathBuf,
 
-    #[arg(
-        long = UiStatusBarColor.name(), default_value_t = UiStatusBarColor.value(),
-        value_parser = Rgb::parse
-    )]
-    pub ui_status_bar_color: <UiStatusBarColor as Property>::Type,
+    pub font_size: u32,
 
-    #[arg(
-        long = UiCommandBarColor.name(), default_value_t = UiCommandBarColor.value(),
-        value_parser = Rgb::parse
-    )]
-    pub ui_command_bar_color: <UiCommandBarColor as Property>::Type,
+    #[serde(with = "rgb::serde_pretty")]
+    pub background_color: Rgb,
 
-    #[arg(
-        long = UiTextColor.name(), default_value_t = UiTextColor.value(),
-        value_parser = Rgb::parse
-    )]
-    pub ui_text_color: <UiTextColor as Property>::Type,
+    #[serde(with = "rgb::serde_pretty")]
+    pub status_bar_color: Rgb,
 
-    #[arg(
-        long = UiTextErrorColor.name(), default_value_t = UiTextErrorColor.value(),
-        value_parser = Rgb::parse
-    )]
-    pub ui_text_error_color: <UiTextErrorColor as Property>::Type,
+    #[serde(with = "rgb::serde_pretty")]
+    pub command_bar_color: Rgb,
+
+    #[serde(with = "rgb::serde_pretty")]
+    pub text_color: Rgb,
+
+    #[serde(with = "rgb::serde_pretty")]
+    pub text_error_color: Rgb,
+}
+
+impl Default for UiConfig {
+    fn default() -> Self {
+        Self {
+            font_size: 16,
+            font_path: PathBuf::from("JetBrainsMonoNL-Regular.ttf"),
+            background_color: UiBackgroundColor.value(),
+            status_bar_color: UiStatusBarColor.value(),
+            command_bar_color: UiCommandBarColor.value(),
+            text_color: UiTextColor.value(),
+            text_error_color: UiTextErrorColor.value(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
@@ -162,9 +217,4 @@ impl Display for CurveType {
             CurveType::Trochoid => write!(f, "Trochoid"),
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
-pub enum SaveFormat {
-    Png,
 }

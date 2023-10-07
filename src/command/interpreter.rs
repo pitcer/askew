@@ -21,6 +21,7 @@ use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{DelegateEventHandler, EventHandler};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::Frame;
+use crate::ui::frame::SaveFormat;
 
 pub struct CommandInterpreter<'a> {
     state: ProgramView<'a>,
@@ -47,6 +48,7 @@ impl<'a> CommandInterpreter<'a> {
             Command::Move { horizontal, vertical } => self.interpret_move(horizontal, vertical),
             Command::Save { path } => self.interpret_save(path.as_ref()),
             Command::Open { path } => self.interpret_open(path.as_ref()),
+            Command::SaveImage { path } => self.interpret_save_image(path),
             Command::SetCurveType { curve_type } => self.interpret_set_curve_type(curve_type),
             Command::GetLength { curve_id } => self.get_length(curve_id),
             Command::GetPoint { curve_id, point_id } => self.get_point(curve_id, point_id),
@@ -143,6 +145,13 @@ impl<'a> CommandInterpreter<'a> {
         let message = Message::info(format!("Project opened from {path}"));
         self.state.frame.load_canvas(canvas);
         Ok(Some(message))
+    }
+
+    fn interpret_save_image(&mut self, path: Option<PathBuf>) -> InterpretResult {
+        let path = path.unwrap_or_else(|| PathBuf::from("canvas.png"));
+        self.state.frame.save_image(&path, SaveFormat::Png)?;
+        let path = path.display();
+        Ok(Some(Message::info(format!("Canvas PNG image saved into '{path}'"))))
     }
 
     fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {

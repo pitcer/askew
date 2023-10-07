@@ -9,7 +9,6 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::command;
 use crate::command::program_view::ProgramView;
-use crate::config::Config;
 use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
 use crate::event::DelegateEventHandler;
 use crate::ipc::server::IpcServerHandle;
@@ -34,7 +33,7 @@ pub mod task;
 pub mod task_sleep;
 
 pub struct WindowRunner {
-    config: Config,
+    commands: Vec<String>,
     window: Window,
     frame: Frame,
     painter: Painter,
@@ -48,7 +47,7 @@ pub struct WindowRunner {
 
 impl WindowRunner {
     pub fn new(
-        config: Config,
+        commands: Vec<String>,
         window: Window,
         frame: Frame,
         painter: Painter,
@@ -63,7 +62,7 @@ impl WindowRunner {
         let sleeping_tasks = SleepingTasks::new();
 
         Ok(Self {
-            config,
+            commands,
             window,
             frame,
             painter,
@@ -108,7 +107,7 @@ impl WindowRunner {
             Event::NewEvents(StartCause::Init) => {
                 control_flow.set_wait();
 
-                for command in mem::take(&mut self.config.command) {
+                for command in mem::take(&mut self.commands) {
                     log::debug!("<cyan>Initial command input:</> '{command}'");
 
                     let state = ProgramView::new(
@@ -161,8 +160,9 @@ impl WindowRunner {
             WindowEvent::CloseRequested => {
                 self.frame.handle_close()?;
 
-                let handle = self.ipc_server.take().expect("IPC server should exist");
-                handle.close();
+                if let Some(handle) = self.ipc_server.take() {
+                    handle.close();
+                }
 
                 control_flow.set_exit();
                 Ok(None)

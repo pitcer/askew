@@ -6,6 +6,9 @@ run-wayland *arguments:
 clippy-wayland:
     cargo clippy --no-default-features --features wayland
 
+test-wayland *arguments:
+    cargo test --no-default-features --features wayland "$@"
+
 build-release:
     RUSTFLAGS="-Clink-arg=-fuse-ld=lld" cargo build --release
 

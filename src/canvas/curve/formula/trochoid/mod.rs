@@ -58,3 +58,16 @@ impl TrochoidProperties {
         Self { range_start, range_end, r_1, r_2, w_1, w_2 }
     }
 }
+
+impl Default for TrochoidProperties {
+    fn default() -> Self {
+        Self {
+            range_start: 10.0 * -std::f32::consts::PI,
+            range_end: 10.0 * std::f32::consts::PI,
+            r_1: 0.3,
+            r_2: 0.8,
+            w_1: 0.3,
+            w_2: 0.7,
+        }
+    }
+}

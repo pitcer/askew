@@ -1,19 +1,16 @@
 use std::path::PathBuf;
 
-use crate::config::{Config, SaveFormat};
+use crate::config::FrameConfig;
 
 #[derive(Debug)]
 pub struct FrameProperties {
-    pub save_format: Option<SaveFormat>,
+    // TODO: add default image save path (and read that from config)
     pub default_save_path: PathBuf,
 }
 
 impl FrameProperties {
     #[must_use]
-    pub fn new(config: &Config) -> Self {
-        Self {
-            save_format: config.save_format,
-            default_save_path: PathBuf::from("askew_canvas.json"),
-        }
+    pub fn new(_config: FrameConfig) -> Self {
+        Self { default_save_path: PathBuf::from("askew_canvas.json") }
     }
 }

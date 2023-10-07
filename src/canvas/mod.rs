@@ -18,7 +18,7 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
-use crate::config::{Config, CurveType};
+use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
 use crate::event::EventHandler;
 use crate::ui::frame::panel::Panel;
@@ -39,9 +39,9 @@ pub struct Canvas {
 
 impl Canvas {
     #[must_use]
-    pub fn new(size: Rectangle<f32>, config: &Config) -> Self {
+    pub fn new(size: Rectangle<f32>, config: CanvasConfig) -> Self {
         let properties = CanvasProperties::new(config);
-        let curve = Self::create_curve(&properties, config.curve_type, None, None);
+        let curve = Self::create_curve(&properties, properties.default_curve_type, None, None);
         let curves = vec![curve];
         Self { curves, size, properties }
     }

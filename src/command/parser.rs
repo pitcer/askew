@@ -75,6 +75,12 @@ pub enum Command {
     },
 
     #[command()]
+    SaveImage {
+        #[arg()]
+        path: Option<PathBuf>,
+    },
+
+    #[command()]
     SetCurveType {
         #[arg()]
         curve_type: CurveType,

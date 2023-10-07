@@ -9,7 +9,7 @@ use tiny_skia::Pixmap;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::Canvas;
 use crate::config::rgb::{Alpha, Rgb};
-use crate::config::{Config, SaveFormat};
+use crate::config::{CanvasConfig, FrameConfig};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
@@ -29,36 +29,38 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(size: Rectangle<u32>, config: &Config) -> Result<Self> {
-        let background = Self::load_background(config)?;
+    pub fn new(
+        size: Rectangle<u32>,
+        frame_config: FrameConfig,
+        canvas_config: CanvasConfig,
+    ) -> Result<Self> {
+        let background =
+            frame_config.background_to_load_path.as_ref().map(Self::load_background).transpose()?;
 
-        let mut canvas = config
-            .open_path
+        let mut canvas = frame_config
+            .project_to_open_path
             .as_ref()
-            .map_or_else(|| Ok(Canvas::new(size.into(), config)), Self::open_canvas)?;
-        let properties = FrameProperties::new(config);
+            .map_or_else(|| Ok(Canvas::new(size.into(), canvas_config)), Self::open_canvas)?;
 
-        if config.random_points > 0 {
-            canvas.generate_random_points(config.random_points)?;
+        if frame_config.generate_random_points > 0 {
+            canvas.generate_random_points(frame_config.generate_random_points)?;
         }
+
+        let properties = FrameProperties::new(frame_config);
 
         Ok(Self { canvas, size, properties, background })
     }
 
-    fn load_background(config: &Config) -> Result<Option<Pixmap>> {
-        if let Some(path) = &config.background_path {
-            let image = image::open(path)?;
-            let image = image.into_rgb8();
-            let buffer: &[[u8; 3]] = bytemuck::cast_slice(image.as_bytes());
-            let buffer =
-                buffer.iter().copied().flat_map(|[r, g, b]| [b, g, r, 255]).collect::<Vec<_>>();
-            let image_pixmap =
-                Pixmap::from_vec(buffer, IntSize::from_wh(image.width(), image.height()).unwrap())
-                    .unwrap();
-            Ok(Some(image_pixmap))
-        } else {
-            Ok(None)
-        }
+    fn load_background(path: impl AsRef<Path>) -> Result<Pixmap> {
+        let image = image::open(path)?;
+        let image = image.into_rgb8();
+        let buffer: &[[u8; 3]] = bytemuck::cast_slice(image.as_bytes());
+        let buffer =
+            buffer.iter().copied().flat_map(|[r, g, b]| [b, g, r, 255]).collect::<Vec<_>>();
+        let image_pixmap =
+            Pixmap::from_vec(buffer, IntSize::from_wh(image.width(), image.height()).unwrap())
+                .unwrap();
+        Ok(image_pixmap)
     }
 
     pub fn resize(&mut self, size: Rectangle<u32>) {
@@ -71,13 +73,10 @@ impl Frame {
     }
 
     pub fn handle_close(&mut self) -> Result<()> {
-        if let Some(format) = self.properties.save_format {
-            self.save_image(format)?;
-        }
         Ok(())
     }
 
-    pub fn save_image(&self, format: SaveFormat) -> Result<()> {
+    pub fn save_image(&self, path: impl AsRef<Path>, format: SaveFormat) -> Result<()> {
         match format {
             SaveFormat::Png => {
                 const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), Alpha::min());
@@ -89,7 +88,7 @@ impl Frame {
                 let size = self.size.size();
                 let image = RgbImage::from_raw(size.width(), size.height(), buffer)
                     .ok_or_else(|| anyhow!("image should fit"))?;
-                image.save_with_format("curve.png", ImageFormat::Png)?;
+                image.save_with_format(path, ImageFormat::Png)?;
             }
         }
         Ok(())
@@ -132,4 +131,10 @@ impl Frame {
     pub fn properties(&self) -> &FrameProperties {
         &self.properties
     }
+}
+
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+pub enum SaveFormat {
+    #[default]
+    Png,
 }

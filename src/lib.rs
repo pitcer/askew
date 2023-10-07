@@ -44,7 +44,7 @@
     clippy::unnecessary_wraps
 )]
 
-use std::{convert, mem};
+use std::convert;
 
 use anyhow::Result;
 use clap::Parser;
@@ -53,10 +53,10 @@ use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
 use winit::event_loop::EventLoopBuilder;
 use winit::window::WindowBuilder;
 
+use cli::{Command, SubCommands};
 use ipc::client::IpcClient;
 use ipc::server::IpcServer;
 
-use crate::cli::SubCommands;
 use crate::config::Config;
 use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
@@ -73,29 +73,40 @@ pub mod ui;
 pub mod wasm;
 
 pub fn main() -> Result<()> {
-    let command = cli::Command::parse();
+    let command = Command::parse();
+
+    let filter = if command.debug { LevelFilter::Debug } else { LevelFilter::Info };
+    initialize_logger(filter, command.log_ignore)?;
+
+    let mut config = Config::from_file(command.config)?;
     match command.command {
-        SubCommands::Run(config) => run(config),
-        SubCommands::Ipc(ipc) => IpcClient::new(ipc.socket_path)?.send(ipc.message),
+        SubCommands::Run(run) => {
+            config.overwrite_with_run(run);
+            crate::run(config)
+        }
+        SubCommands::Ipc(ipc) => {
+            let socket_path = ipc.socket_path.unwrap_or(config.ipc_socket_path);
+            let client = IpcClient::new(socket_path)?;
+            client.send(ipc.message)
+        }
     }
 }
 
-fn run(mut config: Config) -> Result<()> {
-    let filter = if config.debug { LevelFilter::Debug } else { LevelFilter::Info };
-    initialize_logger(filter, mem::take(&mut config.log_ignore))?;
-
+fn run(config: Config) -> Result<()> {
     let event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
     let window = Window::from_winit(window)?;
     let size = window.size_rectangle();
-    let frame = Frame::new(size, &config)?;
-    let painter = Painter::new(&config)?;
+    let frame = Frame::new(size, config.frame, config.canvas)?;
+    let painter = Painter::new(config.ui)?;
+
+    // TODO: add option to disable IPC server
+    let proxy = event_loop.create_proxy();
+    let ipc_server = IpcServer::run(&config.ipc_socket_path, proxy)?;
 
     let proxy = event_loop.create_proxy();
-    let ipc_server = IpcServer::run(&config.ipc_path, proxy)?;
-
-    let proxy = event_loop.create_proxy();
-    let mut handler = WindowRunner::new(config, window, frame, painter, ipc_server, proxy)?;
+    let mut handler =
+        WindowRunner::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
 
     event_loop.run(move |event, _, control_flow| {
         let result = handler.run(event, control_flow);

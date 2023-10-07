@@ -36,7 +36,7 @@ impl<'a> Panel<'a> {
 
         let buffer_width = size.width();
         let mut data = self.buffer;
-        let mut panels = [(); HEIGHTS].map(|_| None);
+        let mut panels = [(); HEIGHTS].map(|()| None);
 
         for (height, panel) in heights.into_iter().zip(panels.iter_mut()) {
             let (split_data, remaining) = data.split_at_mut(buffer_width as usize * height);

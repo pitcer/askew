@@ -4,7 +4,7 @@ use view::WindowView;
 
 use crate::command::message::MessageType;
 use crate::config::rgb::{Alpha, Rgb};
-use crate::config::Config;
+use crate::config::UiConfig;
 use crate::ui::color_scheme::ColorScheme;
 use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::bar::TextPanel;
@@ -24,7 +24,7 @@ pub struct Painter {
 }
 
 impl Painter {
-    pub fn new(config: &Config) -> Result<Self> {
+    pub fn new(config: UiConfig) -> Result<Self> {
         let font_loader = FontLoader::new(&config.font_path)?;
         let glyph_rasterizer = GlyphRasterizer::new();
         let status_layout = FontLayout::new(config.font_size);
