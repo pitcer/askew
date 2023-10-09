@@ -34,3 +34,9 @@ impl Pixel {
         [red, green, blue]
     }
 }
+
+impl Default for Pixel {
+    fn default() -> Self {
+        Pixel::from_rgba(Rgb::new(0, 0, 0), Alpha::min())
+    }
+}

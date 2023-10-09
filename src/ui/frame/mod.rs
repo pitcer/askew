@@ -1,14 +1,12 @@
-use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
-use image::{EncodableLayout, ImageFormat, RgbImage};
+use image::{EncodableLayout, RgbImage};
 use tiny_skia::IntSize;
 use tiny_skia::Pixmap;
 
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::Canvas;
-use crate::config::rgb::{Alpha, Rgb};
 use crate::config::{CanvasConfig, FrameConfig};
 use crate::ui::frame::event_handler::CommandEventHandler;
 use crate::ui::frame::panel::pixel::Pixel;
@@ -40,7 +38,7 @@ impl Frame {
         let mut canvas = frame_config
             .project_to_open_path
             .as_ref()
-            .map_or_else(|| Ok(Canvas::new(size.into(), canvas_config)), Self::open_canvas)?;
+            .map_or_else(|| Ok(Canvas::new(size.into(), canvas_config)), Canvas::from_file)?;
 
         if frame_config.generate_random_points > 0 {
             canvas.generate_random_points(frame_config.generate_random_points)?;
@@ -76,34 +74,39 @@ impl Frame {
         Ok(())
     }
 
-    pub fn save_image(&self, path: impl AsRef<Path>, format: SaveFormat) -> Result<()> {
-        match format {
-            SaveFormat::Png => {
-                const EMPTY_PIXEL: Pixel = Pixel::from_rgba(Rgb::new(0, 0, 0), Alpha::min());
-                let mut buffer = vec![EMPTY_PIXEL; self.size.area() as usize];
-                let panel = Panel::new(&mut buffer, self.size);
-                self.canvas.rasterize(panel)?;
-                let buffer =
-                    buffer.iter().flat_map(|pixel| pixel.into_rgb_array()).collect::<Vec<_>>();
-                let size = self.size.size();
-                let image = RgbImage::from_raw(size.width(), size.height(), buffer)
-                    .ok_or_else(|| anyhow!("image should fit"))?;
-                image.save_with_format(path, ImageFormat::Png)?;
-            }
-        }
-        Ok(())
+    /// If path is `None`, then default image save path from config will be used.
+    pub fn save_image<'a, P>(&'a self, path: Option<P>) -> Result<P>
+    where
+        P: AsRef<Path> + From<&'a PathBuf>,
+    {
+        let mut buffer = vec![Pixel::default(); self.size.area() as usize];
+        let panel = Panel::new(&mut buffer, self.size);
+        self.canvas.rasterize(panel)?;
+        let buffer = buffer.iter().flat_map(|pixel| pixel.into_rgb_array()).collect::<Vec<_>>();
+        let size = self.size.size();
+        let image = RgbImage::from_raw(size.width(), size.height(), buffer)
+            .ok_or_else(|| anyhow!("image should fit"))?;
+        let path = path.unwrap_or_else(|| P::from(&self.properties.default_image_save_path));
+        image.save(&path)?;
+        Ok(path)
     }
 
-    pub fn save_canvas(&self, path: impl AsRef<Path>) -> Result<()> {
-        let file = File::create(path)?;
-        serde_json::to_writer(file, &self.canvas)?;
-        Ok(())
+    pub fn save_canvas<'a, P>(&'a self, path: Option<P>) -> Result<P>
+    where
+        P: AsRef<Path> + From<&'a PathBuf>,
+    {
+        let path = path.unwrap_or_else(|| P::from(&self.properties.default_project_save_path));
+        self.canvas.save_to_file(&path)?;
+        Ok(path)
     }
 
-    pub fn open_canvas(path: impl AsRef<Path>) -> Result<Canvas> {
-        let file = File::open(path)?;
-        let canvas = serde_json::from_reader(file)?;
-        Ok(canvas)
+    pub fn open_canvas<'a, P>(&'a self, path: Option<P>) -> Result<(P, Canvas)>
+    where
+        P: AsRef<Path> + From<&'a PathBuf>,
+    {
+        let path = path.unwrap_or_else(|| P::from(&self.properties.default_project_save_path));
+        let canvas = Canvas::from_file(&path)?;
+        Ok((path, canvas))
     }
 
     pub fn load_canvas(&mut self, mut canvas: Canvas) {
@@ -131,10 +134,4 @@ impl Frame {
     pub fn properties(&self) -> &FrameProperties {
         &self.properties
     }
-}
-
-#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
-pub enum SaveFormat {
-    #[default]
-    Png,
 }

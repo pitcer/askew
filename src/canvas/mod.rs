@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::path::Path;
+
 use anyhow::Result;
 use rand::Rng;
 
@@ -46,6 +49,12 @@ impl Canvas {
         Self { curves, size, properties }
     }
 
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
+        let file = File::open(path)?;
+        let canvas = serde_json::from_reader(file)?;
+        Ok(canvas)
+    }
+
     #[must_use]
     pub fn create_curve(
         properties: &CanvasProperties,
@@ -90,6 +99,12 @@ impl Canvas {
                 properties.trochoid_properties,
             ))),
         }
+    }
+
+    pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
+        let file = File::create(path)?;
+        serde_json::to_writer(file, self)?;
+        Ok(())
     }
 
     pub fn resize(&mut self, size: Rectangle<f32>) {

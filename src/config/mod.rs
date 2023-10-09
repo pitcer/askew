@@ -86,7 +86,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct FrameConfig {
     pub generate_random_points: u32,
@@ -94,6 +94,22 @@ pub struct FrameConfig {
     pub background_to_load_path: Option<PathBuf>,
 
     pub project_to_open_path: Option<PathBuf>,
+
+    pub default_project_save_path: PathBuf,
+
+    pub default_image_save_path: PathBuf,
+}
+
+impl Default for FrameConfig {
+    fn default() -> Self {
+        Self {
+            generate_random_points: 0,
+            background_to_load_path: None,
+            project_to_open_path: None,
+            default_project_save_path: PathBuf::from("askew_project.json"),
+            default_image_save_path: PathBuf::from("askew_canvas.png"),
+        }
+    }
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]

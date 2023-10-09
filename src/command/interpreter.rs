@@ -20,8 +20,6 @@ use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{DelegateEventHandler, EventHandler};
 use crate::ui::frame::event_handler::CommandEventHandler;
-use crate::ui::frame::Frame;
-use crate::ui::frame::SaveFormat;
 
 pub struct CommandInterpreter<'a> {
     state: ProgramView<'a>,
@@ -46,8 +44,8 @@ impl<'a> CommandInterpreter<'a> {
             Command::Toggle(toggle) => self.interpret_toggle(toggle),
             Command::Rotate { angle, curve_id } => self.interpret_rotate(angle, curve_id),
             Command::Move { horizontal, vertical } => self.interpret_move(horizontal, vertical),
-            Command::Save { path } => self.interpret_save(path.as_ref()),
-            Command::Open { path } => self.interpret_open(path.as_ref()),
+            Command::Save { path } => self.interpret_save(path),
+            Command::Open { path } => self.interpret_open(path),
             Command::SaveImage { path } => self.interpret_save_image(path),
             Command::SetCurveType { curve_type } => self.interpret_set_curve_type(curve_type),
             Command::GetLength { curve_id } => self.get_length(curve_id),
@@ -131,16 +129,14 @@ impl<'a> CommandInterpreter<'a> {
         Ok(Some(Message::info(format!("Curve moved by ({horizontal}, {vertical})"))))
     }
 
-    fn interpret_save(&mut self, path: Option<&PathBuf>) -> InterpretResult {
-        let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
-        self.state.frame.save_canvas(path)?;
+    fn interpret_save(&mut self, path: Option<PathBuf>) -> InterpretResult {
+        let path = self.state.frame.save_canvas(path)?;
         let path = path.display();
         Ok(Some(Message::info(format!("Project saved into {path}"))))
     }
 
-    fn interpret_open(&mut self, path: Option<&PathBuf>) -> InterpretResult {
-        let path = path.unwrap_or_else(|| &self.state.frame.properties().default_save_path);
-        let canvas = Frame::open_canvas(path)?;
+    fn interpret_open(&mut self, path: Option<PathBuf>) -> InterpretResult {
+        let (path, canvas) = self.state.frame.open_canvas(path)?;
         let path = path.display();
         let message = Message::info(format!("Project opened from {path}"));
         self.state.frame.load_canvas(canvas);
@@ -148,8 +144,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_save_image(&mut self, path: Option<PathBuf>) -> InterpretResult {
-        let path = path.unwrap_or_else(|| PathBuf::from("canvas.png"));
-        self.state.frame.save_image(&path, SaveFormat::Png)?;
+        let path = self.state.frame.save_image(path)?;
         let path = path.display();
         Ok(Some(Message::info(format!("Canvas PNG image saved into '{path}'"))))
     }

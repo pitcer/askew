@@ -4,13 +4,16 @@ use crate::config::FrameConfig;
 
 #[derive(Debug)]
 pub struct FrameProperties {
-    // TODO: add default image save path (and read that from config)
-    pub default_save_path: PathBuf,
+    pub default_project_save_path: PathBuf,
+    pub default_image_save_path: PathBuf,
 }
 
 impl FrameProperties {
     #[must_use]
-    pub fn new(_config: FrameConfig) -> Self {
-        Self { default_save_path: PathBuf::from("askew_canvas.json") }
+    pub fn new(config: FrameConfig) -> Self {
+        Self {
+            default_project_save_path: config.default_project_save_path,
+            default_image_save_path: config.default_image_save_path,
+        }
     }
 }
