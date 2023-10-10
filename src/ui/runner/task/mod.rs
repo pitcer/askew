@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::Arc;
+use std::fmt;
+use std::fmt::{Display, Formatter};
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use async_task::Runnable;
 use bitvec::vec::BitVec;
 use futures_lite::future;
-use winit::event_loop::EventLoopProxy;
 
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::runner::task::lock::TaskLock;
@@ -19,38 +19,33 @@ pub mod sleep;
 pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
     task_id_mask: TaskIdMask,
-
-    runtime: Arc<WasmRuntime>,
-    event_loop_sender: RunnerSender,
+    runtime: WasmRuntime,
+    runner: RunnerSender,
     lock: TaskLock,
 }
 
 impl Tasks {
-    pub fn new(event_loop_sender: RunnerSender) -> Result<Self> {
+    pub fn new(runner: RunnerSender) -> Result<Self> {
         let tasks = HashMap::new();
         let runtime = WasmRuntime::new()?;
-        let runtime = Arc::new(runtime);
         let task_id_mask = TaskIdMask::new();
         let lock = TaskLock::new()?;
-        Ok(Self { tasks, task_id_mask, runtime, event_loop_sender, lock })
+        Ok(Self { tasks, task_id_mask, runtime, runner, lock })
     }
 
-    pub fn list_tasks(&self) -> impl Iterator<Item = &TaskId> {
-        self.tasks.keys()
+    pub fn list_tasks(&self) -> impl Iterator<Item = &Task> {
+        self.tasks.values()
     }
 
-    pub fn register_task(
-        &mut self,
-        path: impl AsRef<Path> + Send + 'static,
-        argument: Option<String>,
-    ) -> TaskId {
-        let runtime = Arc::clone(&self.runtime);
+    pub fn register_task(&mut self, path: PathBuf, argument: Option<String>) -> Result<TaskId> {
         let task_id = self.task_id_mask.crate_task_id();
-        let proxy = EventLoopProxy::clone(&self.event_loop_sender);
+        let proxy = RunnerSender::clone(&self.runner);
         let lock = TaskLock::clone(&self.lock);
-        let future = async move { runtime.run(path, task_id, proxy, lock, argument).await };
+        let wasm_task = self.runtime.create_task(&path, task_id, proxy, lock)?;
 
-        let proxy = self.event_loop_sender.clone();
+        let future = wasm_task.run(argument);
+
+        let proxy = self.runner.clone();
         let schedule = move |runnable| {
             let request = RunnerRequest::ProgressTask(TaskHandle::new(task_id, runnable));
             proxy.send_event(request).expect("event loop should not be closed");
@@ -59,12 +54,12 @@ impl Tasks {
         let (runnable, task) = async_task::spawn(future, schedule);
         runnable.schedule();
 
-        let task = Task::new(task);
+        let task = Task::new(task, task_id, path);
 
         let result = self.tasks.insert(task_id, task);
         debug_assert!(result.is_none(), "task with id {task_id} is already in tasks map");
 
-        task_id
+        Ok(task_id)
     }
 
     #[must_use]
@@ -144,14 +139,17 @@ pub type AsyncTask = async_task::Task<TaskResult>;
 pub type TaskResult = Result<RunResult>;
 pub type TaskId = usize;
 
+#[derive(Debug)]
 pub struct Task {
     task: AsyncTask,
+    id: TaskId,
+    path: PathBuf,
 }
 
 impl Task {
     #[must_use]
-    pub fn new(task: AsyncTask) -> Self {
-        Self { task }
+    pub fn new(task: AsyncTask, id: TaskId, path: PathBuf) -> Self {
+        Self { task, id, path }
     }
 
     #[must_use]
@@ -159,12 +157,30 @@ impl Task {
         self.task.is_finished()
     }
 
+    /// Blocks on task's future
     pub fn finish(self) -> TaskResult {
         future::block_on(self.task)
     }
 
     pub fn kill(self) {
         drop(self.task);
+    }
+
+    #[must_use]
+    pub fn id(&self) -> TaskId {
+        self.id
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Display for Task {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        let file_name = self.path.file_name().unwrap_or("<invalid>".as_ref()).to_string_lossy();
+        write!(formatter, "{}: '{file_name}'", self.id)
     }
 }
 

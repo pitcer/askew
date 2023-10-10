@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use async_channel::{SendError, Sender};
@@ -17,6 +18,7 @@ pub mod wit;
 
 pub struct WasmRuntime {
     engine: Engine,
+    linker: Arc<Linker<State>>,
 }
 
 impl WasmRuntime {
@@ -27,41 +29,60 @@ impl WasmRuntime {
 
         let engine = Engine::new(&config)?;
 
-        Ok(Self { engine })
+        let mut linker = Linker::new(&engine);
+        Askew::add_to_linker(&mut linker, |state| state)?;
+        let linker = Arc::new(linker);
+
+        Ok(Self { engine, linker })
     }
 
-    pub async fn run(
+    pub fn create_task(
         &self,
         path: impl AsRef<Path>,
         task_id: TaskId,
-        runner_sender: RunnerSender,
+        runner: RunnerSender,
         lock: TaskLock,
-        argument: RunArgument,
-    ) -> TaskResult {
-        let mut linker = Linker::new(&self.engine);
-        Askew::add_to_linker(&mut linker, |state: &mut State| state)?;
-
-        let state = State::new(task_id, runner_sender, lock);
-        let mut store = Store::new(&self.engine, state);
-
+    ) -> Result<WasmTask> {
+        let state = State::new(task_id, runner, lock);
+        let store = Store::new(&self.engine, state);
         let component = Component::from_file(&self.engine, path)?;
-        let (bindings, _) = Askew::instantiate_async(&mut store, &component, &linker).await?;
+        let linker = Arc::clone(&self.linker);
 
-        let result = bindings.call_run(&mut store, &argument).await?;
+        let task = WasmTask::new(store, component, linker);
+        Ok(task)
+    }
+}
+
+pub struct WasmTask {
+    store: Store<State>,
+    component: Component,
+    linker: Arc<Linker<State>>,
+}
+
+impl WasmTask {
+    fn new(store: Store<State>, component: Component, linker: Arc<Linker<State>>) -> Self {
+        Self { store, component, linker }
+    }
+
+    pub async fn run(mut self, argument: RunArgument) -> TaskResult {
+        let (bindings, _instance) =
+            Askew::instantiate_async(&mut self.store, &self.component, &self.linker).await?;
+
+        let result = bindings.call_run(&mut self.store, &argument).await?;
         Ok(result)
     }
 }
 
 struct State {
     task_id: TaskId,
-    runner_sender: RunnerSender,
+    runner: RunnerSender,
     lock: TaskLock,
     lock_token: Option<LockToken>,
 }
 
 impl State {
-    pub fn new(task_id: TaskId, runner_sender: RunnerSender, lock: TaskLock) -> Self {
-        Self { task_id, runner_sender, lock, lock_token: None }
+    pub fn new(task_id: TaskId, runner: RunnerSender, lock: TaskLock) -> Self {
+        Self { task_id, runner, lock, lock_token: None }
     }
 
     pub async fn send_request(&mut self, request: Request) -> Result<Response> {
@@ -81,7 +102,8 @@ impl State {
         let responder = Responder::new(self.task_id, response_sender);
         let request = RequestHandle::new(request, responder);
         let request = RunnerRequest::TaskRequest(request);
-        self.runner_sender.send_event(request)?;
+        self.runner.send_event(request)?;
+
         let response = response_receiver.recv().await?;
         Ok(response)
     }

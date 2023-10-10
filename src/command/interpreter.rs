@@ -189,14 +189,15 @@ impl<'a> CommandInterpreter<'a> {
             return Err(anyhow!("File '{}' does not exists", path.display()));
         }
 
-        let task_id = self.state.tasks.register_task(path, argument);
+        let task_id = self.state.tasks.register_task(path, argument)?;
         Ok(Some(Message::info(format!("Created task {task_id}"))))
     }
 
     fn task(&mut self, task: Task) -> InterpretResult {
         match task {
             Task::List => {
-                let tasks = self.state.tasks.list_tasks().join(", ");
+                let tasks =
+                    self.state.tasks.list_tasks().map(|task| format!("({task})")).join(", ");
                 Ok(Some(Message::info(format!("Tasks: {tasks}"))))
             }
             Task::Kill { task_id } => {
