@@ -7,3 +7,5 @@ target/
 *.socket
 *.ttf
 *.wasm
+
+askew_config.toml

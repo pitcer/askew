@@ -21,8 +21,8 @@ use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::ui::runner::task::sleep::SleepingTasks;
 use crate::ui::runner::task::Tasks;
-use crate::ui::runner::task_sleep::SleepingTasks;
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
@@ -30,7 +30,6 @@ use crate::wasm::RequestHandle;
 
 pub mod request;
 pub mod task;
-pub mod task_sleep;
 
 pub struct WindowRunner {
     commands: Vec<String>,

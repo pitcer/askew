@@ -9,8 +9,12 @@ use futures_lite::future;
 use winit::event_loop::EventLoopProxy;
 
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::ui::runner::task::lock::TaskLock;
 use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
+
+pub mod lock;
+pub mod sleep;
 
 pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
@@ -18,6 +22,7 @@ pub struct Tasks {
 
     runtime: Arc<WasmRuntime>,
     event_loop_sender: RunnerSender,
+    lock: TaskLock,
 }
 
 impl Tasks {
@@ -26,7 +31,8 @@ impl Tasks {
         let runtime = WasmRuntime::new()?;
         let runtime = Arc::new(runtime);
         let task_id_mask = TaskIdMask::new();
-        Ok(Self { tasks, task_id_mask, runtime, event_loop_sender })
+        let lock = TaskLock::new()?;
+        Ok(Self { tasks, task_id_mask, runtime, event_loop_sender, lock })
     }
 
     pub fn list_tasks(&self) -> impl Iterator<Item = &TaskId> {
@@ -41,7 +47,8 @@ impl Tasks {
         let runtime = Arc::clone(&self.runtime);
         let task_id = self.task_id_mask.crate_task_id();
         let proxy = EventLoopProxy::clone(&self.event_loop_sender);
-        let future = async move { runtime.run(path, task_id, proxy, argument).await };
+        let lock = TaskLock::clone(&self.lock);
+        let future = async move { runtime.run(path, task_id, proxy, lock, argument).await };
 
         let proxy = self.event_loop_sender.clone();
         let schedule = move |runnable| {

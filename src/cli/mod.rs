@@ -10,7 +10,7 @@ pub struct Command {
     #[arg(short, long, default_value_t = false)]
     pub debug: bool,
 
-    #[arg(long, default_value = "config.toml")]
+    #[arg(long, default_value = "askew_config.toml")]
     pub config: PathBuf,
 
     /// Simplelog ignore filters

@@ -1,12 +1,13 @@
 use std::path::Path;
 
-use crate::ui::runner::task::{TaskId, TaskResult};
 use anyhow::{anyhow, Result};
 use async_channel::{SendError, Sender};
 use wasmtime::component::{Component, Linker};
 use wasmtime::{Config, Engine, Store};
 
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::ui::runner::task::lock::{LockToken, TaskLock};
+use crate::ui::runner::task::{TaskId, TaskResult};
 use crate::wasm::request::{Request, Response};
 use crate::wasm::wit::curve::CurveId;
 use crate::wasm::wit::{control, curve, Askew, RunArgument};
@@ -34,12 +35,13 @@ impl WasmRuntime {
         path: impl AsRef<Path>,
         task_id: TaskId,
         runner_sender: RunnerSender,
+        lock: TaskLock,
         argument: RunArgument,
     ) -> TaskResult {
         let mut linker = Linker::new(&self.engine);
         Askew::add_to_linker(&mut linker, |state: &mut State| state)?;
 
-        let state = State::new(task_id, runner_sender);
+        let state = State::new(task_id, runner_sender, lock);
         let mut store = Store::new(&self.engine, state);
 
         let component = Component::from_file(&self.engine, path)?;
@@ -53,14 +55,28 @@ impl WasmRuntime {
 struct State {
     task_id: TaskId,
     runner_sender: RunnerSender,
+    lock: TaskLock,
+    lock_token: Option<LockToken>,
 }
 
 impl State {
-    pub fn new(task_id: TaskId, runner_sender: RunnerSender) -> Self {
-        Self { task_id, runner_sender }
+    pub fn new(task_id: TaskId, runner_sender: RunnerSender, lock: TaskLock) -> Self {
+        Self { task_id, runner_sender, lock, lock_token: None }
     }
 
     pub async fn send_request(&mut self, request: Request) -> Result<Response> {
+        let response = if self.lock_token.is_some() {
+            self.send_request_lockless(request).await?
+        } else {
+            let token = self.lock.acquire().await;
+            let response = self.send_request_lockless(request).await?;
+            self.lock.release(token);
+            response
+        };
+        Ok(response)
+    }
+
+    pub async fn send_request_lockless(&mut self, request: Request) -> Result<Response> {
         let (response_sender, response_receiver) = async_channel::bounded(1);
         let responder = Responder::new(self.task_id, response_sender);
         let request = RequestHandle::new(request, responder);
@@ -139,9 +155,26 @@ impl curve::Host for State {
 impl control::Host for State {
     async fn sleep(&mut self, seconds: u64, nanoseconds: u32) -> Result<()> {
         let request = Request::Sleep { seconds, nanoseconds };
-        let Response::Sleep = self.send_request(request).await? else {
+        let Response::Sleep = self.send_request_lockless(request).await? else {
             return Err(anyhow!("Invalid response"));
         };
+        Ok(())
+    }
+
+    async fn lock(&mut self) -> Result<()> {
+        let None = self.lock_token else {
+            return Err(anyhow!("Tried to lock without unlocking first"));
+        };
+        let token = self.lock.acquire().await;
+        self.lock_token = Some(token);
+        Ok(())
+    }
+
+    async fn unlock(&mut self) -> Result<()> {
+        let Some(token) = self.lock_token.take() else {
+            return Err(anyhow!("Tried to unlock without locking first"));
+        };
+        self.lock.release(token);
         Ok(())
     }
 }

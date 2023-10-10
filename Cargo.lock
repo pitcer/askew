@@ -154,6 +154,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-channel",
+ "async-lock",
  "async-net",
  "async-task",
  "async-trait",
