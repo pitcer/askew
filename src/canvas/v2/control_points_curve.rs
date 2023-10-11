@@ -1,6 +1,6 @@
 use crate::canvas::curve::control_points::points::ControlPoints;
-use crate::canvas::v2::visual_path::point::VisualPoint;
 use crate::canvas::v2::visual_path::line::VisualLine;
+use crate::canvas::v2::visual_path::point::VisualPoint;
 
 #[derive(Debug, Clone)]
 pub struct ControlPointsCurve<P> {

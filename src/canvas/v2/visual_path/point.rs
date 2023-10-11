@@ -4,14 +4,11 @@ use tiny_skia::{FillRule, Path, PathBuilder, PixmapMut, Transform};
 
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::paint::PaintBuilder;
-use crate::canvas::v2::visual_path::private;
+use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathProperties};
+use crate::canvas::v2::visual_path::VisualPath;
 use crate::config::rgb::Rgb;
 
-#[derive(Debug, Clone)]
-pub struct VisualPoint {
-    path: Option<Path>,
-    properties: VisualPointProperties,
-}
+pub type VisualPoint = VisualPath<VisualPointDetails>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct VisualPointProperties {
@@ -20,15 +17,18 @@ pub struct VisualPointProperties {
     color: Rgb,
 }
 
-impl private::VisualPath for VisualPoint {
+#[derive(Debug, Clone)]
+pub struct VisualPointDetails;
+
+impl VisualPathDetails for VisualPointDetails {
     type Properties = VisualPointProperties;
 
-    fn new_internal(path: Option<Path>, properties: Self::Properties) -> Self {
-        Self { path, properties }
-    }
-
-    fn draw_on_internal(&self, mut pixmap: PixmapMut<'_>, path: &Path) -> Result<()> {
-        let paint = PaintBuilder::new().rgb_color(self.properties.color).build();
+    fn draw_on(
+        mut pixmap: PixmapMut<'_>,
+        path: &Path,
+        properties: &Self::Properties,
+    ) -> Result<()> {
+        let paint = PaintBuilder::new().rgb_color(properties.color).build();
         pixmap.fill_path(path, &paint, FillRule::Winding, Transform::identity(), None);
         Ok(())
     }
@@ -48,18 +48,6 @@ impl private::VisualPath for VisualPoint {
 
         builder.finish().ok_or_else(|| anyhow!("path should be non-empty and have valid bounds"))
     }
-
-    fn properties(&self) -> &Self::Properties {
-        &self.properties
-    }
-
-    fn path(&self) -> &Option<Path> {
-        &self.path
-    }
-
-    fn path_mut(&mut self) -> &mut Option<Path> {
-        &mut self.path
-    }
 }
 
 impl VisualPointProperties {
@@ -69,7 +57,7 @@ impl VisualPointProperties {
     }
 }
 
-impl private::VisualPathProperties for VisualPointProperties {
+impl VisualPathProperties for VisualPointProperties {
     fn visible(&self) -> bool {
         self.visible
     }

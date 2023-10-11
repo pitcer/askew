@@ -1,5 +1,5 @@
+use crate::canvas::v2::visual_path::line::{VisualLine, VisualLineProperties};
 use crate::canvas::v2::visual_path::point::VisualPoint;
-use crate::canvas::v2::visual_path::line::VisualLine;
 
 #[derive(Debug, Clone)]
 pub struct BasePolyline {

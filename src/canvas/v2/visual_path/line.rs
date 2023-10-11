@@ -4,14 +4,11 @@ use tiny_skia::{Path, PathBuilder, PixmapMut, Stroke, Transform};
 
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::paint::PaintBuilder;
-use crate::canvas::v2::visual_path::private;
+use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathProperties};
+use crate::canvas::v2::visual_path::VisualPath;
 use crate::config::rgb::Rgb;
 
-#[derive(Debug, Clone)]
-pub struct VisualLine {
-    path: Option<Path>,
-    properties: VisualLineProperties,
-}
+pub type VisualLine = VisualPath<VisualLineDetails>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct VisualLineProperties {
@@ -21,16 +18,19 @@ pub struct VisualLineProperties {
     color: Rgb,
 }
 
-impl private::VisualPath for VisualLine {
+#[derive(Debug, Clone)]
+pub struct VisualLineDetails;
+
+impl VisualPathDetails for VisualLineDetails {
     type Properties = VisualLineProperties;
 
-    fn new_internal(path: Option<Path>, properties: Self::Properties) -> Self {
-        Self { path, properties }
-    }
-
-    fn draw_on_internal(&self, mut pixmap: PixmapMut<'_>, path: &Path) -> Result<()> {
-        let paint = PaintBuilder::new().rgb_color(self.properties.color).build();
-        let stroke = Stroke { width: self.properties.width, ..Stroke::default() };
+    fn draw_on(
+        mut pixmap: PixmapMut<'_>,
+        path: &Path,
+        properties: &Self::Properties,
+    ) -> Result<()> {
+        let paint = PaintBuilder::new().rgb_color(properties.color).build();
+        let stroke = Stroke { width: properties.width, ..Stroke::default() };
         pixmap.stroke_path(path, &paint, &stroke, Transform::identity(), None);
         Ok(())
     }
@@ -58,18 +58,6 @@ impl private::VisualPath for VisualLine {
 
         builder.finish().ok_or_else(|| anyhow!("path should be non-empty and have valid bounds"))
     }
-
-    fn properties(&self) -> &Self::Properties {
-        &self.properties
-    }
-
-    fn path(&self) -> &Option<Path> {
-        &self.path
-    }
-
-    fn path_mut(&mut self) -> &mut Option<Path> {
-        &mut self.path
-    }
 }
 
 impl VisualLineProperties {
@@ -79,7 +67,7 @@ impl VisualLineProperties {
     }
 }
 
-impl private::VisualPathProperties for VisualLineProperties {
+impl VisualPathProperties for VisualLineProperties {
     fn visible(&self) -> bool {
         self.visible
     }
