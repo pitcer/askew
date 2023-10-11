@@ -1,0 +1,6 @@
+#! /usr/bin/env bash
+
+for samples in $(seq 1 1024); do
+    just run-wayland -- ipc "set samples $samples" &>/dev/null
+    sleep 0.2
+done

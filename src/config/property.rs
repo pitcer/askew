@@ -1,4 +1,4 @@
-use crate::canvas::curve::control_points::kind::bezier::BezierAlgorithm;
+use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
@@ -46,7 +46,7 @@ declare_properties! {
     Samples("samples", u32, 1000),
     DefaultWeight("default_weight", f32, 1.0),
     DefaultCurveType("curve_type", CurveType, CurveType::Polyline),
-    DefaultBezierAlgorithm("bezier_algorithm", BezierAlgorithm, BezierAlgorithm::DeCasteljau),
+    DefaultBezierAlgorithm("bezier_algorithm", BezierCurveAlgorithm, BezierCurveAlgorithm::DeCasteljau),
     DefaultRationalBezierAlgorithm(
         "rational_bezier_algorithm",
         RationalBezierAlgorithm,

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::canvas::curve::control_points::kind::bezier::BezierAlgorithm;
+use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
@@ -125,7 +125,7 @@ pub struct CanvasConfig {
 
     pub default_curve_type: CurveType,
 
-    pub default_bezier_algorithm: BezierAlgorithm,
+    pub default_bezier_algorithm: BezierCurveAlgorithm,
 
     pub default_rational_bezier_algorithm: RationalBezierAlgorithm,
 
@@ -160,7 +160,7 @@ impl Default for CanvasConfig {
             show_center_of_mass: true,
             curve_samples: 1000,
             default_curve_type: CurveType::Polyline,
-            default_bezier_algorithm: BezierAlgorithm::ChudyWozny,
+            default_bezier_algorithm: BezierCurveAlgorithm::ChudyWozny,
             default_rational_bezier_algorithm: RationalBezierAlgorithm::ChudyWozny,
             default_interpolation_nodes: InterpolationNodes::Chebyshev,
             default_trochoid_properties: TrochoidProperties::default(),

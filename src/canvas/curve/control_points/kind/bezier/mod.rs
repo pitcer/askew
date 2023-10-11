@@ -11,11 +11,12 @@ pub mod event_handler;
 pub struct Bezier {
     points: CurvePoints,
     samples: Samples,
-    algorithm: BezierAlgorithm,
+    algorithm: BezierCurveAlgorithm,
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
-pub enum BezierAlgorithm {
+pub enum BezierCurveAlgorithm {
+    #[deprecated(note = "This fails for n > 13")]
     Generic,
     DeCasteljau,
     ChudyWozny,
@@ -23,7 +24,7 @@ pub enum BezierAlgorithm {
 
 impl Bezier {
     #[must_use]
-    pub fn new(points: CurvePoints, samples: Samples, algorithm: BezierAlgorithm) -> Self {
+    pub fn new(points: CurvePoints, samples: Samples, algorithm: BezierCurveAlgorithm) -> Self {
         Self { points, samples, algorithm }
     }
 
@@ -58,17 +59,17 @@ impl ToPath for Bezier {
 
         let path = self.samples.equally_spaced(0.0..=1.0);
         match self.algorithm {
-            BezierAlgorithm::Generic => {
+            BezierCurveAlgorithm::Generic => {
                 let path = path.map(|t| self.bezier(t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
-            BezierAlgorithm::DeCasteljau => {
+            BezierCurveAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::de_casteljau(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
-            BezierAlgorithm::ChudyWozny => {
+            BezierCurveAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::chudy_wozny(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)

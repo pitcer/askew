@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+
+for samples_power in $(seq 1 10); do
+    samples=$((2 ** samples_power))
+    just run-wayland -- ipc "set samples $samples" &>/dev/null
+    sleep 1
+done

@@ -32,6 +32,7 @@ pub mod math;
 pub mod paint;
 pub mod properties;
 mod rasterizer;
+pub mod v2;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Canvas {

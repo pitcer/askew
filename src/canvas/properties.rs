@@ -1,4 +1,4 @@
-use crate::canvas::curve::control_points::kind::bezier::BezierAlgorithm;
+use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
@@ -10,7 +10,7 @@ pub struct CanvasProperties {
     pub current_point_index: usize,
     pub current_curve: usize,
     pub default_curve_type: CurveType,
-    pub bezier_algorithm: BezierAlgorithm,
+    pub bezier_algorithm: BezierCurveAlgorithm,
     pub rational_bezier_algorithm: RationalBezierAlgorithm,
     pub trochoid_properties: TrochoidProperties,
     pub line_width: f32,
@@ -47,10 +47,10 @@ impl CanvasProperties {
             interpolation_nodes: config.default_interpolation_nodes,
             default_weight: config.default_rational_bezier_weight,
             samples: config.curve_samples,
-            line_color: (config.line_color),
-            convex_hull_color: (config.convex_hull_color),
-            control_points_color: (config.control_points_color),
-            current_control_point_color: (config.current_control_point_color),
+            line_color: config.line_color,
+            convex_hull_color: config.convex_hull_color,
+            control_points_color: config.control_points_color,
+            current_control_point_color: config.current_control_point_color,
         }
     }
 }
