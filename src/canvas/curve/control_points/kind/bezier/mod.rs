@@ -17,8 +17,6 @@ pub struct Bezier {
 
 #[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum BezierCurveAlgorithm {
-    #[deprecated(note = "This fails for n > 13")]
-    Generic,
     #[default]
     DeCasteljau,
     ChudyWozny,
@@ -33,24 +31,6 @@ impl Bezier {
     pub fn event_handler(&mut self) -> BezierEventHandler<'_> {
         BezierEventHandler::new(self)
     }
-
-    fn bezier(&self, t: f32) -> CurvePoint {
-        let n = self.points.length() as u32 - 1;
-        self.points
-            .iterator()
-            .enumerate()
-            .map(|(k, point)| {
-                let bernstein = math::bernstein(n, k as u32, t);
-                CurvePoint::new(point.horizontal() * bernstein, point.vertical() * bernstein)
-            })
-            .reduce(|accumulator, point| {
-                CurvePoint::new(
-                    accumulator.horizontal() + point.horizontal(),
-                    accumulator.vertical() + point.vertical(),
-                )
-            })
-            .expect("points should not be empty")
-    }
 }
 
 impl ToPath for Bezier {
@@ -61,11 +41,6 @@ impl ToPath for Bezier {
 
         let path = self.samples.equally_spaced(0.0..=1.0);
         match self.algorithm {
-            BezierCurveAlgorithm::Generic => {
-                let path = path.map(|t| self.bezier(t));
-                let path = CurvePath::new_open(path);
-                converter.to_path(path)
-            }
             BezierCurveAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::de_casteljau(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);

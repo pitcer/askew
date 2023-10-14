@@ -55,9 +55,6 @@ impl Update for BezierCurve {
 
         let path = self.samples.equally_spaced(0.0..=1.0);
         match self.properties.algorithm {
-            BezierCurveAlgorithm::Generic => {
-                unimplemented!("this will be removed in the future")
-            }
             BezierCurveAlgorithm::DeCasteljau => {
                 let path =
                     path.map(|t| math::de_casteljau(self.control_points.points.as_slice(), t));
