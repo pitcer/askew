@@ -6,6 +6,9 @@ use crate::canvas::math::convex_hull::GrahamScan;
 
 pub mod event_handler;
 
+#[deprecated(
+    note = "Can be replaced entirely with polyline with hidden path and shown convex hull"
+)]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ConvexHull {
     points: CurvePoints,
