@@ -1,7 +1,5 @@
-use anyhow::Result;
-use tiny_skia::PixmapMut;
+use tiny_skia::{PixmapMut, Point};
 
-use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::v2::visual_path::line::{VisualLine, VisualLineProperties};
 use crate::canvas::v2::visual_path::point::{VisualPoint, VisualPointProperties};
 use crate::canvas::v2::DrawOn;
@@ -12,12 +10,15 @@ use crate::config::CanvasConfig;
 pub struct BasePolyline<const CLOSED: bool> {
     pub line: VisualLine<CLOSED>,
     pub points: VisualPoint,
+    #[serde(skip)]
+    point_buffer: Vec<Point>,
 }
 
 impl<const CLOSED: bool> BasePolyline<CLOSED> {
     #[must_use]
     pub fn new(line: VisualLine<CLOSED>, points: VisualPoint) -> Self {
-        Self { line, points }
+        let point_buffer = Vec::new();
+        Self { line, points, point_buffer }
     }
 
     #[must_use]
@@ -29,24 +30,26 @@ impl<const CLOSED: bool> BasePolyline<CLOSED> {
                 config.line_color,
             )),
             points: VisualPoint::new(VisualPointProperties::new(false, 3.0, Rgb::WHITE)),
+            point_buffer: Vec::new(),
         }
     }
 
-    pub fn rebuild_paths<P>(&mut self, points: impl ExactSizeIterator<Item = P>) -> Result<()>
+    pub fn rebuild_paths<P>(&mut self, points: impl Iterator<Item = P>)
     where
-        P: Into<CurvePoint> + Copy,
+        P: Into<Point>,
     {
-        let path = self.line.rebuild_path(points)?;
-        either::for_both!(path, points => { let _ = self.points.rebuild_path(points)?; });
-        Ok(())
+        self.point_buffer.clear();
+        let points = points.map(P::into);
+        self.point_buffer.extend(points);
+        self.line.rebuild_path(self.point_buffer.iter().copied());
+        self.points.rebuild_path(self.point_buffer.iter().copied());
     }
 }
 
 impl<const CLOSED: bool> DrawOn for BasePolyline<CLOSED> {
-    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()> {
-        self.line.draw_on(pixmap)?;
-        self.points.draw_on(pixmap)?;
-        Ok(())
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
+        self.line.draw_on(pixmap);
+        self.points.draw_on(pixmap);
     }
 }
 
@@ -55,6 +58,7 @@ impl<const CLOSED: bool> Default for BasePolyline<CLOSED> {
         Self {
             line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE)),
             points: VisualPoint::new(VisualPointProperties::new(false, 4.0, Rgb::WHITE)),
+            point_buffer: Vec::new(),
         }
     }
 }

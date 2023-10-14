@@ -35,4 +35,8 @@ impl Samples {
             range_start + (index * delta) / length
         })
     }
+
+    pub fn samples(&self) -> usize {
+        self.samples
+    }
 }

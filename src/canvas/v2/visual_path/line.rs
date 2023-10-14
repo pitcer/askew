@@ -1,8 +1,5 @@
-use anyhow::anyhow;
-use anyhow::Result;
-use tiny_skia::{Path, PathBuilder, PixmapMut, Stroke, Transform};
+use tiny_skia::{Path, PathBuilder, PixmapMut, Point, Stroke, Transform};
 
-use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::paint::PaintBuilder;
 use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathProperties};
 use crate::canvas::v2::visual_path::VisualPath;
@@ -23,39 +20,29 @@ pub struct VisualLineDetails<const CLOSED: bool>;
 impl<const CLOSED: bool> VisualPathDetails for VisualLineDetails<CLOSED> {
     type Properties = VisualLineProperties;
 
-    fn draw_on(
-        pixmap: &mut PixmapMut<'_>,
-        path: &Path,
-        properties: &Self::Properties,
-    ) -> Result<()> {
+    fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties) {
         let paint = PaintBuilder::new().rgb_color(properties.color).build();
         let stroke = Stroke { width: properties.width, ..Stroke::default() };
         pixmap.stroke_path(path, &paint, &stroke, Transform::identity(), None);
-        Ok(())
     }
 
-    fn build_path_from_builder<P>(
+    fn build_path(
         mut builder: PathBuilder,
-        mut points: impl Iterator<Item = P>,
+        mut points: impl ExactSizeIterator<Item = Point>,
         _properties: &Self::Properties,
-    ) -> Result<Path>
-    where
-        P: Into<CurvePoint>,
-    {
-        let point = points.next().ok_or_else(|| anyhow!("points should be non-empty"))?;
-        let point = point.into();
-        builder.move_to(point.horizontal(), point.vertical());
+    ) -> Option<Path> {
+        let point = points.next()?;
+        builder.move_to(point.x, point.y);
 
         for point in points {
-            let point = point.into();
-            builder.line_to(point.horizontal(), point.vertical());
+            builder.line_to(point.x, point.y);
         }
 
         if CLOSED {
             builder.close();
         }
 
-        builder.finish().ok_or_else(|| anyhow!("path should be non-empty and have valid bounds"))
+        builder.finish()
     }
 }
 

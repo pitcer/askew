@@ -29,23 +29,19 @@ impl PolylineCurve {
     }
 }
 
-impl DrawOn for PolylineCurve {
-    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()> {
-        if self.control_points.points.length() > 1 {
-            self.polyline.draw_on(pixmap)?;
-            self.control_points.draw_on(pixmap)?;
-        }
+impl Update for PolylineCurve {
+    fn update(&mut self) -> Result<()> {
+        let points = self.control_points.points.copied_iterator();
+        self.polyline.rebuild_paths(points);
+
+        self.control_points.rebuild_paths();
         Ok(())
     }
 }
 
-impl Update for PolylineCurve {
-    fn update(&mut self) -> Result<()> {
-        if self.control_points.points.length() > 1 {
-            let points = self.control_points.points.iterator().copied();
-            self.polyline.rebuild_paths(points)?;
-            self.control_points.rebuild_paths()?;
-        }
-        Ok(())
+impl DrawOn for PolylineCurve {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
+        self.polyline.draw_on(pixmap);
+        self.control_points.draw_on(pixmap);
     }
 }

@@ -78,10 +78,7 @@ impl Canvas {
         let curve = match curve_type {
             CurveType::Polyline => {
                 let mut curve = PolylineCurve::new(
-                    ControlPointsCurve::new(
-                        CurvePoints::new(points),
-                        ControlPointsCurveProperties::from_config(config),
-                    ),
+                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
                 );
                 let result = curve.update();
@@ -122,10 +119,7 @@ impl Canvas {
             ))),
             CurveType::BezierV2 => {
                 let mut curve = BezierCurve::new(
-                    ControlPointsCurve::new(
-                        CurvePoints::new(points),
-                        ControlPointsCurveProperties::from_config(config),
-                    ),
+                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
                     BezierCurveProperties::new(properties.bezier_algorithm),
                     samples,

@@ -35,7 +35,7 @@ impl Rasterizer {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
                 ControlPointsCurveKind::BezierV2(curve) => {
-                    curve.draw_on(&mut panel.as_pixmap_mut())?
+                    curve.draw_on(&mut panel.as_pixmap_mut())
                 }
                 ControlPointsCurveKind::RationalBezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
@@ -44,7 +44,7 @@ impl Rasterizer {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
                 ControlPointsCurveKind::PolylineV2(curve) => {
-                    curve.draw_on(&mut panel.as_pixmap_mut())?
+                    curve.draw_on(&mut panel.as_pixmap_mut())
                 }
             },
             CurveKind::Formula(curve) => {

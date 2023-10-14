@@ -9,7 +9,7 @@ pub mod visual_path;
 
 // TODO: will this trait be useful anywhere?
 pub trait DrawOn {
-    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()>;
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>);
 }
 
 // TODO: in event handler add mut events that will call that method (all curves

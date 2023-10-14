@@ -71,6 +71,12 @@ where
     }
 }
 
+impl From<Point<f32>> for tiny_skia::Point {
+    fn from(value: Point<f32>) -> Self {
+        Self { x: value.horizontal, y: value.vertical }
+    }
+}
+
 impl From<tiny_skia::Point> for Point<f32> {
     fn from(value: tiny_skia::Point) -> Self {
         Self { horizontal: value.x, vertical: value.y }

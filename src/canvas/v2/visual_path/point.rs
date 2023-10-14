@@ -1,8 +1,5 @@
-use anyhow::anyhow;
-use anyhow::Result;
-use tiny_skia::{FillRule, Path, PathBuilder, PixmapMut, Transform};
+use tiny_skia::{FillRule, Path, PathBuilder, PixmapMut, Point, Transform};
 
-use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::paint::PaintBuilder;
 use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathProperties};
 use crate::canvas::v2::visual_path::VisualPath;
@@ -23,30 +20,21 @@ pub struct VisualPointDetails;
 impl VisualPathDetails for VisualPointDetails {
     type Properties = VisualPointProperties;
 
-    fn draw_on(
-        pixmap: &mut PixmapMut<'_>,
-        path: &Path,
-        properties: &Self::Properties,
-    ) -> Result<()> {
+    fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties) {
         let paint = PaintBuilder::new().rgb_color(properties.color).build();
         pixmap.fill_path(path, &paint, FillRule::Winding, Transform::identity(), None);
-        Ok(())
     }
 
-    fn build_path_from_builder<P>(
+    fn build_path(
         mut builder: PathBuilder,
-        points: impl Iterator<Item = P>,
+        points: impl ExactSizeIterator<Item = Point>,
         properties: &Self::Properties,
-    ) -> Result<Path>
-    where
-        P: Into<CurvePoint>,
-    {
+    ) -> Option<Path> {
         for point in points {
-            let point = point.into();
-            builder.push_circle(point.horizontal(), point.vertical(), properties.radius);
+            builder.push_circle(point.x, point.y, properties.radius);
         }
 
-        builder.finish().ok_or_else(|| anyhow!("path should be non-empty and have valid bounds"))
+        builder.finish()
     }
 }
 

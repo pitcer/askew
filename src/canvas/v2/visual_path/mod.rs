@@ -1,8 +1,6 @@
-use anyhow::{anyhow, Result};
-use either::Either;
+use anyhow::Result;
 use tiny_skia::{Path, PathBuilder, PixmapMut, Point};
 
-use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathProperties};
 use crate::canvas::v2::DrawOn;
 
@@ -33,52 +31,51 @@ where
         properties: T::Properties,
     ) -> Result<Self>
     where
-        P: Into<CurvePoint>,
+        P: Into<Point>,
     {
-        let path = Self::build_path(points, &properties)?;
-        let path = Some(path);
+        let path =
+            properties.visible().then(|| Self::build_new_path(points, &properties)).flatten();
         Ok(Self { path, properties })
     }
 
-    pub fn rebuild_path<'a, P>(
-        &'a mut self,
-        points: impl ExactSizeIterator<Item = P> + 'a,
-    ) -> Result<
-        Either<impl ExactSizeIterator<Item = Point> + 'a, impl ExactSizeIterator<Item = P> + 'a>,
-    >
+    pub fn rebuild_path<P>(&mut self, points: impl ExactSizeIterator<Item = P>)
     where
-        P: Into<CurvePoint> + Copy,
+        P: Into<Point>,
     {
         if self.properties.visible() {
             let path = match self.path.take() {
-                None => Self::build_path(points, &self.properties)?,
+                None => Self::build_new_path(points, &self.properties),
                 Some(path) => {
                     let builder = path.clear();
-                    T::build_path_from_builder(builder, points, &self.properties)?
+                    Self::build_path_from_builder(builder, points, &self.properties)
                 }
             };
-            let path = self.path.insert(path);
-            Ok(Either::Left(path.points().iter().copied()))
-        } else {
-            Ok(Either::Right(points))
+            self.path = path;
         }
     }
 
-    fn build_path<P>(
+    fn build_new_path<P>(
         points: impl ExactSizeIterator<Item = P>,
         properties: &T::Properties,
-    ) -> Result<Path>
+    ) -> Option<Path>
     where
-        P: Into<CurvePoint>,
+        P: Into<Point>,
     {
         let length = points.len();
-        let path = PathBuilder::with_capacity(length, length);
-        let path = T::build_path_from_builder(path, points, properties)?;
-        Ok(path)
+        let builder = PathBuilder::with_capacity(length, length);
+        Self::build_path_from_builder(builder, points, properties)
     }
 
-    pub fn points(&self) -> Option<&[Point]> {
-        self.path.as_ref().map(Path::points)
+    fn build_path_from_builder<P>(
+        builder: PathBuilder,
+        points: impl ExactSizeIterator<Item = P>,
+        properties: &T::Properties,
+    ) -> Option<Path>
+    where
+        P: Into<Point>,
+    {
+        let points = points.map(P::into);
+        T::build_path(builder, points, properties)
     }
 }
 
@@ -86,35 +83,30 @@ impl<T> DrawOn for VisualPath<T>
 where
     T: VisualPathDetails,
 {
-    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()> {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
         if self.properties.visible() {
-            let path =
-                self.path.as_ref().ok_or_else(|| anyhow!("path should be built before drawing"))?;
-            T::draw_on(pixmap, path, &self.properties)?;
+            if let Some(path) = &self.path {
+                T::draw_on(pixmap, path, &self.properties);
+            }
         }
-        Ok(())
     }
 }
 
 mod private {
-    use super::{CurvePoint, Path, PathBuilder, PixmapMut, Result};
+    use super::{Path, PathBuilder, PixmapMut, Point};
 
     pub trait VisualPathDetails {
         type Properties: VisualPathProperties;
 
-        fn draw_on(
-            pixmap: &mut PixmapMut<'_>,
-            path: &Path,
-            properties: &Self::Properties,
-        ) -> Result<()>;
+        fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties);
 
-        fn build_path_from_builder<P>(
+        /// Returns None if path cannot be built from the given points, e.g. there are too little
+        /// of them or their coordinates are out of bounds (infinite).
+        fn build_path(
             builder: PathBuilder,
-            points: impl Iterator<Item = P>,
+            points: impl ExactSizeIterator<Item = Point>,
             properties: &Self::Properties,
-        ) -> Result<Path>
-        where
-            P: Into<CurvePoint>;
+        ) -> Option<Path>;
     }
 
     pub trait VisualPathProperties {

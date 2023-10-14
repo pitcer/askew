@@ -41,35 +41,31 @@ impl BezierCurve {
     }
 }
 
-impl DrawOn for BezierCurve {
-    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()> {
-        self.polyline.draw_on(pixmap)?;
-        self.control_points.draw_on(pixmap)?;
+impl Update for BezierCurve {
+    fn update(&mut self) -> Result<()> {
+        if self.control_points.points.length() > 1 {
+            let points = self.control_points.points.as_slice();
+
+            let path = self.samples.equally_spaced(0.0..=1.0);
+            match self.properties.algorithm {
+                BezierCurveAlgorithm::DeCasteljau => {
+                    self.polyline.rebuild_paths(path.map(|t| math::de_casteljau(points, t)))
+                }
+                BezierCurveAlgorithm::ChudyWozny => {
+                    self.polyline.rebuild_paths(path.map(|t| math::chudy_wozny(points, t)))
+                }
+            };
+        }
+
+        self.control_points.rebuild_paths();
         Ok(())
     }
 }
 
-impl Update for BezierCurve {
-    fn update(&mut self) -> Result<()> {
-        if self.control_points.points.length() < 2 {
-            return Ok(());
-        }
-
-        let path = self.samples.equally_spaced(0.0..=1.0);
-        match self.properties.algorithm {
-            BezierCurveAlgorithm::DeCasteljau => {
-                let path =
-                    path.map(|t| math::de_casteljau(self.control_points.points.as_slice(), t));
-                self.polyline.rebuild_paths(path)?;
-            }
-            BezierCurveAlgorithm::ChudyWozny => {
-                let path =
-                    path.map(|t| math::chudy_wozny(self.control_points.points.as_slice(), t));
-                self.polyline.rebuild_paths(path)?;
-            }
-        }
-        self.control_points.rebuild_paths()?;
-        Ok(())
+impl DrawOn for BezierCurve {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
+        self.polyline.draw_on(pixmap);
+        self.control_points.draw_on(pixmap);
     }
 }
 
