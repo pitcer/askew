@@ -96,21 +96,6 @@ where
     }
 }
 
-macro_rules! rebuild_many {
-    ([$first_path:expr, $($path:expr),* $(,)?], $points:expr) => {
-        $first_path.rebuild_path($points)?;
-        // Reusing points generated in the previous step assumes that path generation does not
-        // change points and their order.
-        let points = $first_path.points().expect("Path should be present");
-        $({
-            let points = points.iter().copied();
-            $path.rebuild_path(points)?;
-        })*
-    };
-}
-
-pub(crate) use rebuild_many;
-
 mod private {
     use super::{CurvePoint, Path, PathBuilder, PixmapMut, Result};
 
