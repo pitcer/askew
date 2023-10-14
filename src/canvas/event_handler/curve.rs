@@ -99,6 +99,9 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                         ControlPointsCurveKind::BezierV2(curve) => {
                             curve.control_points.points.into_inner()
                         }
+                        ControlPointsCurveKind::PolylineV2(curve) => {
+                            curve.control_points.points.into_inner()
+                        }
                     };
                     Some(points)
                 }

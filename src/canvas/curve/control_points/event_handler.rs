@@ -1,4 +1,5 @@
 use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
+use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -26,6 +27,7 @@ impl<'a, E> DelegateEvent<E> for ControlPointsCurveEventHandler<'a>
 where
     E: Event,
     for<'b> PolylineEventHandler<'b>: EventHandler<E>,
+    for<'b> PolylineCurveEventHandler<'b>: EventHandler<E>,
     for<'b> ConvexHullEventHandler<'b>: EventHandler<E>,
     for<'b> InterpolationEventHandler<'b>: EventHandler<E>,
     for<'b> BezierEventHandler<'b>: EventHandler<E>,
@@ -35,6 +37,7 @@ where
     fn delegate(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {
             ControlPointsCurveKind::Polyline(curve) => curve.event_handler().handle(event),
+            ControlPointsCurveKind::PolylineV2(curve) => curve.event_handler().handle(event),
             ControlPointsCurveKind::ConvexHull(curve) => curve.event_handler().handle(event),
             ControlPointsCurveKind::Interpolation(curve) => curve.event_handler().handle(event),
             ControlPointsCurveKind::Bezier(curve) => curve.event_handler().handle(event),

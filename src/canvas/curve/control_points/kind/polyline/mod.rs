@@ -5,6 +5,7 @@ use crate::canvas::curve::converter::{CurvePath, PathConverter, ToPath};
 
 pub mod event_handler;
 
+#[deprecated]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Polyline {
     points: CurvePoints,

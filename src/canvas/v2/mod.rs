@@ -1,11 +1,11 @@
 use anyhow::Result;
-use tiny_skia::{Pixmap, PixmapMut};
+use tiny_skia::PixmapMut;
 
 pub mod base_polyline;
 pub mod control_points_curve;
+pub mod curve;
 pub mod shape;
 pub mod visual_path;
-pub mod curve;
 
 // TODO: will this trait be useful anywhere?
 pub trait DrawOn {

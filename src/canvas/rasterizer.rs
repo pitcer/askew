@@ -43,6 +43,9 @@ impl Rasterizer {
                 ControlPointsCurveKind::ConvexHull(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
+                ControlPointsCurveKind::PolylineV2(curve) => {
+                    curve.draw_on(&mut panel.as_pixmap_mut())?
+                }
             },
             CurveKind::Formula(curve) => {
                 let mut rasterizer = CurveRasterizer::new(curve, properties, panel);

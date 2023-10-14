@@ -24,6 +24,7 @@ use crate::canvas::rasterizer::Rasterizer;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::{ControlPointsCurve, ControlPointsCurveProperties};
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
+use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::Update;
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
@@ -75,9 +76,20 @@ impl Canvas {
         let points = points.unwrap_or_default();
         let samples = Samples::new(samples.unwrap_or(properties.samples) as usize);
         let curve = match curve_type {
-            CurveType::Polyline => CurveKind::ControlPoints(ControlPointsCurveKind::Polyline(
-                Polyline::new(CurvePoints::new(points)),
-            )),
+            CurveType::Polyline => {
+                let mut curve = PolylineCurve::new(
+                    ControlPointsCurve::new(
+                        CurvePoints::new(points),
+                        ControlPointsCurveProperties::from_config(config),
+                    ),
+                    BasePolyline::from_config(config),
+                );
+                let result = curve.update();
+                if let Err(error) = result {
+                    log::warn!("Curve was not updated after its creation: {error}");
+                }
+                CurveKind::ControlPoints(ControlPointsCurveKind::PolylineV2(Box::new(curve)))
+            }
             CurveType::ConvexHull => CurveKind::ControlPoints(ControlPointsCurveKind::ConvexHull(
                 ConvexHull::new(CurvePoints::new(points)),
             )),
@@ -155,6 +167,7 @@ impl Canvas {
             match curve {
                 CurveKind::ControlPoints(curve) => match curve {
                     ControlPointsCurveKind::BezierV2(curve) => curve.update()?,
+                    ControlPointsCurveKind::PolylineV2(curve) => curve.update()?,
                     _ => {}
                 },
                 CurveKind::Formula(_) => {}
@@ -187,6 +200,7 @@ impl Canvas {
                 ControlPointsCurveKind::Bezier(_) => CurveType::Bezier,
                 ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
                 ControlPointsCurveKind::BezierV2(_) => CurveType::BezierV2,
+                ControlPointsCurveKind::PolylineV2(_) => CurveType::Polyline,
             },
             CurveKind::Formula(curve) => match curve {
                 FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,

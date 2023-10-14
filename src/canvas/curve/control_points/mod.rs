@@ -8,6 +8,7 @@ use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
 use crate::canvas::v2::curve::bezier::BezierCurve;
+use crate::canvas::v2::curve::polyline::PolylineCurve;
 
 pub mod event_handler;
 pub mod kind;
@@ -28,6 +29,7 @@ pub trait GetControlPoints {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum ControlPointsCurveKind {
     Polyline(Polyline),
+    PolylineV2(Box<PolylineCurve>),
     ConvexHull(ConvexHull),
     Interpolation(Interpolation),
     #[deprecated]
