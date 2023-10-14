@@ -1,4 +1,3 @@
-use anyhow::Result;
 use tiny_skia::PixmapMut;
 
 pub mod base_polyline;
@@ -15,5 +14,5 @@ pub trait DrawOn {
 // TODO: in event handler add mut events that will call that method (all curves
 // must implement this trait)
 pub trait Update {
-    fn update(&mut self) -> Result<()>;
+    fn update(&mut self);
 }

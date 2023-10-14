@@ -156,6 +156,8 @@ delegate_handlers! {
         canvas::RotateCurve,
         canvas::GetCurveCenter,
         canvas::SelectPoint,
+        canvas::SetConvexHull,
+        canvas::GetConvexHull,
         curve::GetPoint,
     }
 }

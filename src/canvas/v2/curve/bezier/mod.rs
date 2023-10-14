@@ -1,4 +1,3 @@
-use anyhow::Result;
 use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
@@ -42,7 +41,7 @@ impl BezierCurve {
 }
 
 impl Update for BezierCurve {
-    fn update(&mut self) -> Result<()> {
+    fn update(&mut self) {
         if self.control_points.points.length() > 1 {
             let points = self.control_points.points.as_slice();
 
@@ -58,7 +57,6 @@ impl Update for BezierCurve {
         }
 
         self.control_points.rebuild_paths();
-        Ok(())
     }
 }
 

@@ -14,7 +14,7 @@ where
 {
     #[serde(skip)]
     path: Option<Path>,
-    properties: T::Properties,
+    pub properties: T::Properties,
 }
 
 impl<T> VisualPath<T>

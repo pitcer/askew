@@ -1,4 +1,3 @@
-use anyhow::Result;
 use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::control_points::CurvePoint;
@@ -30,12 +29,11 @@ impl PolylineCurve {
 }
 
 impl Update for PolylineCurve {
-    fn update(&mut self) -> Result<()> {
+    fn update(&mut self) {
         let points = self.control_points.points.copied_iterator();
         self.polyline.rebuild_paths(points);
 
         self.control_points.rebuild_paths();
-        Ok(())
     }
 }
 

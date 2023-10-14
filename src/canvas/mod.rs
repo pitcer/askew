@@ -81,10 +81,7 @@ impl Canvas {
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
                 );
-                let result = curve.update();
-                if let Err(error) = result {
-                    log::warn!("Curve was not updated after its creation: {error}");
-                }
+                curve.update();
                 CurveKind::ControlPoints(ControlPointsCurveKind::PolylineV2(Box::new(curve)))
             }
             CurveType::ConvexHull => CurveKind::ControlPoints(ControlPointsCurveKind::ConvexHull(
@@ -124,10 +121,7 @@ impl Canvas {
                     BezierCurveProperties::new(properties.bezier_algorithm),
                     samples,
                 );
-                let result = curve.update();
-                if let Err(error) = result {
-                    log::warn!("Curve was not updated after its creation: {error}");
-                }
+                curve.update();
                 CurveKind::ControlPoints(ControlPointsCurveKind::BezierV2(Box::new(curve)))
             }
         };
@@ -156,18 +150,17 @@ impl Canvas {
     }
 
     #[deprecated(note = "Remove after implementing updates in event handler")]
-    pub fn update(&mut self) -> Result<()> {
+    pub fn update(&mut self) {
         for curve in &mut self.curves {
             match curve {
                 CurveKind::ControlPoints(curve) => match curve {
-                    ControlPointsCurveKind::BezierV2(curve) => curve.update()?,
-                    ControlPointsCurveKind::PolylineV2(curve) => curve.update()?,
+                    ControlPointsCurveKind::BezierV2(curve) => curve.update(),
+                    ControlPointsCurveKind::PolylineV2(curve) => curve.update(),
                     _ => {}
                 },
                 CurveKind::Formula(_) => {}
             }
         }
-        Ok(())
     }
 
     pub fn generate_random_points(&mut self, number_of_points: u32) -> Result<()> {

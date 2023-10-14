@@ -33,19 +33,6 @@ where
     }
 }
 
-impl EventHandler<GetConvexHull> for CanvasEventHandler<'_> {
-    fn handle(&mut self, _event: GetConvexHull) -> HandlerResult<GetConvexHull> {
-        Ok(self.canvas.properties.show_convex_hull)
-    }
-}
-
-impl EventHandler<SetConvexHull> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: SetConvexHull) -> HandlerResult<SetConvexHull> {
-        self.canvas.properties.show_convex_hull = event.0;
-        Ok(())
-    }
-}
-
 impl EventHandler<AddCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: AddCurve) -> HandlerResult<AddCurve> {
         let curve_type = self.canvas.properties.default_curve_type;

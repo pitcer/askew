@@ -9,9 +9,9 @@ pub type VisualLine<const CLOSED: bool> = VisualPath<VisualLineDetails<CLOSED>>;
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualLineProperties {
-    visible: bool,
-    width: f32,
-    color: Rgb,
+    pub visible: bool,
+    pub width: f32,
+    pub color: Rgb,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

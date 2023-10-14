@@ -1,7 +1,11 @@
 use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler;
+use crate::canvas::curve::control_points::ControlPointsCurveKind;
 use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
 use crate::canvas::curve::CurveKind;
-use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
+use crate::canvas::v2::Update;
+use crate::event::canvas::{
+    GetConvexHull, GetCurveCenter, MoveCurve, RotateCurve, SelectPoint, SetConvexHull,
+};
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::GetPoint;
@@ -101,6 +105,43 @@ impl EventHandler<SetTrochoidProperties> for CurveEventHandler<'_> {
             CurveKind::Formula(curve) => curve.event_handler().handle(event),
             _ => Err(Error::Unimplemented),
         }
+    }
+}
+
+impl EventHandler<GetConvexHull> for CurveEventHandler<'_> {
+    fn handle(&mut self, _event: GetConvexHull) -> HandlerResult<GetConvexHull> {
+        match self.curve {
+            CurveKind::ControlPoints(curve) => match curve {
+                ControlPointsCurveKind::PolylineV2(curve) => {
+                    Ok(curve.control_points.convex_hull.properties.visible)
+                }
+                ControlPointsCurveKind::BezierV2(curve) => {
+                    Ok(curve.control_points.convex_hull.properties.visible)
+                }
+                _ => Err(Error::Unimplemented),
+            },
+            _ => Err(Error::Unimplemented),
+        }
+    }
+}
+
+impl EventHandler<SetConvexHull> for CurveEventHandler<'_> {
+    fn handle(&mut self, event: SetConvexHull) -> HandlerResult<SetConvexHull> {
+        match self.curve {
+            CurveKind::ControlPoints(curve) => match curve {
+                ControlPointsCurveKind::PolylineV2(curve) => {
+                    curve.control_points.convex_hull.properties.visible = event.0;
+                    curve.update();
+                }
+                ControlPointsCurveKind::BezierV2(curve) => {
+                    curve.control_points.convex_hull.properties.visible = event.0;
+                    curve.update();
+                }
+                _ => return Err(Error::Unimplemented),
+            },
+            _ => return Err(Error::Unimplemented),
+        }
+        Ok(())
     }
 }
 
