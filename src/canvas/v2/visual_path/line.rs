@@ -10,7 +10,7 @@ use crate::config::rgb::Rgb;
 
 pub type VisualLine = VisualPath<VisualLineDetails>;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualLineProperties {
     closed: bool,
     visible: bool,
@@ -18,14 +18,14 @@ pub struct VisualLineProperties {
     color: Rgb,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualLineDetails;
 
 impl VisualPathDetails for VisualLineDetails {
     type Properties = VisualLineProperties;
 
     fn draw_on(
-        mut pixmap: PixmapMut<'_>,
+        pixmap: &mut PixmapMut<'_>,
         path: &Path,
         properties: &Self::Properties,
     ) -> Result<()> {

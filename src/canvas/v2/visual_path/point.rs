@@ -10,21 +10,21 @@ use crate::config::rgb::Rgb;
 
 pub type VisualPoint = VisualPath<VisualPointDetails>;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualPointProperties {
     visible: bool,
     radius: f32,
     color: Rgb,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualPointDetails;
 
 impl VisualPathDetails for VisualPointDetails {
     type Properties = VisualPointProperties;
 
     fn draw_on(
-        mut pixmap: PixmapMut<'_>,
+        pixmap: &mut PixmapMut<'_>,
         path: &Path,
         properties: &Self::Properties,
     ) -> Result<()> {

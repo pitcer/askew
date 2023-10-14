@@ -5,31 +5,47 @@ use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::config::rgb::Rgb;
 use crate::config::{CanvasConfig, CurveType};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct CanvasProperties {
     pub current_point_index: usize,
     pub current_curve: usize,
+    #[deprecated]
     pub default_curve_type: CurveType,
+    #[deprecated]
     pub bezier_algorithm: BezierCurveAlgorithm,
+    #[deprecated]
     pub rational_bezier_algorithm: RationalBezierAlgorithm,
+    #[deprecated]
     pub trochoid_properties: TrochoidProperties,
+    #[deprecated]
     pub line_width: f32,
+    #[deprecated]
     pub point_radius: f32,
+    #[deprecated]
     pub control_line: bool,
+    #[deprecated]
     pub show_convex_hull: bool,
+    #[deprecated]
     pub show_center_of_mass: bool,
+    #[deprecated]
     pub interpolation_nodes: InterpolationNodes,
+    #[deprecated]
     pub default_weight: f32,
+    #[deprecated]
     pub samples: u32,
+    #[deprecated]
     pub line_color: Rgb,
+    #[deprecated]
     pub convex_hull_color: Rgb,
+    #[deprecated]
     pub control_points_color: Rgb,
+    #[deprecated]
     pub current_control_point_color: Rgb,
 }
 
 impl CanvasProperties {
     #[must_use]
-    pub fn new(config: CanvasConfig) -> Self {
+    pub fn new(config: &CanvasConfig) -> Self {
         Self {
             current_point_index: 0,
             current_curve: 0,

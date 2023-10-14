@@ -21,6 +21,10 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
+use crate::canvas::v2::base_polyline::BasePolyline;
+use crate::canvas::v2::bezier_curve::{BezierCurve, BezierCurveProperties};
+use crate::canvas::v2::control_points_curve::{ControlPointsCurve, ControlPointsCurveProperties};
+use crate::canvas::v2::Update;
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
 use crate::event::EventHandler;
@@ -38,34 +42,39 @@ pub mod v2;
 pub struct Canvas {
     curves: Vec<CurveKind>,
     size: Rectangle<f32>,
+    #[serde(skip)]
     properties: CanvasProperties,
+    config: CanvasConfig,
 }
 
 impl Canvas {
     #[must_use]
     pub fn new(size: Rectangle<f32>, config: CanvasConfig) -> Self {
-        let properties = CanvasProperties::new(config);
-        let curve = Self::create_curve(&properties, properties.default_curve_type, None, None);
+        let properties = CanvasProperties::new(&config);
+        let curve =
+            Self::create_curve(&properties, &config, properties.default_curve_type, None, None);
         let curves = vec![curve];
-        Self { curves, size, properties }
+        Self { curves, size, properties, config }
     }
 
     pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
         let file = File::open(path)?;
-        let canvas = serde_json::from_reader(file)?;
+        let mut canvas = serde_json::from_reader::<_, Canvas>(file)?;
+        canvas.properties = CanvasProperties::new(&canvas.config);
         Ok(canvas)
     }
 
     #[must_use]
     pub fn create_curve(
         properties: &CanvasProperties,
+        config: &CanvasConfig,
         curve_type: CurveType,
         points: Option<Vec<Point<f32>>>,
         samples: Option<u32>,
     ) -> CurveKind {
         let points = points.unwrap_or_default();
         let samples = Samples::new(samples.unwrap_or(properties.samples) as usize);
-        match curve_type {
+        let curve = match curve_type {
             CurveType::Polyline => CurveKind::ControlPoints(ControlPointsCurveKind::Polyline(
                 Polyline::new(CurvePoints::new(points)),
             )),
@@ -99,7 +108,24 @@ impl Canvas {
                 samples,
                 properties.trochoid_properties,
             ))),
-        }
+            CurveType::BezierV2 => {
+                let mut curve = BezierCurve::new(
+                    ControlPointsCurve::new(
+                        CurvePoints::new(points),
+                        ControlPointsCurveProperties::from_config(config),
+                    ),
+                    BasePolyline::from_config(config),
+                    BezierCurveProperties::new(properties.bezier_algorithm),
+                    samples,
+                );
+                let result = curve.update();
+                if let Err(error) = result {
+                    log::warn!("Curve was not updated after its creation: {error}");
+                }
+                CurveKind::ControlPoints(ControlPointsCurveKind::BezierV2(Box::new(curve)))
+            }
+        };
+        curve
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
@@ -119,6 +145,20 @@ impl Canvas {
     pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
         for curve in &self.curves {
             Rasterizer.rasterize(curve, &self.properties, &mut panel)?;
+        }
+        Ok(())
+    }
+
+    #[deprecated(note = "Remove after implementing updates in event handler")]
+    pub fn update(&mut self) -> Result<()> {
+        for curve in &mut self.curves {
+            match curve {
+                CurveKind::ControlPoints(curve) => match curve {
+                    ControlPointsCurveKind::BezierV2(curve) => curve.update()?,
+                    _ => {}
+                },
+                CurveKind::Formula(_) => {}
+            }
         }
         Ok(())
     }
@@ -146,6 +186,7 @@ impl Canvas {
                 ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
                 ControlPointsCurveKind::Bezier(_) => CurveType::Bezier,
                 ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
+                ControlPointsCurveKind::BezierV2(_) => CurveType::BezierV2,
             },
             CurveKind::Formula(curve) => match curve {
                 FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,

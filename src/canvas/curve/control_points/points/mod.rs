@@ -8,7 +8,7 @@ use crate::canvas::math::vector::Vector;
 
 pub mod event_handler;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ControlPoints<T> {
     points: Vec<T>,
 }
@@ -60,7 +60,7 @@ impl<T> ControlPoints<T> {
 
     pub fn rotate_all<V>(&mut self, angle: V)
     where
-        T: AsRef<Point<V>> + AsMut<Point<V>> + Debug,
+        T: AsRef<Point<V>> + AsMut<Point<V>> + Debug + Copy + Into<Point<V>>,
         V: Float + Debug,
     {
         let cos_angle = V::cos(angle);
@@ -81,13 +81,14 @@ impl<T> ControlPoints<T> {
     #[must_use]
     pub fn center_of_mass<V>(&self) -> Option<Point<V>>
     where
-        T: AsRef<Point<V>>,
+        T: Into<Point<V>> + Copy,
         V: Copy + Num + NumCast,
     {
         let length = V::from(self.points.len()).unwrap();
         self.points
             .iter()
-            .map(|point| point.as_ref().into_vector(Point::zero()))
+            .copied()
+            .map(|point| point.into().into_vector(Point::zero()))
             .reduce(|accumulator, point| accumulator + point)
             .map(|center| center / length)
             .map(|center| center.into_point(Point::zero()))
@@ -133,5 +134,12 @@ impl<T> ControlPoints<T> {
     #[must_use]
     pub fn iterator(&self) -> impl ExactSizeIterator<Item = &T> {
         self.points.iter()
+    }
+
+    pub fn copied_iterator(&self) -> impl ExactSizeIterator<Item = T> + '_
+    where
+        T: Copy,
+    {
+        self.points.iter().copied()
     }
 }

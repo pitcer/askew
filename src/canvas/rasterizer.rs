@@ -9,6 +9,7 @@ use crate::canvas::curve::CurveKind;
 use crate::canvas::math::point::Point;
 use crate::canvas::paint::{PaintBuilder, PaintColor};
 use crate::canvas::properties::CanvasProperties;
+use crate::canvas::v2::DrawOn;
 use crate::config::rgb::Rgb;
 use crate::ui::frame::panel::Panel;
 
@@ -32,6 +33,9 @@ impl Rasterizer {
                 }
                 ControlPointsCurveKind::Bezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
+                }
+                ControlPointsCurveKind::BezierV2(curve) => {
+                    curve.draw_on(&mut panel.as_pixmap_mut())?
                 }
                 ControlPointsCurveKind::RationalBezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);

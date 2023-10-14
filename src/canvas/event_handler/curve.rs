@@ -96,12 +96,21 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                             .into_iter()
                             .map(WeightedPoint::point)
                             .collect::<Vec<_>>(),
+                        ControlPointsCurveKind::BezierV2(curve) => {
+                            curve.control_points.points.into_inner()
+                        }
                     };
                     Some(points)
                 }
                 CurveKind::Formula(_) => None,
             };
-            Canvas::create_curve(&self.canvas.properties, event.0, points, samples)
+            Canvas::create_curve(
+                &self.canvas.properties,
+                &self.canvas.config,
+                event.0,
+                points,
+                samples,
+            )
         });
         Ok(())
     }

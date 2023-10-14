@@ -16,9 +16,10 @@ pub struct RationalBezier {
     algorithm: RationalBezierAlgorithm,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum RationalBezierAlgorithm {
     Generic,
+    #[default]
     DeCasteljau,
     ChudyWozny,
 }

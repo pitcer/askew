@@ -6,7 +6,7 @@ use crate::event::canvas::{
 };
 use crate::event::curve::control_points::{GetControlPointsLength, MovePoint};
 use crate::event::curve::GetPoint;
-use crate::event::{DelegateEventHandler, Event, EventHandler, HandlerResult};
+use crate::event::{DelegateEventHandler, Error, Event, EventHandler, HandlerResult};
 
 pub mod curve;
 
@@ -49,7 +49,13 @@ impl EventHandler<SetConvexHull> for CanvasEventHandler<'_> {
 impl EventHandler<AddCurve> for CanvasEventHandler<'_> {
     fn handle(&mut self, _event: AddCurve) -> HandlerResult<AddCurve> {
         let curve_type = self.canvas.properties.default_curve_type;
-        let curve = Canvas::create_curve(&self.canvas.properties, curve_type, None, None);
+        let curve = Canvas::create_curve(
+            &self.canvas.properties,
+            &self.canvas.config,
+            curve_type,
+            None,
+            None,
+        );
         self.canvas.curves.push(curve);
         self.canvas.properties.current_curve += 1;
         Ok(())

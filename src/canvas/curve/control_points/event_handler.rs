@@ -1,3 +1,4 @@
+use crate::canvas::v2::bezier_event_handler::BezierV2EventHandler;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
@@ -28,6 +29,7 @@ where
     for<'b> ConvexHullEventHandler<'b>: EventHandler<E>,
     for<'b> InterpolationEventHandler<'b>: EventHandler<E>,
     for<'b> BezierEventHandler<'b>: EventHandler<E>,
+    for<'b> BezierV2EventHandler<'b>: EventHandler<E>,
     for<'b> RationalBezierEventHandler<'b>: EventHandler<E>,
 {
     fn delegate(&mut self, event: E) -> HandlerResult<E> {
@@ -37,6 +39,7 @@ where
             ControlPointsCurveKind::Interpolation(curve) => curve.event_handler().handle(event),
             ControlPointsCurveKind::Bezier(curve) => curve.event_handler().handle(event),
             ControlPointsCurveKind::RationalBezier(curve) => curve.event_handler().handle(event),
+            ControlPointsCurveKind::BezierV2(curve) => curve.event_handler().handle(event),
         }
     }
 }

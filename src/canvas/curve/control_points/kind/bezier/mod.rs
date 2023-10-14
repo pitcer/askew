@@ -7,6 +7,7 @@ use crate::canvas::math;
 
 pub mod event_handler;
 
+#[deprecated]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Bezier {
     points: CurvePoints,
@@ -14,10 +15,11 @@ pub struct Bezier {
     algorithm: BezierCurveAlgorithm,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum BezierCurveAlgorithm {
     #[deprecated(note = "This fails for n > 13")]
     Generic,
+    #[default]
     DeCasteljau,
     ChudyWozny,
 }

@@ -62,7 +62,7 @@ where
 
 impl<P> EventHandler<RotateCurve> for ControlPointsEventHandler<'_, P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
+    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Into<Point<f32>> + Copy,
 {
     fn handle(&mut self, event: RotateCurve) -> HandlerResult<RotateCurve> {
         self.points.rotate_all(event.angle);
@@ -72,7 +72,7 @@ where
 
 impl<P> EventHandler<GetCurveCenter> for ControlPointsEventHandler<'_, P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
+    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Copy + Into<Point<f32>>,
 {
     fn handle(&mut self, _event: GetCurveCenter) -> HandlerResult<GetCurveCenter> {
         Ok(self.points.center_of_mass())

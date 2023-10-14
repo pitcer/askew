@@ -163,6 +163,7 @@ dependencies = [
  "clap",
  "criterion",
  "delegate",
+ "either",
  "fontdue",
  "futures-lite",
  "image",

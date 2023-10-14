@@ -212,12 +212,15 @@ impl Default for UiConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum CurveType {
+    #[default]
     Polyline,
     ConvexHull,
     Interpolation,
+    #[deprecated(note = "to be replaced by v2 version")]
     Bezier,
+    BezierV2,
     RationalBezier,
     Trochoid,
 }
@@ -231,6 +234,7 @@ impl Display for CurveType {
             CurveType::Bezier => write!(f, "Bezier"),
             CurveType::RationalBezier => write!(f, "RationalBezier"),
             CurveType::Trochoid => write!(f, "Trochoid"),
+            CurveType::BezierV2 => write!(f, "BezierV2"),
         }
     }
 }

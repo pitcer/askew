@@ -7,6 +7,7 @@ use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEvent
 use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
+use crate::canvas::v2::bezier_curve::BezierCurve;
 
 pub mod event_handler;
 pub mod kind;
@@ -17,7 +18,7 @@ pub type CurvePoints = ControlPoints<CurvePoint>;
 pub type CurvePoint = Point<f32>;
 
 pub trait GetControlPoints {
-    type Point: AsRef<CurvePoint>;
+    type Point: AsRef<CurvePoint> + Into<CurvePoint> + Copy;
 
     fn control_points(&self) -> &ControlPoints<Self::Point>;
 
@@ -29,7 +30,9 @@ pub enum ControlPointsCurveKind {
     Polyline(Polyline),
     ConvexHull(ConvexHull),
     Interpolation(Interpolation),
+    #[deprecated]
     Bezier(Bezier),
+    BezierV2(Box<BezierCurve>),
     RationalBezier(RationalBezier),
 }
 
@@ -80,5 +83,11 @@ impl<T, W> AsMut<Point<T>> for WeightedPoint<T, W> {
 impl<T> AsMut<Point<T>> for Point<T> {
     fn as_mut(&mut self) -> &mut Point<T> {
         self
+    }
+}
+
+impl<T, W> From<WeightedPoint<T, W>> for Point<T> {
+    fn from(value: WeightedPoint<T, W>) -> Self {
+        value.point
     }
 }

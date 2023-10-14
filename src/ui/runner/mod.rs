@@ -83,6 +83,7 @@ impl WindowRunner {
 
         match event {
             Event::RedrawRequested(window_id) if self.window.has_id(window_id) => {
+                self.frame.canvas_mut().update()?;
                 self.paint()?;
             }
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {

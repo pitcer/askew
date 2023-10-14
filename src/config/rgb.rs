@@ -25,6 +25,8 @@ pub struct Rgb {
 }
 
 impl Rgb {
+    pub const WHITE: Rgb = Rgb::new(255, 255, 255);
+
     #[must_use]
     pub const fn new(red: u8, green: u8, blue: u8) -> Self {
         Self { red: Hex(red), green: Hex(green), blue: Hex(blue) }

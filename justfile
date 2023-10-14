@@ -3,8 +3,11 @@ set positional-arguments
 run-wayland *arguments:
     cargo run --no-default-features --features wayland "$@"
 
-clippy-wayland:
-    cargo clippy --no-default-features --features wayland
+clippy-wayland *arguments:
+    cargo clippy --no-default-features --features wayland "$@"
+
+clippy-wayland-errors:
+    just clippy-wayland -- --allow warnings
 
 test-wayland *arguments:
     cargo test --no-default-features --features wayland "$@"

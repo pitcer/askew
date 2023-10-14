@@ -73,8 +73,9 @@ impl GetControlPoints for Interpolation {
     }
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
 pub enum InterpolationNodes {
     EquallySpaced,
+    #[default]
     Chebyshev,
 }

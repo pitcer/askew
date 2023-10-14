@@ -80,7 +80,7 @@ impl<'a> Panel<'a> {
         pixel.blend(foreground);
     }
 
-    fn as_pixmap_mut(&mut self) -> PixmapMut<'_> {
+    pub fn as_pixmap_mut(&mut self) -> PixmapMut<'_> {
         let bytes = bytemuck::cast_slice_mut(self.buffer);
         let size = self.area.size();
         PixmapMut::from_bytes(bytes, size.width(), size.height())
