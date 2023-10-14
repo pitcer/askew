@@ -8,20 +8,19 @@ use crate::canvas::v2::visual_path::private::{VisualPathDetails, VisualPathPrope
 use crate::canvas::v2::visual_path::VisualPath;
 use crate::config::rgb::Rgb;
 
-pub type VisualLine = VisualPath<VisualLineDetails>;
+pub type VisualLine<const CLOSED: bool> = VisualPath<VisualLineDetails<CLOSED>>;
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualLineProperties {
-    closed: bool,
     visible: bool,
     width: f32,
     color: Rgb,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct VisualLineDetails;
+pub struct VisualLineDetails<const CLOSED: bool>;
 
-impl VisualPathDetails for VisualLineDetails {
+impl<const CLOSED: bool> VisualPathDetails for VisualLineDetails<CLOSED> {
     type Properties = VisualLineProperties;
 
     fn draw_on(
@@ -38,7 +37,7 @@ impl VisualPathDetails for VisualLineDetails {
     fn build_path_from_builder<P>(
         mut builder: PathBuilder,
         mut points: impl Iterator<Item = P>,
-        properties: &Self::Properties,
+        _properties: &Self::Properties,
     ) -> Result<Path>
     where
         P: Into<CurvePoint>,
@@ -52,7 +51,7 @@ impl VisualPathDetails for VisualLineDetails {
             builder.line_to(point.horizontal(), point.vertical());
         }
 
-        if properties.closed {
+        if CLOSED {
             builder.close();
         }
 
@@ -62,8 +61,8 @@ impl VisualPathDetails for VisualLineDetails {
 
 impl VisualLineProperties {
     #[must_use]
-    pub fn new(closed: bool, visible: bool, width: f32, color: Rgb) -> Self {
-        Self { closed, visible, width, color }
+    pub fn new(visible: bool, width: f32, color: Rgb) -> Self {
+        Self { visible, width, color }
     }
 }
 

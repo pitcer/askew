@@ -9,14 +9,14 @@ use crate::config::rgb::Rgb;
 use crate::config::CanvasConfig;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct BasePolyline {
-    pub line: VisualLine,
+pub struct BasePolyline<const CLOSED: bool> {
+    pub line: VisualLine<CLOSED>,
     pub points: VisualPoint,
 }
 
-impl BasePolyline {
+impl<const CLOSED: bool> BasePolyline<CLOSED> {
     #[must_use]
-    pub fn new(line: VisualLine, points: VisualPoint) -> Self {
+    pub fn new(line: VisualLine<CLOSED>, points: VisualPoint) -> Self {
         Self { line, points }
     }
 
@@ -24,7 +24,6 @@ impl BasePolyline {
     pub fn from_config(config: &CanvasConfig) -> Self {
         Self {
             line: VisualLine::new(VisualLineProperties::new(
-                false,
                 true,
                 config.default_line_width,
                 config.line_color,
@@ -43,7 +42,7 @@ impl BasePolyline {
     }
 }
 
-impl DrawOn for BasePolyline {
+impl<const CLOSED: bool> DrawOn for BasePolyline<CLOSED> {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) -> Result<()> {
         self.line.draw_on(pixmap)?;
         self.points.draw_on(pixmap)?;
@@ -51,10 +50,10 @@ impl DrawOn for BasePolyline {
     }
 }
 
-impl Default for BasePolyline {
+impl<const CLOSED: bool> Default for BasePolyline<CLOSED> {
     fn default() -> Self {
         Self {
-            line: VisualLine::new(VisualLineProperties::new(false, true, 2.0, Rgb::WHITE)),
+            line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE)),
             points: VisualPoint::new(VisualPointProperties::new(false, 4.0, Rgb::WHITE)),
         }
     }

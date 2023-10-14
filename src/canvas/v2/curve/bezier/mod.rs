@@ -15,7 +15,7 @@ pub mod event_handler;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BezierCurve {
     pub control_points: ControlPointsCurve<CurvePoint>,
-    pub polyline: BasePolyline,
+    pub polyline: BasePolyline<false>,
     pub properties: BezierCurveProperties,
     pub samples: Samples,
 }
@@ -29,7 +29,7 @@ impl BezierCurve {
     #[must_use]
     pub fn new(
         control_points: ControlPointsCurve<CurvePoint>,
-        polyline: BasePolyline,
+        polyline: BasePolyline<false>,
         properties: BezierCurveProperties,
         samples: Samples,
     ) -> Self {
