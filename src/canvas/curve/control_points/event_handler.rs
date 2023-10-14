@@ -1,4 +1,4 @@
-use crate::canvas::v2::bezier_event_handler::BezierV2EventHandler;
+use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,

@@ -7,7 +7,7 @@ use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEvent
 use crate::canvas::curve::control_points::kind::bezier::Bezier;
 use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
-use crate::canvas::v2::bezier_curve::BezierCurve;
+use crate::canvas::v2::curve::bezier::BezierCurve;
 
 pub mod event_handler;
 pub mod kind;

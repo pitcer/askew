@@ -1,14 +1,16 @@
 use anyhow::Result;
-use tiny_skia::{Pixmap, PixmapMut};
+use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math;
 use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::bezier_event_handler::BezierV2EventHandler;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
+use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
 use crate::canvas::v2::{DrawOn, Update};
+
+pub mod event_handler;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BezierCurve {

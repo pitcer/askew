@@ -1,5 +1,5 @@
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
-use crate::canvas::v2::bezier_curve::BezierCurve;
+use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::event::curve::control_points::weighted;
 use crate::event::curve::{control_points, GetSamples, SetSamples};
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};
