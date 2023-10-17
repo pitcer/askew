@@ -19,6 +19,7 @@ pub struct ControlPointsCurve<P> {
     pub points: ControlPoints<P>,
 
     pub control_points: VisualPoint,
+    // TODO: add current control point
     pub control_line: ControlLine,
 
     pub convex_hull: ConvexHullLine,

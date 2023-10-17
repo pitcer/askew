@@ -4,11 +4,6 @@ use winit::dpi::PhysicalPosition;
 
 use crate::{
     canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler,
-    canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
-    canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
-    canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
-    canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
-    canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::points::event_handler::ControlPointsEventHandler,
     canvas::curve::control_points::WeightedPoint,
     canvas::curve::event_handler::CurveEventHandler,
@@ -156,8 +151,12 @@ pub mod curve {
     }
 
     pub mod control_points {
-        use super::*;
+        use crate::canvas::v2::curve::bezier::event_handler::BezierCurveEventHandler;
+        use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandler;
         use crate::canvas::v2::curve::interpolation::InterpolationNodes;
+        use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
+
+        use super::*;
 
         declare_events! {
             ControlPointsCurveEventHandler<'_> {
@@ -182,7 +181,7 @@ pub mod curve {
                 }
             }
 
-            BezierEventHandler<'_> {
+            BezierCurveEventHandler<'_> {
                 ~ {
                     GetControlPointsLength,
                     AddControlPoint,
@@ -205,30 +204,7 @@ pub mod curve {
                 }
             }
 
-            ConvexHullEventHandler<'_> {
-                ~ {
-                    GetControlPointsLength,
-                    AddControlPoint,
-                    MovePoint,
-                    DeletePoint,
-
-                    canvas::RotateCurve,
-                    canvas::MoveCurve,
-                    canvas::GetCurveCenter,
-                    canvas::SelectPoint,
-                    curve::GetPoint
-                }
-
-                ! {
-                    weighted::AddWeightedControlPoint,
-                    weighted::ChangeWeight,
-                    weighted::GetWeight,
-                    curve::SetSamples,
-                    curve::GetSamples,
-                }
-            }
-
-            InterpolationEventHandler<'_> {
+            InterpolationCurveEventHandler<'_> {
                 ~ {
                     GetControlPointsLength,
                     AddControlPoint,
@@ -254,7 +230,7 @@ pub mod curve {
                 GetInterpolationNodes () -> InterpolationNodes,
             }
 
-            PolylineEventHandler<'_> {
+            PolylineCurveEventHandler<'_> {
                 ~ {
                     GetControlPointsLength,
                     AddControlPoint,
@@ -295,9 +271,10 @@ pub mod curve {
 
         pub mod weighted {
             use super::*;
+            use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
 
             declare_events! {
-                RationalBezierEventHandler<'_> {
+                RationalBezierCurveEventHandler<'_> {
                     ~ {
                         control_points::GetControlPointsLength,
                         control_points::MovePoint,

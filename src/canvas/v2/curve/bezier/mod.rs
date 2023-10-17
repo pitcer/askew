@@ -1,12 +1,11 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
-use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
+use crate::canvas::v2::curve::bezier::event_handler::BezierCurveEventHandler;
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
@@ -35,8 +34,8 @@ impl BezierCurve {
         Self { control_points, polyline, properties, samples }
     }
 
-    pub fn event_handler(&mut self) -> BezierV2EventHandler<'_> {
-        BezierV2EventHandler::new(self)
+    pub fn event_handler(&mut self) -> BezierCurveEventHandler<'_> {
+        BezierCurveEventHandler::new(self)
     }
 }
 
@@ -48,10 +47,10 @@ impl Update for BezierCurve {
             let path = self.samples.equally_spaced(0.0..=1.0);
             match self.properties.algorithm {
                 BezierCurveAlgorithm::DeCasteljau => {
-                    self.polyline.rebuild_paths(path.map(|t| math::de_casteljau(points, t)))
+                    self.polyline.rebuild_paths(path.map(|t| math::de_casteljau(points, t)));
                 }
                 BezierCurveAlgorithm::ChudyWozny => {
-                    self.polyline.rebuild_paths(path.map(|t| math::chudy_wozny(points, t)))
+                    self.polyline.rebuild_paths(path.map(|t| math::chudy_wozny(points, t)));
                 }
             };
         }
@@ -72,4 +71,11 @@ impl BezierCurveProperties {
     pub fn new(algorithm: BezierCurveAlgorithm) -> Self {
         Self { algorithm }
     }
+}
+
+#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+pub enum BezierCurveAlgorithm {
+    #[default]
+    DeCasteljau,
+    ChudyWozny,
 }

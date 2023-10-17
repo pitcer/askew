@@ -4,13 +4,6 @@ use std::path::Path;
 use anyhow::Result;
 use rand::Rng;
 
-use crate::canvas::curve::control_points::kind::bezier::Bezier;
-use crate::canvas::curve::control_points::kind::convex_hull::ConvexHull;
-use crate::canvas::curve::control_points::kind::interpolation::Interpolation;
-use crate::canvas::curve::control_points::kind::polyline::Polyline;
-use crate::canvas::curve::control_points::kind::rational_bezier::{
-    RationalBezier, RationalBezierPoints,
-};
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, WeightedPoint};
 use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurveKind;
@@ -22,12 +15,12 @@ use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::rasterizer::Rasterizer;
 use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::control_points_curve::{ControlPointsCurve, ControlPointsCurveProperties};
+use crate::canvas::v2::control_points_curve::ControlPointsCurve;
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
 use crate::canvas::v2::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
 use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::{
-    RationalBezierCurve, RationalBezierCurveProperties,
+    RationalBezierCurve, RationalBezierCurveProperties, RationalBezierPoints,
 };
 use crate::canvas::v2::Update;
 use crate::config::{CanvasConfig, CurveType};
@@ -88,9 +81,6 @@ impl Canvas {
                 curve.update();
                 CurveKind::ControlPoints(ControlPointsCurveKind::PolylineV2(Box::new(curve)))
             }
-            CurveType::ConvexHull => CurveKind::ControlPoints(ControlPointsCurveKind::ConvexHull(
-                ConvexHull::new(CurvePoints::new(points)),
-            )),
             CurveType::Interpolation => {
                 let mut curve = InterpolationCurve::new(
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
@@ -101,9 +91,16 @@ impl Canvas {
                 curve.update();
                 CurveKind::ControlPoints(ControlPointsCurveKind::Interpolation(Box::new(curve)))
             }
-            CurveType::Bezier => CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
-                Bezier::new(CurvePoints::new(points), samples, properties.bezier_algorithm),
-            )),
+            CurveType::BezierV2 => {
+                let mut curve = BezierCurve::new(
+                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
+                    BasePolyline::from_config(config),
+                    BezierCurveProperties::new(properties.bezier_algorithm),
+                    samples,
+                );
+                curve.update();
+                CurveKind::ControlPoints(ControlPointsCurveKind::BezierV2(Box::new(curve)))
+            }
             CurveType::RationalBezier => {
                 let points = points
                     .into_iter()
@@ -122,16 +119,6 @@ impl Canvas {
                 samples,
                 properties.trochoid_properties,
             ))),
-            CurveType::BezierV2 => {
-                let mut curve = BezierCurve::new(
-                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
-                    BasePolyline::from_config(config),
-                    BezierCurveProperties::new(properties.bezier_algorithm),
-                    samples,
-                );
-                curve.update();
-                CurveKind::ControlPoints(ControlPointsCurveKind::BezierV2(Box::new(curve)))
-            }
         };
         curve
     }
@@ -191,13 +178,10 @@ impl Canvas {
     pub fn curve_type(&self) -> CurveType {
         match self.current_curve() {
             CurveKind::ControlPoints(curve) => match curve {
-                ControlPointsCurveKind::Polyline(_) => CurveType::Polyline,
-                ControlPointsCurveKind::ConvexHull(_) => CurveType::ConvexHull,
-                ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
-                ControlPointsCurveKind::Bezier(_) => CurveType::Bezier,
-                ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
-                ControlPointsCurveKind::BezierV2(_) => CurveType::BezierV2,
                 ControlPointsCurveKind::PolylineV2(_) => CurveType::Polyline,
+                ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
+                ControlPointsCurveKind::BezierV2(_) => CurveType::BezierV2,
+                ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
             },
             CurveKind::Formula(curve) => match curve {
                 FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,

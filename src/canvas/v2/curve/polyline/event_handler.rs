@@ -1,4 +1,3 @@
-use crate::canvas::curve::control_points::kind::polyline::Polyline;
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::event::macros::{delegate_handlers, unimplemented_handlers};

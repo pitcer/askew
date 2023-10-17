@@ -1,5 +1,5 @@
-use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::bezier::BezierCurveAlgorithm;
 use crate::canvas::v2::curve::interpolation::InterpolationNodes;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::config::rgb::Rgb;

@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::bezier::BezierCurveAlgorithm;
 use crate::canvas::v2::curve::interpolation::InterpolationNodes;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::cli::RunArguments;
@@ -216,10 +216,7 @@ impl Default for UiConfig {
 pub enum CurveType {
     #[default]
     Polyline,
-    ConvexHull,
     Interpolation,
-    #[deprecated(note = "to be replaced by v2 version")]
-    Bezier,
     BezierV2,
     RationalBezier,
     Trochoid,
@@ -229,12 +226,10 @@ impl Display for CurveType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             CurveType::Polyline => write!(f, "Polyline"),
-            CurveType::ConvexHull => write!(f, "ConvexHull"),
             CurveType::Interpolation => write!(f, "Interpolation"),
-            CurveType::Bezier => write!(f, "Bezier"),
+            CurveType::BezierV2 => write!(f, "BezierV2"),
             CurveType::RationalBezier => write!(f, "RationalBezier"),
             CurveType::Trochoid => write!(f, "Trochoid"),
-            CurveType::BezierV2 => write!(f, "BezierV2"),
         }
     }
 }

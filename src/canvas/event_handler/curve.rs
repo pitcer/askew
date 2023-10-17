@@ -78,17 +78,14 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
             let points = match curve {
                 CurveKind::ControlPoints(curve) => {
                     let points = match curve {
-                        ControlPointsCurveKind::Polyline(curve) => {
-                            curve.into_control_points().into_inner()
-                        }
-                        ControlPointsCurveKind::ConvexHull(curve) => {
-                            curve.into_control_points().into_inner()
+                        ControlPointsCurveKind::PolylineV2(curve) => {
+                            curve.control_points.points.into_inner()
                         }
                         ControlPointsCurveKind::Interpolation(curve) => {
                             curve.control_points.points.into_inner()
                         }
-                        ControlPointsCurveKind::Bezier(curve) => {
-                            curve.into_control_points().into_inner()
+                        ControlPointsCurveKind::BezierV2(curve) => {
+                            curve.control_points.points.into_inner()
                         }
                         ControlPointsCurveKind::RationalBezier(curve) => curve
                             .control_points
@@ -97,12 +94,6 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                             .into_iter()
                             .map(WeightedPoint::point)
                             .collect::<Vec<_>>(),
-                        ControlPointsCurveKind::BezierV2(curve) => {
-                            curve.control_points.points.into_inner()
-                        }
-                        ControlPointsCurveKind::PolylineV2(curve) => {
-                            curve.control_points.points.into_inner()
-                        }
                     };
                     Some(points)
                 }
