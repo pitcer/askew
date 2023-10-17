@@ -1,9 +1,13 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::control_points::ControlPointsCurveKind;
 use crate::canvas::curve::event_handler::CurveEventHandler;
-use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::v2::curve::bezier::BezierCurve;
+use crate::canvas::v2::curve::interpolation::InterpolationCurve;
+use crate::canvas::v2::curve::polyline::PolylineCurve;
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurve;
+use crate::canvas::v2::curve::trochoid::TrochoidCurve;
 use crate::canvas::v2::{DrawOn, Update};
+use crate::config::CurveType;
 
 pub mod control_points;
 pub mod event_handler;
@@ -11,31 +15,51 @@ pub mod formula;
 pub mod samples;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub enum CurveKind {
-    ControlPoints(ControlPointsCurveKind),
-    Formula(FormulaCurveKind),
+pub enum Curve {
+    Polyline(Box<PolylineCurve>),
+    Interpolation(Box<InterpolationCurve>),
+    Bezier(Box<BezierCurve>),
+    RationalBezier(Box<RationalBezierCurve>),
+    Trochoid(Box<TrochoidCurve>),
 }
 
-impl CurveKind {
+impl Curve {
     pub fn event_handler(&mut self) -> CurveEventHandler<'_> {
         CurveEventHandler::new(self)
     }
-}
 
-impl Update for CurveKind {
-    fn update(&mut self) {
+    #[must_use]
+    pub fn curve_type(&self) -> CurveType {
         match self {
-            CurveKind::ControlPoints(curve) => curve.update(),
-            CurveKind::Formula(curve) => curve.update(),
+            Curve::Polyline(_) => CurveType::Polyline,
+            Curve::Interpolation(_) => CurveType::Interpolation,
+            Curve::Bezier(_) => CurveType::Bezier,
+            Curve::RationalBezier(_) => CurveType::RationalBezier,
+            Curve::Trochoid(_) => CurveType::Trochoid,
         }
     }
 }
 
-impl DrawOn for CurveKind {
+impl Update for Curve {
+    fn update(&mut self) {
+        match self {
+            Curve::Polyline(curve) => curve.update(),
+            Curve::Interpolation(curve) => curve.update(),
+            Curve::Bezier(curve) => curve.update(),
+            Curve::RationalBezier(curve) => curve.update(),
+            Curve::Trochoid(curve) => curve.update(),
+        }
+    }
+}
+
+impl DrawOn for Curve {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
         match self {
-            CurveKind::ControlPoints(curve) => curve.draw_on(pixmap),
-            CurveKind::Formula(curve) => curve.draw_on(pixmap),
+            Curve::Polyline(curve) => curve.draw_on(pixmap),
+            Curve::Interpolation(curve) => curve.draw_on(pixmap),
+            Curve::Bezier(curve) => curve.draw_on(pixmap),
+            Curve::RationalBezier(curve) => curve.draw_on(pixmap),
+            Curve::Trochoid(curve) => curve.draw_on(pixmap),
         }
     }
 }

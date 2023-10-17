@@ -1,14 +1,14 @@
-use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::curve::Curve;
 use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
 use crate::event::macros::{delegate_events, unimplemented_handlers};
-use crate::event::{curve, DelegateEvent, Event, EventHandler, HandlerResult};
+use crate::event::{curve, DelegateEvent, Error, Event, EventHandler, HandlerResult};
 
 pub struct FormulaCurveEventHandler<'a> {
-    curve: &'a mut FormulaCurveKind,
+    curve: &'a mut Curve,
 }
 
 impl<'a> FormulaCurveEventHandler<'a> {
-    pub fn new(curve: &'a mut FormulaCurveKind) -> Self {
+    pub fn new(curve: &'a mut Curve) -> Self {
         Self { curve }
     }
 }
@@ -20,7 +20,8 @@ where
 {
     fn delegate(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {
-            FormulaCurveKind::Trochoid(curve) => curve.event_handler().handle(event),
+            Curve::Trochoid(curve) => curve.event_handler().handle(event),
+            _ => Err(Error::Unimplemented),
         }
     }
 }

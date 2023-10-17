@@ -217,7 +217,7 @@ pub enum CurveType {
     #[default]
     Polyline,
     Interpolation,
-    BezierV2,
+    Bezier,
     RationalBezier,
     Trochoid,
 }
@@ -227,7 +227,7 @@ impl Display for CurveType {
         match self {
             CurveType::Polyline => write!(f, "Polyline"),
             CurveType::Interpolation => write!(f, "Interpolation"),
-            CurveType::BezierV2 => write!(f, "BezierV2"),
+            CurveType::Bezier => write!(f, "Bezier"),
             CurveType::RationalBezier => write!(f, "RationalBezier"),
             CurveType::Trochoid => write!(f, "Trochoid"),
         }

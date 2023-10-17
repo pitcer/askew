@@ -1,7 +1,7 @@
-use crate::canvas::curve::CurveKind;
+use crate::canvas::curve::Curve;
 
 pub enum ShapeKind {
-    Curve(CurveKind),
+    Curve(Curve),
     Square,
     Rectangle,
     Circle,

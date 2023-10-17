@@ -5,10 +5,9 @@ use anyhow::Result;
 use rand::Rng;
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, WeightedPoint};
-use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::curve::control_points::{CurvePoints, WeightedPoint};
 use crate::canvas::curve::samples::Samples;
-use crate::canvas::curve::CurveKind;
+use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
@@ -36,7 +35,7 @@ pub mod v2;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Canvas {
-    curves: Vec<CurveKind>,
+    curves: Vec<Curve>,
     size: Rectangle<f32>,
     #[serde(skip)]
     properties: CanvasProperties,
@@ -67,7 +66,7 @@ impl Canvas {
         curve_type: CurveType,
         points: Option<Vec<Point<f32>>>,
         samples: Option<u32>,
-    ) -> CurveKind {
+    ) -> Curve {
         let points = points.unwrap_or_default();
         let samples = Samples::new(samples.unwrap_or(properties.samples) as usize);
         let curve = match curve_type {
@@ -77,7 +76,7 @@ impl Canvas {
                     BasePolyline::from_config(config),
                 );
                 curve.update();
-                CurveKind::ControlPoints(ControlPointsCurveKind::PolylineV2(Box::new(curve)))
+                Curve::Polyline(Box::new(curve))
             }
             CurveType::Interpolation => {
                 let mut curve = InterpolationCurve::new(
@@ -87,9 +86,9 @@ impl Canvas {
                     samples,
                 );
                 curve.update();
-                CurveKind::ControlPoints(ControlPointsCurveKind::Interpolation(Box::new(curve)))
+                Curve::Interpolation(Box::new(curve))
             }
-            CurveType::BezierV2 => {
+            CurveType::Bezier => {
                 let mut curve = BezierCurve::new(
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
@@ -97,7 +96,7 @@ impl Canvas {
                     samples,
                 );
                 curve.update();
-                CurveKind::ControlPoints(ControlPointsCurveKind::BezierV2(Box::new(curve)))
+                Curve::Bezier(Box::new(curve))
             }
             CurveType::RationalBezier => {
                 let points = points
@@ -111,15 +110,13 @@ impl Canvas {
                     samples,
                 );
                 curve.update();
-                CurveKind::ControlPoints(ControlPointsCurveKind::RationalBezier(Box::new(curve)))
+                Curve::RationalBezier(Box::new(curve))
             }
-            CurveType::Trochoid => {
-                CurveKind::Formula(FormulaCurveKind::Trochoid(Box::new(TrochoidCurve::new(
-                    BasePolyline::from_config(config),
-                    properties.trochoid_properties,
-                    samples,
-                ))))
-            }
+            CurveType::Trochoid => Curve::Trochoid(Box::new(TrochoidCurve::new(
+                BasePolyline::from_config(config),
+                properties.trochoid_properties,
+                samples,
+            ))),
         };
         curve
     }
@@ -167,30 +164,20 @@ impl Canvas {
 
     #[must_use]
     pub fn curve_type(&self) -> CurveType {
-        match self.current_curve() {
-            CurveKind::ControlPoints(curve) => match curve {
-                ControlPointsCurveKind::PolylineV2(_) => CurveType::Polyline,
-                ControlPointsCurveKind::Interpolation(_) => CurveType::Interpolation,
-                ControlPointsCurveKind::BezierV2(_) => CurveType::BezierV2,
-                ControlPointsCurveKind::RationalBezier(_) => CurveType::RationalBezier,
-            },
-            CurveKind::Formula(curve) => match curve {
-                FormulaCurveKind::Trochoid(_) => CurveType::Trochoid,
-            },
-        }
+        self.current_curve().curve_type()
     }
 
     #[must_use]
-    pub fn current_curve(&self) -> &CurveKind {
+    pub fn current_curve(&self) -> &Curve {
         &self.curves[self.properties.current_curve]
     }
 
-    pub fn current_curve_mut(&mut self) -> &mut CurveKind {
+    pub fn current_curve_mut(&mut self) -> &mut Curve {
         &mut self.curves[self.properties.current_curve]
     }
 
     #[must_use]
-    pub fn curves(&self) -> &Vec<CurveKind> {
+    pub fn curves(&self) -> &Vec<Curve> {
         &self.curves
     }
 

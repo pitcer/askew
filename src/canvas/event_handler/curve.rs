@@ -1,5 +1,5 @@
-use crate::canvas::curve::control_points::{ControlPointsCurveKind, WeightedPoint};
-use crate::canvas::curve::CurveKind;
+use crate::canvas::curve::control_points::WeightedPoint;
+use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::{math, Canvas};
 use crate::event::canvas::{
@@ -74,28 +74,19 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
         replace_with::replace_with_or_abort(curve, |mut curve| {
             let samples = curve.event_handler().handle(GetSamples).ok();
             let points = match curve {
-                CurveKind::ControlPoints(curve) => {
-                    let points = match curve {
-                        ControlPointsCurveKind::PolylineV2(curve) => {
-                            curve.control_points.points.into_inner()
-                        }
-                        ControlPointsCurveKind::Interpolation(curve) => {
-                            curve.control_points.points.into_inner()
-                        }
-                        ControlPointsCurveKind::BezierV2(curve) => {
-                            curve.control_points.points.into_inner()
-                        }
-                        ControlPointsCurveKind::RationalBezier(curve) => curve
-                            .control_points
-                            .points
-                            .into_inner()
-                            .into_iter()
-                            .map(WeightedPoint::point)
-                            .collect::<Vec<_>>(),
-                    };
-                    Some(points)
-                }
-                CurveKind::Formula(_) => None,
+                Curve::Polyline(curve) => Some(curve.control_points.points.into_inner()),
+                Curve::Interpolation(curve) => Some(curve.control_points.points.into_inner()),
+                Curve::Bezier(curve) => Some(curve.control_points.points.into_inner()),
+                Curve::RationalBezier(curve) => Some(
+                    curve
+                        .control_points
+                        .points
+                        .into_inner()
+                        .into_iter()
+                        .map(WeightedPoint::point)
+                        .collect::<Vec<_>>(),
+                ),
+                Curve::Trochoid(_) => None,
             };
             Canvas::create_curve(
                 &self.canvas.properties,
