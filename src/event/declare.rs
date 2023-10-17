@@ -8,7 +8,6 @@ use crate::{
     canvas::curve::control_points::WeightedPoint,
     canvas::curve::event_handler::CurveEventHandler,
     canvas::curve::formula::event_handler::FormulaCurveEventHandler,
-    canvas::curve::formula::trochoid::event_handler::TrochoidEventHandler,
     canvas::curve::samples::event_handler::SamplesEventHandler,
     canvas::event_handler::CanvasEventHandler,
     canvas::math::point::Point,
@@ -116,7 +115,8 @@ pub mod curve {
     }
 
     pub mod formula {
-        use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+        use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
+        use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 
         use super::*;
 
@@ -139,13 +139,13 @@ pub mod curve {
                 }
             }
 
-            TrochoidEventHandler<'_> {
+            TrochoidCurveEventHandler<'_> {
                 ~ {
                     curve::SetSamples,
                     curve::GetSamples,
                 }
 
-                SetTrochoidProperties (TrochoidProperties) -> (),
+                SetTrochoidProperties (TrochoidCurveProperties) -> (),
             }
         }
     }
@@ -270,8 +270,9 @@ pub mod curve {
         }
 
         pub mod weighted {
-            use super::*;
             use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
+
+            use super::*;
 
             declare_events! {
                 RationalBezierCurveEventHandler<'_> {

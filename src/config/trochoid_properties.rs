@@ -4,16 +4,16 @@ use std::str;
 
 use anyhow::{anyhow, Result};
 
-use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 
-pub fn parse(input: &str) -> Result<TrochoidProperties> {
+pub fn parse(input: &str) -> Result<TrochoidCurveProperties> {
     let properties = input.split(',').map(str::parse).collect::<Result<Vec<_>, _>>()?;
     let [range_start, range_end, r_1, r_2, w_1, w_2] =
         <[f32; 6]>::try_from(properties).map_err(|_properties| anyhow!("6 properties required"))?;
-    Ok(TrochoidProperties::new(range_start, range_end, r_1, r_2, w_1, w_2))
+    Ok(TrochoidCurveProperties::new(range_start, range_end, r_1, r_2, w_1, w_2))
 }
 
-impl Display for TrochoidProperties {
+impl Display for TrochoidCurveProperties {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,

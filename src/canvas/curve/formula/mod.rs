@@ -1,13 +1,14 @@
-use crate::canvas::curve::converter::{PathConverter, ToPath};
+use tiny_skia::PixmapMut;
+
 use crate::canvas::curve::formula::event_handler::FormulaCurveEventHandler;
-use crate::canvas::curve::formula::trochoid::Trochoid;
+use crate::canvas::v2::curve::trochoid::TrochoidCurve;
+use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
-pub mod trochoid;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum FormulaCurveKind {
-    Trochoid(Trochoid),
+    Trochoid(Box<TrochoidCurve>),
 }
 
 impl FormulaCurveKind {
@@ -16,10 +17,18 @@ impl FormulaCurveKind {
     }
 }
 
-impl ToPath for FormulaCurveKind {
-    fn to_path<P>(&self, converter: impl PathConverter<Path = P>) -> Option<P> {
+impl Update for FormulaCurveKind {
+    fn update(&mut self) {
         match self {
-            FormulaCurveKind::Trochoid(trochoid) => trochoid.to_path(converter),
+            FormulaCurveKind::Trochoid(curve) => curve.update(),
+        }
+    }
+}
+
+impl DrawOn for FormulaCurveKind {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
+        match self {
+            FormulaCurveKind::Trochoid(curve) => curve.draw_on(pixmap),
         }
     }
 }

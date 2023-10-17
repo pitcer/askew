@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::v2::curve::bezier::BezierCurveAlgorithm;
 use crate::canvas::v2::curve::interpolation::InterpolationNodes;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
+use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 use crate::cli::RunArguments;
 use crate::config::property::{
     Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
@@ -131,7 +131,7 @@ pub struct CanvasConfig {
 
     pub default_interpolation_nodes: InterpolationNodes,
 
-    pub default_trochoid_properties: TrochoidProperties,
+    pub default_trochoid_properties: TrochoidCurveProperties,
 
     pub default_rational_bezier_weight: f32,
 
@@ -163,7 +163,7 @@ impl Default for CanvasConfig {
             default_bezier_algorithm: BezierCurveAlgorithm::ChudyWozny,
             default_rational_bezier_algorithm: RationalBezierCurveAlgorithm::ChudyWozny,
             default_interpolation_nodes: InterpolationNodes::Chebyshev,
-            default_trochoid_properties: TrochoidProperties::default(),
+            default_trochoid_properties: TrochoidCurveProperties::default(),
             default_rational_bezier_weight: 1.0,
             default_line_width: 2.0,
             default_point_radius: 4.0,

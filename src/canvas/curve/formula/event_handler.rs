@@ -1,5 +1,5 @@
-use crate::canvas::curve::formula::trochoid::event_handler::TrochoidEventHandler;
 use crate::canvas::curve::formula::FormulaCurveKind;
+use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
 use crate::event::macros::{delegate_events, unimplemented_handlers};
 use crate::event::{curve, DelegateEvent, Event, EventHandler, HandlerResult};
 
@@ -16,7 +16,7 @@ impl<'a> FormulaCurveEventHandler<'a> {
 impl<'a, E> DelegateEvent<E> for FormulaCurveEventHandler<'a>
 where
     E: Event,
-    for<'b> TrochoidEventHandler<'b>: EventHandler<E>,
+    for<'b> TrochoidCurveEventHandler<'b>: EventHandler<E>,
 {
     fn delegate(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {

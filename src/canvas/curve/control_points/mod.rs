@@ -1,3 +1,5 @@
+use tiny_skia::PixmapMut;
+
 use points::ControlPoints;
 
 use crate::canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler;
@@ -6,6 +8,7 @@ use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::canvas::v2::curve::interpolation::InterpolationCurve;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierCurve;
+use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
 pub mod points;
@@ -33,6 +36,28 @@ pub enum ControlPointsCurveKind {
 impl ControlPointsCurveKind {
     pub fn event_handler(&mut self) -> ControlPointsCurveEventHandler<'_> {
         ControlPointsCurveEventHandler::new(self)
+    }
+}
+
+impl Update for ControlPointsCurveKind {
+    fn update(&mut self) {
+        match self {
+            ControlPointsCurveKind::PolylineV2(curve) => curve.update(),
+            ControlPointsCurveKind::Interpolation(curve) => curve.update(),
+            ControlPointsCurveKind::BezierV2(curve) => curve.update(),
+            ControlPointsCurveKind::RationalBezier(curve) => curve.update(),
+        }
+    }
+}
+
+impl DrawOn for ControlPointsCurveKind {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
+        match self {
+            ControlPointsCurveKind::PolylineV2(curve) => curve.draw_on(pixmap),
+            ControlPointsCurveKind::Interpolation(curve) => curve.draw_on(pixmap),
+            ControlPointsCurveKind::BezierV2(curve) => curve.draw_on(pixmap),
+            ControlPointsCurveKind::RationalBezier(curve) => curve.draw_on(pixmap),
+        }
     }
 }
 

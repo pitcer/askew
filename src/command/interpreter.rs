@@ -4,9 +4,9 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
+use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 use crate::command::message::Message;
 use crate::command::parser::{Command, Get, Set, Task, Toggle};
 use crate::command::program_view::ProgramView;
@@ -174,7 +174,7 @@ impl<'a> CommandInterpreter<'a> {
         Ok(None)
     }
 
-    fn trochoid(&mut self, prop: TrochoidProperties) -> InterpretResult {
+    fn trochoid(&mut self, prop: TrochoidCurveProperties) -> InterpretResult {
         self.state
             .frame
             .canvas_mut()

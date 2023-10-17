@@ -3,9 +3,9 @@ use std::path::Path;
 
 use anyhow::Result;
 use rand::Rng;
+use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::control_points::{ControlPointsCurveKind, CurvePoints, WeightedPoint};
-use crate::canvas::curve::formula::trochoid::Trochoid;
 use crate::canvas::curve::formula::FormulaCurveKind;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::curve::CurveKind;
@@ -13,7 +13,6 @@ use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
-use crate::canvas::rasterizer::Rasterizer;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
@@ -22,18 +21,17 @@ use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::{
     RationalBezierCurve, RationalBezierCurveProperties, RationalBezierPoints,
 };
-use crate::canvas::v2::Update;
+use crate::canvas::v2::curve::trochoid::TrochoidCurve;
+use crate::canvas::v2::{DrawOn, Update};
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
 use crate::event::EventHandler;
-use crate::ui::frame::panel::Panel;
 
 pub mod curve;
 pub mod event_handler;
 pub mod math;
 pub mod paint;
 pub mod properties;
-mod rasterizer;
 pub mod v2;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -115,10 +113,13 @@ impl Canvas {
                 curve.update();
                 CurveKind::ControlPoints(ControlPointsCurveKind::RationalBezier(Box::new(curve)))
             }
-            CurveType::Trochoid => CurveKind::Formula(FormulaCurveKind::Trochoid(Trochoid::new(
-                samples,
-                properties.trochoid_properties,
-            ))),
+            CurveType::Trochoid => {
+                CurveKind::Formula(FormulaCurveKind::Trochoid(Box::new(TrochoidCurve::new(
+                    BasePolyline::from_config(config),
+                    properties.trochoid_properties,
+                    samples,
+                ))))
+            }
         };
         curve
     }
@@ -137,26 +138,16 @@ impl Canvas {
         CanvasEventHandler::new(self)
     }
 
-    pub fn rasterize(&self, mut panel: Panel<'_>) -> Result<()> {
+    pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
         for curve in &self.curves {
-            Rasterizer.rasterize(curve, &self.properties, &mut panel)?;
+            curve.draw_on(pixmap);
         }
-        Ok(())
     }
 
     #[deprecated(note = "Remove after implementing updates in event handler")]
-    pub fn update(&mut self) {
+    pub fn update_all(&mut self) {
         for curve in &mut self.curves {
-            match curve {
-                CurveKind::ControlPoints(curve) => match curve {
-                    ControlPointsCurveKind::BezierV2(curve) => curve.update(),
-                    ControlPointsCurveKind::PolylineV2(curve) => curve.update(),
-                    ControlPointsCurveKind::RationalBezier(curve) => curve.update(),
-                    ControlPointsCurveKind::Interpolation(curve) => curve.update(),
-                    _ => {}
-                },
-                CurveKind::Formula(_) => {}
-            }
+            curve.update();
         }
     }
 

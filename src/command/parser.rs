@@ -1,7 +1,7 @@
+use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 use std::path::PathBuf;
 use std::str;
 
-use crate::canvas::curve::formula::trochoid::TrochoidProperties;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
 use crate::config::CurveType;
 
@@ -116,7 +116,7 @@ pub enum Command {
     },
 
     #[command()]
-    TrochoidProperties(TrochoidProperties),
+    TrochoidProperties(TrochoidCurveProperties),
 
     /// Creates new task
     #[command()]

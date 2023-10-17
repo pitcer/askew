@@ -41,7 +41,7 @@ impl Painter {
         let area = panel.area();
         let size = area.size();
         let split_layout = [size.height() as usize - 44, 22, 22];
-        let [panel, status, command] = panel.split_vertical(split_layout);
+        let [mut panel, status, command] = panel.split_vertical(split_layout);
 
         let canvas = &view.frame.canvas();
         let mut name = canvas.curve_type().to_string();
@@ -90,7 +90,7 @@ impl Painter {
             &mut self.glyph_rasterizer,
         );
 
-        canvas.rasterize(panel)?;
+        canvas.draw_on_all(&mut panel.as_pixmap_mut());
 
         Ok(())
     }

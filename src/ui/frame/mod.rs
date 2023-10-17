@@ -80,8 +80,8 @@ impl Frame {
         P: AsRef<Path> + From<&'a PathBuf>,
     {
         let mut buffer = vec![Pixel::default(); self.size.area() as usize];
-        let panel = Panel::new(&mut buffer, self.size);
-        self.canvas.rasterize(panel)?;
+        let mut panel = Panel::new(&mut buffer, self.size);
+        self.canvas.draw_on_all(&mut panel.as_pixmap_mut());
         let buffer = buffer.iter().flat_map(|pixel| pixel.into_rgb_array()).collect::<Vec<_>>();
         let size = self.size.size();
         let image = RgbImage::from_raw(size.width(), size.height(), buffer)
