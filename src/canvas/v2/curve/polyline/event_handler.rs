@@ -1,7 +1,12 @@
 use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
-use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{canvas, curve, DelegateEventHandler, Event, EventHandler};
+use crate::event::macros::{
+    delegate_handlers, delegate_handlers_mut, unimplemented_handlers, unimplemented_handlers_mut,
+};
+use crate::event::{
+    canvas, curve, DelegateEventHandler, DelegateEventHandlerMut, Event, EventHandler,
+    EventHandlerMut, EventMut,
+};
 
 pub struct PolylineCurveEventHandler<'a> {
     curve: &'a mut PolylineCurve,
@@ -20,7 +25,19 @@ where
 {
     type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
 
-    fn delegate_handler(&mut self) -> Self::Delegate<'_> {
+    fn delegate_handler(&self) -> Self::Delegate<'_> {
+        self.curve.control_points.points.event_handler()
+    }
+}
+
+impl<'a, E> DelegateEventHandlerMut<E> for PolylineCurveEventHandler<'a>
+where
+    E: EventMut,
+    for<'b> ControlPointsEventHandler<'b>: EventHandlerMut<E>,
+{
+    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+
+    fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
         self.curve.control_points.points.event_handler()
     }
 }
@@ -28,24 +45,35 @@ where
 delegate_handlers! {
     PolylineCurveEventHandler<'_> {
         curve::control_points::GetControlPointsLength,
-        curve::control_points::AddControlPoint,
-        curve::control_points::MovePoint,
-        curve::control_points::DeletePoint,
 
-        canvas::RotateCurve,
-        canvas::MoveCurve,
         canvas::GetCurveCenter,
         canvas::SelectPoint,
         curve::GetPoint,
     }
 }
 
+delegate_handlers_mut! {
+    PolylineCurveEventHandler<'_> {
+        curve::control_points::AddControlPoint,
+        curve::control_points::MovePoint,
+        curve::control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
+    }
+}
+
 unimplemented_handlers! {
+    PolylineCurveEventHandler<'_> {
+        curve::control_points::weighted::GetWeight,
+        curve::GetSamples,
+    }
+}
+
+unimplemented_handlers_mut! {
     PolylineCurveEventHandler<'_> {
         curve::control_points::weighted::AddWeightedControlPoint,
         curve::control_points::weighted::ChangeWeight,
-        curve::control_points::weighted::GetWeight,
         curve::SetSamples,
-        curve::GetSamples,
     }
 }

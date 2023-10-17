@@ -18,7 +18,7 @@ use crate::event::canvas::{
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
-use crate::event::{DelegateEventHandler, EventHandler};
+use crate::event::{DelegateEventHandler, DelegateEventHandlerMut, EventHandlerMut};
 use crate::ui::frame::event_handler::CommandEventHandler;
 
 pub struct CommandInterpreter<'a> {
@@ -86,11 +86,11 @@ impl<'a> CommandInterpreter<'a> {
         let mut handler = self.command_handler();
 
         match set {
-            Set::ConvexHull { value } => handler.delegate(SetConvexHull(value))?,
+            Set::ConvexHull { value } => handler.delegate_mut(SetConvexHull(value))?,
             Set::InterpolationNodes { value } => {
-                handler.delegate(SetInterpolationNodes::new(value))?;
+                handler.delegate_mut(SetInterpolationNodes::new(value))?;
             }
-            Set::Samples { value } => handler.delegate(SetSamples(value))?,
+            Set::Samples { value } => handler.delegate_mut(SetSamples(value))?,
         }
         Ok(None)
     }
@@ -101,7 +101,7 @@ impl<'a> CommandInterpreter<'a> {
         match toggle {
             Toggle::ConvexHull => {
                 let value = handler.delegate(GetConvexHull)?;
-                handler.delegate(SetConvexHull(!value))?;
+                handler.delegate_mut(SetConvexHull(!value))?;
             }
             Toggle::ControlLine => {
                 // TODO: handle for current curve instead
@@ -116,9 +116,9 @@ impl<'a> CommandInterpreter<'a> {
         let mut handler = self.command_handler();
         let radians = consts::PI * f32::from(angle) / 180.0;
         if let Some(curve) = curve {
-            handler.delegate(RotateCurveById::new(radians, curve))?;
+            handler.delegate_mut(RotateCurveById::new(radians, curve))?;
         } else {
-            handler.delegate(RotateCurve::new(radians))?;
+            handler.delegate_mut(RotateCurve::new(radians))?;
         }
         Ok(Some(Message::info(format!("Curve rotated by {angle} deg"))))
     }
@@ -126,7 +126,7 @@ impl<'a> CommandInterpreter<'a> {
     fn interpret_move(&mut self, horizontal: f32, vertical: f32) -> InterpretResult {
         let mut handler = self.command_handler();
         let shift = Vector::new(horizontal, vertical);
-        handler.delegate(MoveCurve::new(shift))?;
+        handler.delegate_mut(MoveCurve::new(shift))?;
         Ok(Some(Message::info(format!("Curve moved by ({horizontal}, {vertical})"))))
     }
 
@@ -151,7 +151,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {
-        self.command_handler().delegate(SetCurveType(curve_type))?;
+        self.command_handler().delegate_mut(SetCurveType(curve_type))?;
         Ok(Some(Message::info(format!("Set curve type to {curve_type}"))))
     }
 
@@ -171,7 +171,11 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn move_point(&mut self, curve_id: usize, point_id: usize, x: f32, y: f32) -> InterpretResult {
-        self.command_handler().delegate(MovePointOnCurve(curve_id, point_id, Point::new(x, y)))?;
+        self.command_handler().delegate_mut(MovePointOnCurve(
+            curve_id,
+            point_id,
+            Point::new(x, y),
+        ))?;
         Ok(None)
     }
 
@@ -181,7 +185,7 @@ impl<'a> CommandInterpreter<'a> {
             .canvas_mut()
             .current_curve_mut()
             .event_handler()
-            .handle(SetTrochoidProperties(prop))?;
+            .handle_mut(SetTrochoidProperties(prop))?;
         Ok(None)
     }
 

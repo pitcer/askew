@@ -10,7 +10,7 @@ use crate::canvas::math::vector::Vector;
 use crate::command;
 use crate::command::program_view::ProgramView;
 use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
-use crate::event::DelegateEventHandler;
+use crate::event::{DelegateEventHandler, DelegateEventHandlerMut};
 use crate::ipc::server::IpcServerHandle;
 use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
@@ -218,7 +218,7 @@ impl WindowRunner {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
-                self.frame.event_handler(&mut self.mode).delegate(MoveCurve::new(shift))?;
+                self.frame.event_handler(&mut self.mode).delegate_mut(MoveCurve::new(shift))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
@@ -226,7 +226,7 @@ impl WindowRunner {
             Request::RotateCurve { id, angle_radians } => {
                 self.frame
                     .event_handler(&mut self.mode)
-                    .delegate(RotateCurveById::new(angle_radians, id as usize))?;
+                    .delegate_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())

@@ -8,8 +8,11 @@ use crate::event::canvas::{
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::GetPoint;
-use crate::event::macros::delegate_events;
-use crate::event::{curve, DelegateEvent, Error, Event, EventHandler, HandlerResult};
+use crate::event::macros::{delegate_events, delegate_events_mut};
+use crate::event::{
+    curve, DelegateEvent, DelegateEventMut, Error, Event, EventHandler, EventHandlerMut, EventMut,
+    HandlerResult,
+};
 
 pub struct CurveEventHandler<'a> {
     curve: &'a mut Curve,
@@ -27,7 +30,7 @@ where
     for<'b> FormulaCurveEventHandler<'b>: EventHandler<E>,
     for<'b> ControlPointsCurveEventHandler<'b>: EventHandler<E>,
 {
-    fn delegate(&mut self, event: E) -> HandlerResult<E> {
+    fn delegate(&self, event: E) -> HandlerResult<E> {
         match self.curve {
             Curve::Polyline(_)
             | Curve::Interpolation(_)
@@ -40,14 +43,33 @@ where
     }
 }
 
-impl EventHandler<SetInterpolationNodes> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
+impl<'a, E> DelegateEventMut<E> for CurveEventHandler<'a>
+where
+    E: EventMut,
+    for<'b> FormulaCurveEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> ControlPointsCurveEventHandler<'b>: EventHandlerMut<E>,
+{
+    fn delegate_mut(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {
             Curve::Polyline(_)
             | Curve::Interpolation(_)
             | Curve::Bezier(_)
             | Curve::RationalBezier(_) => {
-                ControlPointsCurveEventHandler::new(self.curve).handle(event)
+                ControlPointsCurveEventHandler::new(self.curve).handle_mut(event)
+            }
+            Curve::Trochoid(_) => FormulaCurveEventHandler::new(self.curve).handle_mut(event),
+        }
+    }
+}
+
+impl EventHandlerMut<SetInterpolationNodes> for CurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
+        match self.curve {
+            Curve::Polyline(_)
+            | Curve::Interpolation(_)
+            | Curve::Bezier(_)
+            | Curve::RationalBezier(_) => {
+                ControlPointsCurveEventHandler::new(self.curve).handle_mut(event)
             }
             _ => Err(Error::Unimplemented),
         }
@@ -55,7 +77,7 @@ impl EventHandler<SetInterpolationNodes> for CurveEventHandler<'_> {
 }
 
 impl EventHandler<GetInterpolationNodes> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: GetInterpolationNodes) -> HandlerResult<GetInterpolationNodes> {
+    fn handle(&self, event: GetInterpolationNodes) -> HandlerResult<GetInterpolationNodes> {
         match self.curve {
             Curve::Polyline(_)
             | Curve::Interpolation(_)
@@ -68,28 +90,28 @@ impl EventHandler<GetInterpolationNodes> for CurveEventHandler<'_> {
     }
 }
 
-impl EventHandler<MoveCurve> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: MoveCurve) -> HandlerResult<MoveCurve> {
+impl EventHandlerMut<MoveCurve> for CurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: MoveCurve) -> HandlerResult<MoveCurve> {
         match self.curve {
             Curve::Polyline(_)
             | Curve::Interpolation(_)
             | Curve::Bezier(_)
             | Curve::RationalBezier(_) => {
-                ControlPointsCurveEventHandler::new(self.curve).handle(event)
+                ControlPointsCurveEventHandler::new(self.curve).handle_mut(event)
             }
             _ => Err(Error::Unimplemented),
         }
     }
 }
 
-impl EventHandler<RotateCurve> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: RotateCurve) -> HandlerResult<RotateCurve> {
+impl EventHandlerMut<RotateCurve> for CurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: RotateCurve) -> HandlerResult<RotateCurve> {
         match self.curve {
             Curve::Polyline(_)
             | Curve::Interpolation(_)
             | Curve::Bezier(_)
             | Curve::RationalBezier(_) => {
-                ControlPointsCurveEventHandler::new(self.curve).handle(event)
+                ControlPointsCurveEventHandler::new(self.curve).handle_mut(event)
             }
             _ => Err(Error::Unimplemented),
         }
@@ -97,7 +119,7 @@ impl EventHandler<RotateCurve> for CurveEventHandler<'_> {
 }
 
 impl EventHandler<GetCurveCenter> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: GetCurveCenter) -> HandlerResult<GetCurveCenter> {
+    fn handle(&self, event: GetCurveCenter) -> HandlerResult<GetCurveCenter> {
         match self.curve {
             Curve::Trochoid(_)
             | Curve::Interpolation(_)
@@ -111,7 +133,7 @@ impl EventHandler<GetCurveCenter> for CurveEventHandler<'_> {
 }
 
 impl EventHandler<GetPoint> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: GetPoint) -> HandlerResult<GetPoint> {
+    fn handle(&self, event: GetPoint) -> HandlerResult<GetPoint> {
         match self.curve {
             Curve::Trochoid(_)
             | Curve::Interpolation(_)
@@ -125,7 +147,7 @@ impl EventHandler<GetPoint> for CurveEventHandler<'_> {
 }
 
 impl EventHandler<SelectPoint> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: SelectPoint) -> HandlerResult<SelectPoint> {
+    fn handle(&self, event: SelectPoint) -> HandlerResult<SelectPoint> {
         match self.curve {
             Curve::Trochoid(_)
             | Curve::Interpolation(_)
@@ -138,17 +160,17 @@ impl EventHandler<SelectPoint> for CurveEventHandler<'_> {
     }
 }
 
-impl EventHandler<SetTrochoidProperties> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: SetTrochoidProperties) -> HandlerResult<SetTrochoidProperties> {
+impl EventHandlerMut<SetTrochoidProperties> for CurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: SetTrochoidProperties) -> HandlerResult<SetTrochoidProperties> {
         match self.curve {
-            Curve::Trochoid(_) => FormulaCurveEventHandler::new(self.curve).handle(event),
+            Curve::Trochoid(_) => FormulaCurveEventHandler::new(self.curve).handle_mut(event),
             _ => Err(Error::Unimplemented),
         }
     }
 }
 
 impl EventHandler<GetConvexHull> for CurveEventHandler<'_> {
-    fn handle(&mut self, _event: GetConvexHull) -> HandlerResult<GetConvexHull> {
+    fn handle(&self, _event: GetConvexHull) -> HandlerResult<GetConvexHull> {
         match self.curve {
             Curve::Polyline(curve) => Ok(curve.control_points.convex_hull.properties.visible),
             Curve::Interpolation(curve) => Ok(curve.control_points.convex_hull.properties.visible),
@@ -159,8 +181,8 @@ impl EventHandler<GetConvexHull> for CurveEventHandler<'_> {
     }
 }
 
-impl EventHandler<SetConvexHull> for CurveEventHandler<'_> {
-    fn handle(&mut self, event: SetConvexHull) -> HandlerResult<SetConvexHull> {
+impl EventHandlerMut<SetConvexHull> for CurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: SetConvexHull) -> HandlerResult<SetConvexHull> {
         match self.curve {
             Curve::Polyline(curve) => {
                 curve.control_points.convex_hull.properties.visible = event.0;
@@ -186,16 +208,23 @@ impl EventHandler<SetConvexHull> for CurveEventHandler<'_> {
 
 delegate_events! {
     CurveEventHandler<'_> {
+        curve::control_points::GetControlPointsLength,
+
+        curve::control_points::weighted::GetWeight,
+
+        curve::GetSamples,
+    }
+}
+
+delegate_events_mut! {
+    CurveEventHandler<'_> {
         curve::control_points::DeletePoint,
         curve::control_points::MovePoint,
         curve::control_points::AddControlPoint,
-        curve::control_points::GetControlPointsLength,
 
         curve::control_points::weighted::AddWeightedControlPoint,
         curve::control_points::weighted::ChangeWeight,
-        curve::control_points::weighted::GetWeight,
 
         curve::SetSamples,
-        curve::GetSamples,
     }
 }

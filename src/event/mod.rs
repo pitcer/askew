@@ -3,24 +3,34 @@ pub use declare::*;
 pub mod declare;
 pub mod macros;
 
-pub trait Event {
+pub trait Ret {
     type Return;
 }
 
-pub type HandlerResult<E> = anyhow::Result<<E as Event>::Return, Error>;
+pub trait Event: Ret {}
+
+pub trait EventMut: Ret {}
+
+pub type HandlerResult<E>
+where
+    E: Ret,
+= anyhow::Result<E::Return, Error>;
 
 pub trait EventHandler<E>
 where
     E: Event,
 {
-    fn handle(&mut self, event: E) -> HandlerResult<E>;
+    fn handle(&self, event: E) -> HandlerResult<E>;
 }
 
-pub trait UnimplementedHandler<E>: EventHandler<E>
+pub trait EventHandlerMut<E>
 where
-    E: Event,
+    E: EventMut,
 {
+    fn handle_mut(&mut self, event: E) -> HandlerResult<E>;
 }
+
+pub trait UnimplementedHandler<E> {}
 
 pub trait DelegateEventHandler<E>
 where
@@ -30,10 +40,25 @@ where
     where
         Self: 'a;
 
-    fn delegate_handler(&mut self) -> Self::Delegate<'_>;
+    fn delegate_handler(&self) -> Self::Delegate<'_>;
 
-    fn delegate(&mut self, event: E) -> HandlerResult<E> {
+    fn delegate(&self, event: E) -> HandlerResult<E> {
         self.delegate_handler().handle(event)
+    }
+}
+
+pub trait DelegateEventHandlerMut<E>
+where
+    E: EventMut,
+{
+    type Delegate<'a>: EventHandlerMut<E>
+    where
+        Self: 'a;
+
+    fn delegate_handler_mut(&mut self) -> Self::Delegate<'_>;
+
+    fn delegate_mut(&mut self, event: E) -> HandlerResult<E> {
+        self.delegate_handler_mut().handle_mut(event)
     }
 }
 
@@ -41,7 +66,14 @@ pub trait DelegateEvent<E>
 where
     E: Event,
 {
-    fn delegate(&mut self, event: E) -> HandlerResult<E>;
+    fn delegate(&self, event: E) -> HandlerResult<E>;
+}
+
+pub trait DelegateEventMut<E>
+where
+    E: EventMut,
+{
+    fn delegate_mut(&mut self, event: E) -> HandlerResult<E>;
 }
 
 #[derive(Debug, thiserror::Error)]

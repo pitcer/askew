@@ -2,7 +2,7 @@ use anyhow::Result;
 use winit::keyboard::SmolStr;
 
 use crate::command::program_view::ProgramView;
-use crate::event::{input, EventHandler};
+use crate::event::{input, EventHandlerMut};
 use crate::ui::command_state::CommandState;
 use crate::ui::mode::Mode;
 
@@ -25,14 +25,14 @@ impl<'a> InputHandler<'a> {
             CommandState::Closed(_) => {
                 if let Some(event) = input.event {
                     match event {
-                        InputEvent::ToggleConvexHull(event) => handler.handle(event)?,
-                        InputEvent::ChangeWeight(event) => handler.handle(event)?,
-                        InputEvent::MovePoint(event) => handler.handle(event)?,
-                        InputEvent::MouseClick(event) => handler.handle(event)?,
-                        InputEvent::MousePress(event) => handler.handle(event)?,
-                        InputEvent::AddCurve(event) => handler.handle(event)?,
-                        InputEvent::Delete(event) => handler.handle(event)?,
-                        InputEvent::ChangeIndex(event) => handler.handle(event)?,
+                        InputEvent::ToggleConvexHull(event) => handler.handle_mut(event)?,
+                        InputEvent::ChangeWeight(event) => handler.handle_mut(event)?,
+                        InputEvent::MovePoint(event) => handler.handle_mut(event)?,
+                        InputEvent::MouseClick(event) => handler.handle_mut(event)?,
+                        InputEvent::MousePress(event) => handler.handle_mut(event)?,
+                        InputEvent::AddCurve(event) => handler.handle_mut(event)?,
+                        InputEvent::Delete(event) => handler.handle_mut(event)?,
+                        InputEvent::ChangeIndex(event) => handler.handle_mut(event)?,
                         InputEvent::ChangeMode(mode) => self.change_mode(mode),
                         InputEvent::EnterCommand => {
                             self.command.open();

@@ -13,24 +13,27 @@ use crate::event::curve::control_points::{
     AddControlPoint, DeletePoint, GetControlPointsLength, MovePoint,
 };
 use crate::event::curve::{GetPoint, GetSamples};
-use crate::event::macros::delegate_handlers;
-use crate::event::{canvas, curve, DelegateEventHandler, Error, EventHandler, HandlerResult};
+use crate::event::macros::{delegate_handlers, delegate_handlers_mut};
+use crate::event::{
+    canvas, curve, DelegateEventHandler, DelegateEventHandlerMut, Error, EventHandler,
+    EventHandlerMut, HandlerResult,
+};
 
-impl EventHandler<AddPoint> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: AddPoint) -> HandlerResult<AddPoint> {
+impl EventHandlerMut<AddPoint> for CanvasEventHandler<'_> {
+    fn handle_mut(&mut self, event: AddPoint) -> HandlerResult<AddPoint> {
         let default_weight = self.canvas.config.default_rational_bezier_weight;
         let AddPoint { point } = event;
         let weighted_point = WeightedPoint::new(point, default_weight);
-        let result = self.delegate(AddWeightedControlPoint::new(weighted_point));
+        let result = self.delegate_mut(AddWeightedControlPoint::new(weighted_point));
         match result {
-            Err(Error::Unimplemented) => self.delegate(AddControlPoint::new(point)),
+            Err(Error::Unimplemented) => self.delegate_mut(AddControlPoint::new(point)),
             _ => result,
         }
     }
 }
 
-impl EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'_> {
-    fn handle(
+impl EventHandlerMut<ChangeCurrentPointWeight> for CanvasEventHandler<'_> {
+    fn handle_mut(
         &mut self,
         event: ChangeCurrentPointWeight,
     ) -> HandlerResult<ChangeCurrentPointWeight> {
@@ -40,26 +43,29 @@ impl EventHandler<ChangeCurrentPointWeight> for CanvasEventHandler<'_> {
         let change = event.weight;
         let weight = if change < 0.0 { current_weight / -change } else { current_weight * change };
 
-        self.delegate(ChangeWeight::new(point_id, weight))
+        self.delegate_mut(ChangeWeight::new(point_id, weight))
     }
 }
 
-impl EventHandler<DeleteCurrentPoint> for CanvasEventHandler<'_> {
-    fn handle(&mut self, _event: DeleteCurrentPoint) -> HandlerResult<DeleteCurrentPoint> {
+impl EventHandlerMut<DeleteCurrentPoint> for CanvasEventHandler<'_> {
+    fn handle_mut(&mut self, _event: DeleteCurrentPoint) -> HandlerResult<DeleteCurrentPoint> {
         let point_id = self.canvas.properties.current_point_index;
-        self.delegate(DeletePoint::new(point_id))
+        self.delegate_mut(DeletePoint::new(point_id))
     }
 }
 
-impl EventHandler<MoveCurrentPoint> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: MoveCurrentPoint) -> HandlerResult<MoveCurrentPoint> {
+impl EventHandlerMut<MoveCurrentPoint> for CanvasEventHandler<'_> {
+    fn handle_mut(&mut self, event: MoveCurrentPoint) -> HandlerResult<MoveCurrentPoint> {
         let point_id = self.canvas.properties.current_point_index;
-        self.delegate(MovePoint::new(point_id, event.shift))
+        self.delegate_mut(MovePoint::new(point_id, event.shift))
     }
 }
 
-impl EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: ChangeCurrentPointIndex) -> HandlerResult<ChangeCurrentPointIndex> {
+impl EventHandlerMut<ChangeCurrentPointIndex> for CanvasEventHandler<'_> {
+    fn handle_mut(
+        &mut self,
+        event: ChangeCurrentPointIndex,
+    ) -> HandlerResult<ChangeCurrentPointIndex> {
         let point_id = self.canvas.properties.current_point_index;
         let length = self.delegate(GetControlPointsLength)?;
         let new_id = math::rem_euclid(point_id as isize + event.change as isize, length as isize);
@@ -68,8 +74,8 @@ impl EventHandler<ChangeCurrentPointIndex> for CanvasEventHandler<'_> {
     }
 }
 
-impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: SetCurveType) -> HandlerResult<SetCurveType> {
+impl EventHandlerMut<SetCurveType> for CanvasEventHandler<'_> {
+    fn handle_mut(&mut self, event: SetCurveType) -> HandlerResult<SetCurveType> {
         let curve = &mut self.canvas.curves[self.canvas.properties.current_curve];
         replace_with::replace_with_or_abort(curve, |mut curve| {
             let samples = curve.event_handler().handle(GetSamples).ok();
@@ -95,44 +101,51 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
 }
 
 impl EventHandler<GetCurveType> for CanvasEventHandler<'_> {
-    fn handle(&mut self, _event: GetCurveType) -> HandlerResult<GetCurveType> {
+    fn handle(&self, _event: GetCurveType) -> HandlerResult<GetCurveType> {
         Ok(self.canvas.curve_type())
     }
 }
 
 impl EventHandler<GetCurrentPoint> for CanvasEventHandler<'_> {
-    fn handle(&mut self, _event: GetCurrentPoint) -> HandlerResult<GetCurrentPoint> {
+    fn handle(&self, _event: GetCurrentPoint) -> HandlerResult<GetCurrentPoint> {
         let point = self.delegate(GetPoint(self.canvas.properties.current_point_index))?;
         Ok(point)
     }
 }
 
-impl EventHandler<RotateCurveById> for CanvasEventHandler<'_> {
-    fn handle(&mut self, event: RotateCurveById) -> HandlerResult<RotateCurveById> {
+impl EventHandlerMut<RotateCurveById> for CanvasEventHandler<'_> {
+    fn handle_mut(&mut self, event: RotateCurveById) -> HandlerResult<RotateCurveById> {
         let curve = self
             .canvas
             .curves
             .get_mut(event.curve)
             .ok_or_else(|| Error::NoSuchCurve(event.curve))?;
-        curve.event_handler().handle(RotateCurve::new(event.angle))?;
+        curve.event_handler().handle_mut(RotateCurve::new(event.angle))?;
         Ok(())
     }
 }
 
 delegate_handlers! {
     CanvasEventHandler<'_> {
-        curve::SetSamples,
         curve::GetSamples,
 
-        curve::control_points::SetInterpolationNodes,
         curve::control_points::GetInterpolationNodes,
+
+        canvas::GetCurveCenter,
+        canvas::SelectPoint,
+        canvas::GetConvexHull,
+        curve::GetPoint,
+    }
+}
+
+delegate_handlers_mut! {
+    CanvasEventHandler<'_> {
+        curve::SetSamples,
+
+        curve::control_points::SetInterpolationNodes,
 
         canvas::MoveCurve,
         canvas::RotateCurve,
-        canvas::GetCurveCenter,
-        canvas::SelectPoint,
         canvas::SetConvexHull,
-        canvas::GetConvexHull,
-        curve::GetPoint,
     }
 }

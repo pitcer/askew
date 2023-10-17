@@ -11,7 +11,10 @@ use crate::event::canvas::{
 use crate::event::input::{
     Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
 };
-use crate::event::{Change, DelegateEventHandler, Direction, Event};
+use crate::event::{
+    Change, DelegateEventHandler, DelegateEventHandlerMut, Direction, Event, EventHandlerMut,
+    EventMut,
+};
 use crate::event::{EventHandler, HandlerResult};
 use crate::ui::frame::Frame;
 use crate::ui::mode::{Mode, ModeState};
@@ -34,31 +37,43 @@ where
 {
     type Delegate<'b> = CanvasEventHandler<'b> where Self: 'b;
 
-    fn delegate_handler(&mut self) -> Self::Delegate<'_> {
+    fn delegate_handler(&self) -> Self::Delegate<'_> {
         self.frame.canvas.event_handler()
     }
 }
 
-impl EventHandler<ToggleConvexHull> for CommandEventHandler<'_> {
-    fn handle(&mut self, _event: ToggleConvexHull) -> HandlerResult<ToggleConvexHull> {
+impl<'a, E> DelegateEventHandlerMut<E> for CommandEventHandler<'a>
+where
+    E: EventMut,
+    for<'b> CanvasEventHandler<'b>: EventHandlerMut<E>,
+{
+    type Delegate<'b> = CanvasEventHandler<'b> where Self: 'b;
+
+    fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
+        self.frame.canvas.event_handler()
+    }
+}
+
+impl EventHandlerMut<ToggleConvexHull> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, _event: ToggleConvexHull) -> HandlerResult<ToggleConvexHull> {
         let convex_hull = self.delegate(GetConvexHull)?;
-        self.delegate(SetConvexHull(!convex_hull))?;
+        self.delegate_mut(SetConvexHull(!convex_hull))?;
         Ok(())
     }
 }
 
-impl EventHandler<ChangeWeight> for CommandEventHandler<'_> {
-    fn handle(&mut self, event: ChangeWeight) -> HandlerResult<ChangeWeight> {
+impl EventHandlerMut<ChangeWeight> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, event: ChangeWeight) -> HandlerResult<ChangeWeight> {
         let factor = match event.0 {
             Change::Decrease => 1.5,
             Change::Increase => -1.5,
         };
         match self.mode.as_mode() {
             Mode::Curve => {
-                self.delegate(RotateCurve::new(std::f32::consts::PI * factor * 4.0 / 180.0))?;
+                self.delegate_mut(RotateCurve::new(std::f32::consts::PI * factor * 4.0 / 180.0))?;
             }
             Mode::Point => {
-                self.delegate(ChangeCurrentPointWeight::new(factor))?;
+                self.delegate_mut(ChangeCurrentPointWeight::new(factor))?;
             }
             Mode::PointSelect | Mode::PointAdd => {}
         }
@@ -67,8 +82,8 @@ impl EventHandler<ChangeWeight> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandler<MouseClick> for CommandEventHandler<'_> {
-    fn handle(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
+impl EventHandlerMut<MouseClick> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
             Mode::Curve => {
@@ -76,15 +91,15 @@ impl EventHandler<MouseClick> for CommandEventHandler<'_> {
                     return Ok(());
                 };
                 let shift = click_point - center;
-                self.delegate(MoveCurve::new(shift))?;
+                self.delegate_mut(MoveCurve::new(shift))?;
             }
             Mode::Point => {
                 let point = self.delegate(GetCurrentPoint)?;
                 let shift = click_point - point;
-                self.delegate(MoveCurrentPoint::new(shift))?;
+                self.delegate_mut(MoveCurrentPoint::new(shift))?;
             }
             Mode::PointAdd => {
-                self.delegate(AddPoint::new(click_point))?;
+                self.delegate_mut(AddPoint::new(click_point))?;
             }
             Mode::PointSelect => {
                 let point = self.delegate(SelectPoint::new(
@@ -100,8 +115,8 @@ impl EventHandler<MouseClick> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandler<MousePress> for CommandEventHandler<'_> {
-    fn handle(&mut self, event: MousePress) -> HandlerResult<MousePress> {
+impl EventHandlerMut<MousePress> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, event: MousePress) -> HandlerResult<MousePress> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
             Mode::Curve => {
@@ -109,12 +124,12 @@ impl EventHandler<MousePress> for CommandEventHandler<'_> {
                     return Ok(());
                 };
                 let shift = click_point - center;
-                self.delegate(MoveCurve::new(shift))?;
+                self.delegate_mut(MoveCurve::new(shift))?;
             }
             Mode::Point => {
                 let point = self.delegate(GetCurrentPoint)?;
                 let shift = click_point - point;
-                self.delegate(MoveCurrentPoint::new(shift))?;
+                self.delegate_mut(MoveCurrentPoint::new(shift))?;
             }
             Mode::PointAdd | Mode::PointSelect => {}
         }
@@ -122,8 +137,8 @@ impl EventHandler<MousePress> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandler<MovePoint> for CommandEventHandler<'_> {
-    fn handle(&mut self, event: MovePoint) -> HandlerResult<MovePoint> {
+impl EventHandlerMut<MovePoint> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, event: MovePoint) -> HandlerResult<MovePoint> {
         let direction = match event.0 {
             Direction::Up => Vector::new(0.0, -4.0),
             Direction::Down => Vector::new(0.0, 4.0),
@@ -131,44 +146,44 @@ impl EventHandler<MovePoint> for CommandEventHandler<'_> {
             Direction::Right => Vector::new(4.0, 0.0),
         };
         match self.mode.as_mode() {
-            Mode::Curve => self.delegate(MoveCurve::new(direction))?,
-            Mode::Point => self.delegate(MoveCurrentPoint::new(direction))?,
+            Mode::Curve => self.delegate_mut(MoveCurve::new(direction))?,
+            Mode::Point => self.delegate_mut(MoveCurrentPoint::new(direction))?,
             Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
 }
 
-impl EventHandler<Delete> for CommandEventHandler<'_> {
-    fn handle(&mut self, _event: Delete) -> HandlerResult<Delete> {
+impl EventHandlerMut<Delete> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, _event: Delete) -> HandlerResult<Delete> {
         match self.mode.as_mode() {
-            Mode::Curve => self.delegate(DeleteCurve)?,
-            Mode::Point => self.delegate(DeleteCurrentPoint)?,
+            Mode::Curve => self.delegate_mut(DeleteCurve)?,
+            Mode::Point => self.delegate_mut(DeleteCurrentPoint)?,
             Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
 }
 
-impl EventHandler<ChangeIndex> for CommandEventHandler<'_> {
-    fn handle(&mut self, event: ChangeIndex) -> HandlerResult<ChangeIndex> {
+impl EventHandlerMut<ChangeIndex> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, event: ChangeIndex) -> HandlerResult<ChangeIndex> {
         let change = match event.0 {
             Change::Decrease => -1,
             Change::Increase => 1,
         };
         match self.mode.as_mode() {
-            Mode::Curve => self.delegate(ChangeCurrentCurveIndex::new(change))?,
-            Mode::Point => self.delegate(ChangeCurrentPointIndex::new(change))?,
+            Mode::Curve => self.delegate_mut(ChangeCurrentCurveIndex::new(change))?,
+            Mode::Point => self.delegate_mut(ChangeCurrentPointIndex::new(change))?,
             Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())
     }
 }
 
-impl EventHandler<Add> for CommandEventHandler<'_> {
-    fn handle(&mut self, _event: Add) -> HandlerResult<Add> {
+impl EventHandlerMut<Add> for CommandEventHandler<'_> {
+    fn handle_mut(&mut self, _event: Add) -> HandlerResult<Add> {
         match self.mode.as_mode() {
-            Mode::Curve => self.delegate(AddCurve)?,
+            Mode::Curve => self.delegate_mut(AddCurve)?,
             Mode::Point => self.mode.enter_add(),
             Mode::PointAdd | Mode::PointSelect => {}
         }

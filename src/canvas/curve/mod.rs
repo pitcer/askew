@@ -24,7 +24,11 @@ pub enum Curve {
 }
 
 impl Curve {
-    pub fn event_handler(&mut self) -> CurveEventHandler<'_> {
+    pub fn event_handler(&self) -> CurveEventHandler<'_> {
+        CurveEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> CurveEventHandler<'_> {
         CurveEventHandler::new(self)
     }
 

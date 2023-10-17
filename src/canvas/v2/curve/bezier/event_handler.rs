@@ -2,8 +2,13 @@ use crate::canvas::curve::control_points::points::event_handler::ControlPointsEv
 use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::event::curve::control_points::weighted;
 use crate::event::curve::{control_points, GetSamples, SetSamples};
-use crate::event::macros::{delegate_handlers, unimplemented_handlers};
-use crate::event::{canvas, curve, DelegateEventHandler, Event, EventHandler, HandlerResult};
+use crate::event::macros::{
+    delegate_handlers, delegate_handlers_mut, unimplemented_handlers, unimplemented_handlers_mut,
+};
+use crate::event::{
+    canvas, curve, DelegateEventHandler, DelegateEventHandlerMut, Event, EventHandler,
+    EventHandlerMut, EventMut, HandlerResult,
+};
 
 pub struct BezierCurveEventHandler<'a> {
     curve: &'a mut BezierCurve,
@@ -22,19 +27,31 @@ where
 {
     type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
 
-    fn delegate_handler(&mut self) -> Self::Delegate<'_> {
+    fn delegate_handler(&self) -> Self::Delegate<'_> {
         self.curve.control_points.points.event_handler()
     }
 }
 
-impl EventHandler<SetSamples> for BezierCurveEventHandler<'_> {
-    fn handle(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples.event_handler().handle(event)
+impl<'a, E> DelegateEventHandlerMut<E> for BezierCurveEventHandler<'a>
+where
+    E: EventMut,
+    for<'b> ControlPointsEventHandler<'b>: EventHandlerMut<E>,
+{
+    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+
+    fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
+        self.curve.control_points.points.event_handler()
+    }
+}
+
+impl EventHandlerMut<SetSamples> for BezierCurveEventHandler<'_> {
+    fn handle_mut(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
+        self.curve.samples.event_handler().handle_mut(event)
     }
 }
 
 impl EventHandler<GetSamples> for BezierCurveEventHandler<'_> {
-    fn handle(&mut self, event: GetSamples) -> HandlerResult<GetSamples> {
+    fn handle(&self, event: GetSamples) -> HandlerResult<GetSamples> {
         self.curve.samples.event_handler().handle(event)
     }
 }
@@ -42,22 +59,33 @@ impl EventHandler<GetSamples> for BezierCurveEventHandler<'_> {
 delegate_handlers! {
     BezierCurveEventHandler<'_> {
         control_points::GetControlPointsLength,
-        control_points::AddControlPoint,
-        control_points::MovePoint,
-        control_points::DeletePoint,
 
-        canvas::RotateCurve,
-        canvas::MoveCurve,
         canvas::GetCurveCenter,
         canvas::SelectPoint,
         curve::GetPoint
     }
 }
 
+delegate_handlers_mut! {
+    BezierCurveEventHandler<'_> {
+        control_points::AddControlPoint,
+        control_points::MovePoint,
+        control_points::DeletePoint,
+
+        canvas::RotateCurve,
+        canvas::MoveCurve,
+    }
+}
+
 unimplemented_handlers! {
+    BezierCurveEventHandler<'_> {
+        weighted::GetWeight,
+    }
+}
+
+unimplemented_handlers_mut! {
     BezierCurveEventHandler<'_> {
         weighted::AddWeightedControlPoint,
         weighted::ChangeWeight,
-        weighted::GetWeight,
     }
 }

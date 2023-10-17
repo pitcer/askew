@@ -24,7 +24,7 @@ use crate::canvas::v2::curve::trochoid::TrochoidCurve;
 use crate::canvas::v2::{DrawOn, Update};
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
-use crate::event::EventHandler;
+use crate::event::{EventHandler, EventHandlerMut};
 
 pub mod curve;
 pub mod event_handler;
@@ -153,7 +153,7 @@ impl Canvas {
             let horizontal = random.gen_range(origin.horizontal()..=size.width());
             let vertical = random.gen_range(origin.vertical()..=size.height());
             let point = Point::new(horizontal, vertical);
-            self.event_handler().handle(AddPoint::new(point))?;
+            self.event_handler().handle_mut(AddPoint::new(point))?;
         }
         Ok(())
     }
