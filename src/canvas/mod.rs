@@ -25,6 +25,9 @@ use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::{ControlPointsCurve, ControlPointsCurveProperties};
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
 use crate::canvas::v2::curve::polyline::PolylineCurve;
+use crate::canvas::v2::curve::rational_bezier::{
+    RationalBezierCurve, RationalBezierCurveProperties,
+};
 use crate::canvas::v2::Update;
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
@@ -102,13 +105,14 @@ impl Canvas {
                     .into_iter()
                     .map(|point| WeightedPoint::new(point, properties.default_weight))
                     .collect();
-                CurveKind::ControlPoints(ControlPointsCurveKind::RationalBezier(
-                    RationalBezier::new(
-                        RationalBezierPoints::new(points),
-                        samples,
-                        properties.rational_bezier_algorithm,
-                    ),
-                ))
+                let mut curve = RationalBezierCurve::new(
+                    ControlPointsCurve::from_config(RationalBezierPoints::new(points), config),
+                    BasePolyline::from_config(config),
+                    RationalBezierCurveProperties::new(properties.rational_bezier_algorithm),
+                    samples,
+                );
+                curve.update();
+                CurveKind::ControlPoints(ControlPointsCurveKind::RationalBezier(Box::new(curve)))
             }
             CurveType::Trochoid => CurveKind::Formula(FormulaCurveKind::Trochoid(Trochoid::new(
                 samples,
@@ -156,6 +160,7 @@ impl Canvas {
                 CurveKind::ControlPoints(curve) => match curve {
                     ControlPointsCurveKind::BezierV2(curve) => curve.update(),
                     ControlPointsCurveKind::PolylineV2(curve) => curve.update(),
+                    ControlPointsCurveKind::RationalBezier(curve) => curve.update(),
                     _ => {}
                 },
                 CurveKind::Formula(_) => {}

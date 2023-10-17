@@ -1,7 +1,7 @@
 use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::config::rgb::Rgb;
 use crate::config::{CanvasConfig, CurveType};
 
@@ -14,7 +14,7 @@ pub struct CanvasProperties {
     #[deprecated]
     pub bezier_algorithm: BezierCurveAlgorithm,
     #[deprecated]
-    pub rational_bezier_algorithm: RationalBezierAlgorithm,
+    pub rational_bezier_algorithm: RationalBezierCurveAlgorithm,
     #[deprecated]
     pub trochoid_properties: TrochoidProperties,
     #[deprecated]

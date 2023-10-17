@@ -9,6 +9,7 @@ use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezier;
 use crate::canvas::math::point::Point;
 use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurve;
 
 pub mod event_handler;
 pub mod kind;
@@ -28,14 +29,16 @@ pub trait GetControlPoints {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum ControlPointsCurveKind {
+    #[deprecated]
     Polyline(Polyline),
     PolylineV2(Box<PolylineCurve>),
+    #[deprecated]
     ConvexHull(ConvexHull),
     Interpolation(Interpolation),
     #[deprecated]
     Bezier(Bezier),
     BezierV2(Box<BezierCurve>),
-    RationalBezier(RationalBezier),
+    RationalBezier(Box<RationalBezierCurve>),
 }
 
 impl ControlPointsCurveKind {
@@ -59,8 +62,16 @@ impl<T, W> WeightedPoint<T, W> {
         self.point
     }
 
+    pub fn point_mut(&mut self) -> &mut Point<T> {
+        &mut self.point
+    }
+
     pub fn weight(self) -> W {
         self.weight
+    }
+
+    pub fn weight_mut(&mut self) -> &mut W {
+        &mut self.weight
     }
 }
 
@@ -91,5 +102,11 @@ impl<T> AsMut<Point<T>> for Point<T> {
 impl<T, W> From<WeightedPoint<T, W>> for Point<T> {
     fn from(value: WeightedPoint<T, W>) -> Self {
         value.point
+    }
+}
+
+impl<W> From<WeightedPoint<f32, W>> for tiny_skia::Point {
+    fn from(value: WeightedPoint<f32, W>) -> Self {
+        value.point.into()
     }
 }

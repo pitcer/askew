@@ -6,8 +6,8 @@ use anyhow::Result;
 
 use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::cli::RunArguments;
 use crate::config::property::{
     Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
@@ -127,7 +127,7 @@ pub struct CanvasConfig {
 
     pub default_bezier_algorithm: BezierCurveAlgorithm,
 
-    pub default_rational_bezier_algorithm: RationalBezierAlgorithm,
+    pub default_rational_bezier_algorithm: RationalBezierCurveAlgorithm,
 
     pub default_interpolation_nodes: InterpolationNodes,
 
@@ -161,7 +161,7 @@ impl Default for CanvasConfig {
             curve_samples: 1000,
             default_curve_type: CurveType::Polyline,
             default_bezier_algorithm: BezierCurveAlgorithm::ChudyWozny,
-            default_rational_bezier_algorithm: RationalBezierAlgorithm::ChudyWozny,
+            default_rational_bezier_algorithm: RationalBezierCurveAlgorithm::ChudyWozny,
             default_interpolation_nodes: InterpolationNodes::Chebyshev,
             default_trochoid_properties: TrochoidProperties::default(),
             default_rational_bezier_weight: 1.0,

@@ -1,11 +1,11 @@
 use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
 use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
+use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
     canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
     canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
-    canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::ControlPointsCurveKind,
     event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes},
     event::macros::delegate_events,
@@ -32,7 +32,7 @@ where
     for<'b> InterpolationEventHandler<'b>: EventHandler<E>,
     for<'b> BezierEventHandler<'b>: EventHandler<E>,
     for<'b> BezierV2EventHandler<'b>: EventHandler<E>,
-    for<'b> RationalBezierEventHandler<'b>: EventHandler<E>,
+    for<'b> RationalBezierCurveEventHandler<'b>: EventHandler<E>,
 {
     fn delegate(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {

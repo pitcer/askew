@@ -1,7 +1,7 @@
 use crate::canvas::curve::control_points::kind::bezier::BezierCurveAlgorithm;
 use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-use crate::canvas::curve::control_points::kind::rational_bezier::RationalBezierAlgorithm;
 use crate::canvas::curve::formula::trochoid::TrochoidProperties;
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::config::rgb::Rgb;
 use crate::config::CurveType;
 
@@ -49,8 +49,8 @@ declare_properties! {
     DefaultBezierAlgorithm("bezier_algorithm", BezierCurveAlgorithm, BezierCurveAlgorithm::DeCasteljau),
     DefaultRationalBezierAlgorithm(
         "rational_bezier_algorithm",
-        RationalBezierAlgorithm,
-        RationalBezierAlgorithm::DeCasteljau
+        RationalBezierCurveAlgorithm,
+        RationalBezierCurveAlgorithm::DeCasteljau
     ),
     DefaultTrochoidProperties("trochoid_properties", TrochoidProperties,
         TrochoidProperties::new(10.0 * -std::f32::consts::PI, 10.0 * std::f32::consts::PI,

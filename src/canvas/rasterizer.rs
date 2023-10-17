@@ -23,6 +23,7 @@ impl Rasterizer {
         properties: &'a CanvasProperties,
         panel: &'a mut Panel<'_>,
     ) -> Result<()> {
+        let mut pixmap = panel.as_pixmap_mut();
         match curve {
             CurveKind::ControlPoints(curve) => match curve {
                 ControlPointsCurveKind::Polyline(curve) => {
@@ -34,18 +35,14 @@ impl Rasterizer {
                 ControlPointsCurveKind::Bezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurveKind::BezierV2(curve) => {
-                    curve.draw_on(&mut panel.as_pixmap_mut())
-                }
+                ControlPointsCurveKind::BezierV2(curve) => curve.draw_on(&mut pixmap),
                 ControlPointsCurveKind::RationalBezier(curve) => {
-                    self.draw_control_points_curve(curve, properties, panel);
+                    curve.draw_on(&mut pixmap);
                 }
                 ControlPointsCurveKind::ConvexHull(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurveKind::PolylineV2(curve) => {
-                    curve.draw_on(&mut panel.as_pixmap_mut())
-                }
+                ControlPointsCurveKind::PolylineV2(curve) => curve.draw_on(&mut pixmap),
             },
             CurveKind::Formula(curve) => {
                 let mut rasterizer = CurveRasterizer::new(curve, properties, panel);

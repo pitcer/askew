@@ -91,7 +91,8 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                             curve.into_control_points().into_inner()
                         }
                         ControlPointsCurveKind::RationalBezier(curve) => curve
-                            .into_control_points()
+                            .control_points
+                            .points
                             .into_inner()
                             .into_iter()
                             .map(WeightedPoint::point)

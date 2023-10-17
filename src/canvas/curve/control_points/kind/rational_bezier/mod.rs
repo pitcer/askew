@@ -1,7 +1,8 @@
+use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::{
     canvas::curve::control_points::kind::rational_bezier::event_handler::RationalBezierEventHandler,
     canvas::curve::control_points::points::ControlPoints,
-    canvas::curve::control_points::{CurvePoint, GetControlPoints, WeightedPoint},
+    canvas::curve::control_points::{GetControlPoints, WeightedPoint},
     canvas::curve::converter::{CurvePath, PathConverter, ToPath},
     canvas::curve::samples::Samples,
     canvas::math,
@@ -9,19 +10,12 @@ use crate::{
 
 pub mod event_handler;
 
+#[deprecated]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RationalBezier {
     points: RationalBezierPoints,
     samples: Samples,
-    algorithm: RationalBezierAlgorithm,
-}
-
-#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
-pub enum RationalBezierAlgorithm {
-    Generic,
-    #[default]
-    DeCasteljau,
-    ChudyWozny,
+    algorithm: RationalBezierCurveAlgorithm,
 }
 
 impl RationalBezier {
@@ -29,42 +23,13 @@ impl RationalBezier {
     pub fn new(
         points: RationalBezierPoints,
         samples: Samples,
-        algorithm: RationalBezierAlgorithm,
+        algorithm: RationalBezierCurveAlgorithm,
     ) -> Self {
         Self { points, samples, algorithm }
     }
 
     pub fn event_handler(&mut self) -> RationalBezierEventHandler<'_> {
         RationalBezierEventHandler::new(self)
-    }
-
-    fn rational_bezier(&self, t: f32) -> CurvePoint {
-        let n = self.points.length() as u32 - 1;
-        let result = self
-            .points
-            .iterator()
-            .enumerate()
-            .map(|(k, point)| {
-                let bernstein = math::bernstein(n, k as u32, t);
-                CurvePoint::new(
-                    point.point.horizontal() * bernstein * point.weight,
-                    point.point.vertical() * bernstein * point.weight,
-                )
-            })
-            .reduce(|accumulator, point| {
-                CurvePoint::new(
-                    accumulator.horizontal() + point.horizontal(),
-                    accumulator.vertical() + point.vertical(),
-                )
-            })
-            .expect("points should not be empty");
-        let divisor = self
-            .points
-            .iterator()
-            .enumerate()
-            .map(|(k, point)| point.weight * math::bernstein(n, k as u32, t))
-            .sum::<f32>();
-        CurvePoint::new(result.horizontal() / divisor, result.vertical() / divisor)
     }
 }
 
@@ -80,17 +45,12 @@ impl ToPath for RationalBezier {
 
         let path = self.samples.equally_spaced(0.0..=1.0);
         match self.algorithm {
-            RationalBezierAlgorithm::Generic => {
-                let path = path.map(|t| self.rational_bezier(t));
-                let path = CurvePath::new_open(path);
-                converter.to_path(path)
-            }
-            RationalBezierAlgorithm::DeCasteljau => {
+            RationalBezierCurveAlgorithm::DeCasteljau => {
                 let path = path.map(|t| math::rational_de_casteljau(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
             }
-            RationalBezierAlgorithm::ChudyWozny => {
+            RationalBezierCurveAlgorithm::ChudyWozny => {
                 let path = path.map(|t| math::rational_chudy_wozny(self.points.as_slice(), t));
                 let path = CurvePath::new_open(path);
                 converter.to_path(path)
