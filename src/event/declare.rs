@@ -156,9 +156,8 @@ pub mod curve {
     }
 
     pub mod control_points {
-        use crate::canvas::curve::control_points::kind::interpolation::InterpolationNodes;
-
         use super::*;
+        use crate::canvas::v2::curve::interpolation::InterpolationNodes;
 
         declare_events! {
             ControlPointsCurveEventHandler<'_> {

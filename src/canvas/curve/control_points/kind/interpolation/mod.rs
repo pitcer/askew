@@ -1,3 +1,4 @@
+use crate::canvas::v2::curve::interpolation::InterpolationNodes;
 use crate::{
     canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
     canvas::curve::control_points::points::ControlPoints,
@@ -10,6 +11,7 @@ use crate::{
 
 pub mod event_handler;
 
+#[deprecated]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Interpolation {
     points: CurvePoints,
@@ -71,11 +73,4 @@ impl GetControlPoints for Interpolation {
     fn into_control_points(self) -> ControlPoints<Self::Point> {
         self.points
     }
-}
-
-#[derive(Debug, Copy, Clone, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
-pub enum InterpolationNodes {
-    EquallySpaced,
-    #[default]
-    Chebyshev,
 }

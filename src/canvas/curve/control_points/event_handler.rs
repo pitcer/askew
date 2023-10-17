@@ -1,10 +1,10 @@
 use crate::canvas::v2::curve::bezier::event_handler::BezierV2EventHandler;
+use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandler;
 use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
 use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
 use crate::{
     canvas::curve::control_points::kind::bezier::event_handler::BezierEventHandler,
     canvas::curve::control_points::kind::convex_hull::event_handler::ConvexHullEventHandler,
-    canvas::curve::control_points::kind::interpolation::event_handler::InterpolationEventHandler,
     canvas::curve::control_points::kind::polyline::event_handler::PolylineEventHandler,
     canvas::curve::control_points::ControlPointsCurveKind,
     event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes},
@@ -29,7 +29,7 @@ where
     for<'b> PolylineEventHandler<'b>: EventHandler<E>,
     for<'b> PolylineCurveEventHandler<'b>: EventHandler<E>,
     for<'b> ConvexHullEventHandler<'b>: EventHandler<E>,
-    for<'b> InterpolationEventHandler<'b>: EventHandler<E>,
+    for<'b> InterpolationCurveEventHandler<'b>: EventHandler<E>,
     for<'b> BezierEventHandler<'b>: EventHandler<E>,
     for<'b> BezierV2EventHandler<'b>: EventHandler<E>,
     for<'b> RationalBezierCurveEventHandler<'b>: EventHandler<E>,

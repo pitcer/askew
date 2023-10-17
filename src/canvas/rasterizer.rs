@@ -29,9 +29,7 @@ impl Rasterizer {
                 ControlPointsCurveKind::Polyline(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }
-                ControlPointsCurveKind::Interpolation(curve) => {
-                    self.draw_control_points_curve(curve, properties, panel);
-                }
+                ControlPointsCurveKind::Interpolation(curve) => curve.draw_on(&mut pixmap),
                 ControlPointsCurveKind::Bezier(curve) => {
                     self.draw_control_points_curve(curve, properties, panel);
                 }

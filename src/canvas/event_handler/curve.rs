@@ -85,7 +85,7 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                             curve.into_control_points().into_inner()
                         }
                         ControlPointsCurveKind::Interpolation(curve) => {
-                            curve.into_control_points().into_inner()
+                            curve.control_points.points.into_inner()
                         }
                         ControlPointsCurveKind::Bezier(curve) => {
                             curve.into_control_points().into_inner()

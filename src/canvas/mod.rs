@@ -24,6 +24,7 @@ use crate::canvas::rasterizer::Rasterizer;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::{ControlPointsCurve, ControlPointsCurveProperties};
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
+use crate::canvas::v2::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
 use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::{
     RationalBezierCurve, RationalBezierCurveProperties,
@@ -91,11 +92,14 @@ impl Canvas {
                 ConvexHull::new(CurvePoints::new(points)),
             )),
             CurveType::Interpolation => {
-                CurveKind::ControlPoints(ControlPointsCurveKind::Interpolation(Interpolation::new(
-                    CurvePoints::new(points),
+                let mut curve = InterpolationCurve::new(
+                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
+                    BasePolyline::from_config(config),
+                    InterpolationCurveProperties::new(properties.interpolation_nodes),
                     samples,
-                    properties.interpolation_nodes,
-                )))
+                );
+                curve.update();
+                CurveKind::ControlPoints(ControlPointsCurveKind::Interpolation(Box::new(curve)))
             }
             CurveType::Bezier => CurveKind::ControlPoints(ControlPointsCurveKind::Bezier(
                 Bezier::new(CurvePoints::new(points), samples, properties.bezier_algorithm),
@@ -161,6 +165,7 @@ impl Canvas {
                     ControlPointsCurveKind::BezierV2(curve) => curve.update(),
                     ControlPointsCurveKind::PolylineV2(curve) => curve.update(),
                     ControlPointsCurveKind::RationalBezier(curve) => curve.update(),
+                    ControlPointsCurveKind::Interpolation(curve) => curve.update(),
                     _ => {}
                 },
                 CurveKind::Formula(_) => {}
