@@ -1,11 +1,11 @@
+use tiny_skia::PixmapMut;
+
 use crate::canvas::curve::control_points::ControlPointsCurveKind;
 use crate::canvas::curve::event_handler::CurveEventHandler;
 use crate::canvas::curve::formula::FormulaCurveKind;
 use crate::canvas::v2::{DrawOn, Update};
-use tiny_skia::PixmapMut;
 
 pub mod control_points;
-pub mod converter;
 pub mod event_handler;
 pub mod formula;
 pub mod samples;

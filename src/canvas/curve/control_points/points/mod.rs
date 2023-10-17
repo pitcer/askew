@@ -136,6 +136,7 @@ impl<T> ControlPoints<T> {
         self.points.iter()
     }
 
+    #[must_use]
     pub fn copied_iterator(&self) -> impl ExactSizeIterator<Item = T> + '_
     where
         T: Copy,

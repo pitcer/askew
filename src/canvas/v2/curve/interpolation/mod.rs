@@ -5,10 +5,7 @@ use crate::canvas::v2::control_points_curve::ControlPointsCurve;
 use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandler;
 use crate::canvas::v2::{DrawOn, Update};
 use crate::{
-    canvas::curve::control_points::{CurvePoint, GetControlPoints},
-    canvas::curve::converter::{PathConverter, ToPath},
-    canvas::curve::samples::Samples,
-    canvas::math,
+    canvas::curve::control_points::CurvePoint, canvas::curve::samples::Samples, canvas::math,
     canvas::math::point::Point,
 };
 

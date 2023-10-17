@@ -36,6 +36,7 @@ impl Samples {
         })
     }
 
+    #[must_use]
     pub fn samples(&self) -> usize {
         self.samples
     }

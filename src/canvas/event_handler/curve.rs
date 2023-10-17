@@ -1,6 +1,4 @@
-use crate::canvas::curve::control_points::{
-    ControlPointsCurveKind, GetControlPoints, WeightedPoint,
-};
+use crate::canvas::curve::control_points::{ControlPointsCurveKind, WeightedPoint};
 use crate::canvas::curve::CurveKind;
 use crate::canvas::event_handler::CanvasEventHandler;
 use crate::canvas::{math, Canvas};

@@ -14,16 +14,7 @@ pub mod event_handler;
 pub mod points;
 
 pub type CurvePoints = ControlPoints<CurvePoint>;
-
 pub type CurvePoint = Point<f32>;
-
-pub trait GetControlPoints {
-    type Point: AsRef<CurvePoint> + Into<CurvePoint> + Copy;
-
-    fn control_points(&self) -> &ControlPoints<Self::Point>;
-
-    fn into_control_points(self) -> ControlPoints<Self::Point>;
-}
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum ControlPointsCurveKind {
