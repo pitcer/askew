@@ -16,6 +16,7 @@ pub struct TrochoidCurve {
 }
 
 impl TrochoidCurve {
+    #[must_use]
     pub fn new(
         polyline: BasePolyline<false>,
         properties: TrochoidCurveProperties,

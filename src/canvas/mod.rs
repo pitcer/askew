@@ -39,37 +39,34 @@ pub struct Canvas {
     size: Rectangle<f32>,
     #[serde(skip)]
     properties: CanvasProperties,
-    config: CanvasConfig,
+    pub config: CanvasConfig,
 }
 
 impl Canvas {
     #[must_use]
     pub fn new(size: Rectangle<f32>, config: CanvasConfig) -> Self {
-        let properties = CanvasProperties::new(&config);
-        let curve =
-            Self::create_curve(&properties, &config, properties.default_curve_type, None, None);
+        let properties = CanvasProperties::default();
+        let curve = Self::create_curve(&config, config.default_curve_type, None, None);
         let curves = vec![curve];
         Self { curves, size, properties, config }
     }
 
     pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
         let file = File::open(path)?;
-        let mut canvas = serde_json::from_reader::<_, Canvas>(file)?;
-        canvas.properties = CanvasProperties::new(&canvas.config);
+        let canvas = serde_json::from_reader::<_, Canvas>(file)?;
         Ok(canvas)
     }
 
     #[must_use]
     pub fn create_curve(
-        properties: &CanvasProperties,
         config: &CanvasConfig,
         curve_type: CurveType,
         points: Option<Vec<Point<f32>>>,
         samples: Option<u32>,
     ) -> Curve {
         let points = points.unwrap_or_default();
-        let samples = Samples::new(samples.unwrap_or(properties.samples) as usize);
-        let curve = match curve_type {
+        let samples = Samples::new(samples.unwrap_or(config.curve_samples) as usize);
+        match curve_type {
             CurveType::Polyline => {
                 let mut curve = PolylineCurve::new(
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
@@ -82,7 +79,7 @@ impl Canvas {
                 let mut curve = InterpolationCurve::new(
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
-                    InterpolationCurveProperties::new(properties.interpolation_nodes),
+                    InterpolationCurveProperties::new(config.default_interpolation_nodes),
                     samples,
                 );
                 curve.update();
@@ -92,7 +89,7 @@ impl Canvas {
                 let mut curve = BezierCurve::new(
                     ControlPointsCurve::from_config(CurvePoints::new(points), config),
                     BasePolyline::from_config(config),
-                    BezierCurveProperties::new(properties.bezier_algorithm),
+                    BezierCurveProperties::new(config.default_bezier_algorithm),
                     samples,
                 );
                 curve.update();
@@ -101,12 +98,12 @@ impl Canvas {
             CurveType::RationalBezier => {
                 let points = points
                     .into_iter()
-                    .map(|point| WeightedPoint::new(point, properties.default_weight))
+                    .map(|point| WeightedPoint::new(point, config.default_rational_bezier_weight))
                     .collect();
                 let mut curve = RationalBezierCurve::new(
                     ControlPointsCurve::from_config(RationalBezierPoints::new(points), config),
                     BasePolyline::from_config(config),
-                    RationalBezierCurveProperties::new(properties.rational_bezier_algorithm),
+                    RationalBezierCurveProperties::new(config.default_rational_bezier_algorithm),
                     samples,
                 );
                 curve.update();
@@ -114,11 +111,10 @@ impl Canvas {
             }
             CurveType::Trochoid => Curve::Trochoid(Box::new(TrochoidCurve::new(
                 BasePolyline::from_config(config),
-                properties.trochoid_properties,
+                config.default_trochoid_properties,
                 samples,
             ))),
-        };
-        curve
+        }
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
@@ -189,6 +185,11 @@ impl Canvas {
     #[must_use]
     pub fn properties_mut(&mut self) -> &mut CanvasProperties {
         &mut self.properties
+    }
+
+    #[must_use]
+    pub fn config(&self) -> &CanvasConfig {
+        &self.config
     }
 
     #[must_use]

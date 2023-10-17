@@ -32,7 +32,7 @@ pub enum InterpolationNodes {
 }
 
 impl InterpolationCurve {
-    pub fn new(
+    #[must_use] pub fn new(
         control_points: ControlPointsCurve<CurvePoint>,
         polyline: BasePolyline<false>,
         properties: InterpolationCurveProperties,
@@ -88,7 +88,7 @@ impl DrawOn for InterpolationCurve {
 }
 
 impl InterpolationCurveProperties {
-    pub fn new(nodes: InterpolationNodes) -> Self {
+    #[must_use] pub fn new(nodes: InterpolationNodes) -> Self {
         Self { nodes }
     }
 }

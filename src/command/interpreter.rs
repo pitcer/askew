@@ -104,8 +104,9 @@ impl<'a> CommandInterpreter<'a> {
                 handler.delegate(SetConvexHull(!value))?;
             }
             Toggle::ControlLine => {
-                self.state.frame.canvas_mut().properties_mut().control_line =
-                    !self.state.frame.canvas().properties().control_line;
+                // TODO: handle for current curve instead
+                self.state.frame.canvas_mut().config.show_control_line =
+                    !self.state.frame.canvas().config.show_control_line;
             }
         }
         Ok(None)

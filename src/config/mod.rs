@@ -112,7 +112,7 @@ impl Default for FrameConfig {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct CanvasConfig {
     pub show_convex_hull: bool,

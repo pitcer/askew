@@ -89,7 +89,7 @@ impl EventHandler<MouseClick> for CommandEventHandler<'_> {
             Mode::PointSelect => {
                 let point = self.delegate(SelectPoint::new(
                     click_point,
-                    self.frame.canvas.properties().point_radius,
+                    self.frame.canvas.config.default_point_radius,
                 ))?;
                 if let Some(point) = point {
                     self.frame.canvas.properties_mut().current_point_index = point;

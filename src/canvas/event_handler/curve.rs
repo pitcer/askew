@@ -18,7 +18,7 @@ use crate::event::{canvas, curve, DelegateEventHandler, Error, EventHandler, Han
 
 impl EventHandler<AddPoint> for CanvasEventHandler<'_> {
     fn handle(&mut self, event: AddPoint) -> HandlerResult<AddPoint> {
-        let default_weight = self.canvas.properties.default_weight;
+        let default_weight = self.canvas.config.default_rational_bezier_weight;
         let AddPoint { point } = event;
         let weighted_point = WeightedPoint::new(point, default_weight);
         let result = self.delegate(AddWeightedControlPoint::new(weighted_point));
@@ -88,13 +88,7 @@ impl EventHandler<SetCurveType> for CanvasEventHandler<'_> {
                 ),
                 Curve::Trochoid(_) => None,
             };
-            Canvas::create_curve(
-                &self.canvas.properties,
-                &self.canvas.config,
-                event.0,
-                points,
-                samples,
-            )
+            Canvas::create_curve(&self.canvas.config, event.0, points, samples)
         });
         Ok(())
     }
