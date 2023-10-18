@@ -1,8 +1,16 @@
 use crate::canvas::curve::Curve;
-use crate::canvas::v2::curve::bezier::event_handler::BezierCurveEventHandler;
-use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandler;
-use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
-use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
+use crate::canvas::v2::curve::bezier::event_handler::{
+    BezierCurveEventHandler, BezierCurveEventHandlerMut,
+};
+use crate::canvas::v2::curve::interpolation::event_handler::{
+    InterpolationCurveEventHandler, InterpolationCurveEventHandlerMut,
+};
+use crate::canvas::v2::curve::polyline::event_handler::{
+    PolylineCurveEventHandler, PolylineCurveEventHandlerMut,
+};
+use crate::canvas::v2::curve::rational_bezier::event_handler::{
+    RationalBezierCurveEventHandler, RationalBezierCurveEventHandlerMut,
+};
 use crate::event::macros::delegate_events_mut;
 use crate::event::{DelegateEventMut, EventHandlerMut, EventMut};
 use crate::{
@@ -13,10 +21,20 @@ use crate::{
 };
 
 pub struct ControlPointsCurveEventHandler<'a> {
+    curve: &'a Curve,
+}
+
+pub struct ControlPointsCurveEventHandlerMut<'a> {
     curve: &'a mut Curve,
 }
 
 impl<'a> ControlPointsCurveEventHandler<'a> {
+    pub fn new(curve: &'a Curve) -> Self {
+        Self { curve }
+    }
+}
+
+impl<'a> ControlPointsCurveEventHandlerMut<'a> {
     pub fn new(curve: &'a mut Curve) -> Self {
         Self { curve }
     }
@@ -41,29 +59,29 @@ where
     }
 }
 
-impl<'a, E> DelegateEventMut<E> for ControlPointsCurveEventHandler<'a>
+impl<'a, E> DelegateEventMut<E> for ControlPointsCurveEventHandlerMut<'a>
 where
     E: EventMut,
-    for<'b> PolylineCurveEventHandler<'b>: EventHandlerMut<E>,
-    for<'b> InterpolationCurveEventHandler<'b>: EventHandlerMut<E>,
-    for<'b> BezierCurveEventHandler<'b>: EventHandlerMut<E>,
-    for<'b> RationalBezierCurveEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> PolylineCurveEventHandlerMut<'b>: EventHandlerMut<E>,
+    for<'b> InterpolationCurveEventHandlerMut<'b>: EventHandlerMut<E>,
+    for<'b> BezierCurveEventHandlerMut<'b>: EventHandlerMut<E>,
+    for<'b> RationalBezierCurveEventHandlerMut<'b>: EventHandlerMut<E>,
 {
     fn delegate_mut(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {
-            Curve::Polyline(curve) => curve.event_handler().handle_mut(event),
-            Curve::Interpolation(curve) => curve.event_handler().handle_mut(event),
-            Curve::RationalBezier(curve) => curve.event_handler().handle_mut(event),
-            Curve::Bezier(curve) => curve.event_handler().handle_mut(event),
+            Curve::Polyline(curve) => curve.event_handler_mut().handle_mut(event),
+            Curve::Interpolation(curve) => curve.event_handler_mut().handle_mut(event),
+            Curve::RationalBezier(curve) => curve.event_handler_mut().handle_mut(event),
+            Curve::Bezier(curve) => curve.event_handler_mut().handle_mut(event),
             _ => Err(Error::Unimplemented),
         }
     }
 }
 
-impl EventHandlerMut<SetInterpolationNodes> for ControlPointsCurveEventHandler<'_> {
+impl EventHandlerMut<SetInterpolationNodes> for ControlPointsCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
         match self.curve {
-            Curve::Interpolation(curve) => curve.event_handler().handle_mut(event),
+            Curve::Interpolation(curve) => curve.event_handler_mut().handle_mut(event),
             _ => Err(Error::Unimplemented),
         }
     }
@@ -93,7 +111,7 @@ delegate_events! {
 }
 
 delegate_events_mut! {
-    ControlPointsCurveEventHandler<'_> {
+    ControlPointsCurveEventHandlerMut<'_> {
         curve::control_points::AddControlPoint,
         curve::control_points::MovePoint,
         curve::control_points::DeletePoint,

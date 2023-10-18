@@ -1,22 +1,33 @@
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
+use crate::canvas::curve::control_points::points::event_handler::{
+    ControlPointsEventHandler, ControlPointsEventHandlerMut,
+};
 use crate::canvas::v2::curve::rational_bezier::{RationalBezierCurve, RationalBezierPoint};
 use crate::event::curve::control_points::weighted::{
     AddWeightedControlPoint, ChangeWeight, GetWeight,
 };
 use crate::event::curve::{control_points, GetSamples, SetSamples};
-use crate::event::macros::{
-    delegate_handlers, delegate_handlers_mut, unimplemented_handlers, unimplemented_handlers_mut,
-};
+use crate::event::macros::{delegate_handlers, delegate_handlers_mut, unimplemented_handlers_mut};
 use crate::event::{
     canvas, curve, DelegateEventHandler, DelegateEventHandlerMut, Error, Event, EventHandler,
     EventHandlerMut, EventMut, HandlerResult,
 };
 
 pub struct RationalBezierCurveEventHandler<'a> {
+    curve: &'a RationalBezierCurve,
+}
+
+pub struct RationalBezierCurveEventHandlerMut<'a> {
     curve: &'a mut RationalBezierCurve,
 }
 
 impl<'a> RationalBezierCurveEventHandler<'a> {
+    #[must_use]
+    pub fn new(curve: &'a RationalBezierCurve) -> Self {
+        Self { curve }
+    }
+}
+
+impl<'a> RationalBezierCurveEventHandlerMut<'a> {
     pub fn new(curve: &'a mut RationalBezierCurve) -> Self {
         Self { curve }
     }
@@ -34,19 +45,19 @@ where
     }
 }
 
-impl<E> DelegateEventHandlerMut<E> for RationalBezierCurveEventHandler<'_>
+impl<E> DelegateEventHandlerMut<E> for RationalBezierCurveEventHandlerMut<'_>
 where
     E: EventMut,
-    for<'b> ControlPointsEventHandler<'b, RationalBezierPoint>: EventHandlerMut<E>,
+    for<'b> ControlPointsEventHandlerMut<'b, RationalBezierPoint>: EventHandlerMut<E>,
 {
-    type Delegate<'b> = ControlPointsEventHandler<'b, RationalBezierPoint> where Self: 'b;
+    type Delegate<'b> = ControlPointsEventHandlerMut<'b, RationalBezierPoint> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler()
+        self.curve.control_points.points.event_handler_mut()
     }
 }
 
-impl EventHandlerMut<ChangeWeight> for RationalBezierCurveEventHandler<'_> {
+impl EventHandlerMut<ChangeWeight> for RationalBezierCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: ChangeWeight) -> HandlerResult<ChangeWeight> {
         if let Some(point) = self.curve.control_points.points.get_mut(event.id) {
             *point.weight_mut() = event.weight;
@@ -57,7 +68,7 @@ impl EventHandlerMut<ChangeWeight> for RationalBezierCurveEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<AddWeightedControlPoint> for RationalBezierCurveEventHandler<'_> {
+impl EventHandlerMut<AddWeightedControlPoint> for RationalBezierCurveEventHandlerMut<'_> {
     fn handle_mut(
         &mut self,
         event: AddWeightedControlPoint,
@@ -83,9 +94,9 @@ impl EventHandler<GetWeight> for RationalBezierCurveEventHandler<'_> {
 // where
 //     E: Event,
 //     for<'b> SamplesEventHandler<'b>: EventHandler<E>
-impl EventHandlerMut<SetSamples> for RationalBezierCurveEventHandler<'_> {
+impl EventHandlerMut<SetSamples> for RationalBezierCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples.event_handler().handle_mut(event)
+        self.curve.samples.event_handler_mut().handle_mut(event)
     }
 }
 
@@ -106,7 +117,7 @@ delegate_handlers! {
 }
 
 delegate_handlers_mut! {
-    RationalBezierCurveEventHandler<'_> {
+    RationalBezierCurveEventHandlerMut<'_> {
         control_points::MovePoint,
         control_points::DeletePoint,
 
@@ -116,7 +127,7 @@ delegate_handlers_mut! {
 }
 
 unimplemented_handlers_mut! {
-    RationalBezierCurveEventHandler<'_> {
+    RationalBezierCurveEventHandlerMut<'_> {
         control_points::AddControlPoint,
     }
 }

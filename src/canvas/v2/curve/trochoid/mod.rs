@@ -3,7 +3,9 @@ use tiny_skia::PixmapMut;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math::point::Point;
 use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
+use crate::canvas::v2::curve::trochoid::event_handler::{
+    TrochoidCurveEventHandler, TrochoidCurveEventHandlerMut,
+};
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
@@ -25,8 +27,12 @@ impl TrochoidCurve {
         Self { polyline, properties, samples }
     }
 
-    pub fn event_handler(&mut self) -> TrochoidCurveEventHandler<'_> {
+    pub fn event_handler(&self) -> TrochoidCurveEventHandler<'_> {
         TrochoidCurveEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> TrochoidCurveEventHandlerMut<'_> {
+        TrochoidCurveEventHandlerMut::new(self)
     }
 }
 

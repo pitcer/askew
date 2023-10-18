@@ -2,7 +2,9 @@ use std::fmt::Debug;
 
 use num_traits::{Float, Num, NumCast};
 
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
+use crate::canvas::curve::control_points::points::event_handler::{
+    ControlPointsEventHandler, ControlPointsEventHandlerMut,
+};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 
@@ -19,8 +21,12 @@ impl<T> ControlPoints<T> {
         Self { points }
     }
 
-    pub fn event_handler(&mut self) -> ControlPointsEventHandler<'_, T> {
+    pub fn event_handler(&self) -> ControlPointsEventHandler<'_, T> {
         ControlPointsEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> ControlPointsEventHandlerMut<'_, T> {
+        ControlPointsEventHandlerMut::new(self)
     }
 
     pub fn add(&mut self, point: T) {

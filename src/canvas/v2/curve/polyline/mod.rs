@@ -3,7 +3,9 @@ use tiny_skia::PixmapMut;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
-use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
+use crate::canvas::v2::curve::polyline::event_handler::{
+    PolylineCurveEventHandler, PolylineCurveEventHandlerMut,
+};
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
@@ -23,8 +25,12 @@ impl PolylineCurve {
         Self { control_points, polyline }
     }
 
-    pub fn event_handler(&mut self) -> PolylineCurveEventHandler<'_> {
+    pub fn event_handler(&self) -> PolylineCurveEventHandler<'_> {
         PolylineCurveEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> PolylineCurveEventHandlerMut<'_> {
+        PolylineCurveEventHandlerMut::new(self)
     }
 }
 

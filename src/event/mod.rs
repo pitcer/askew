@@ -11,10 +11,7 @@ pub trait Event: Ret {}
 
 pub trait EventMut: Ret {}
 
-pub type HandlerResult<E>
-where
-    E: Ret,
-= anyhow::Result<E::Return, Error>;
+pub type HandlerResult<E> = anyhow::Result<<E as Ret>::Return, Error>;
 
 pub trait EventHandler<E>
 where

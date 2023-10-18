@@ -19,7 +19,7 @@ impl<'a> InputHandler<'a> {
     pub fn handle_input(self, input: Input) -> Result<()> {
         log::debug!("<cyan><b>Event received from input:</>\n<bright_black>{input:?}</>");
 
-        let mut handler = self.state.frame.event_handler(self.state.mode);
+        let mut handler = self.state.frame.event_handler_mut(self.state.mode);
 
         match self.command {
             CommandState::Closed(_) => {

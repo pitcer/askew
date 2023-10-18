@@ -4,26 +4,29 @@ use winit::dpi::PhysicalPosition;
 
 use crate::event::macros::declare_handler;
 use crate::{
-    canvas::curve::control_points::event_handler::ControlPointsCurveEventHandler,
     canvas::curve::control_points::points::event_handler::ControlPointsEventHandler,
+    canvas::curve::control_points::points::event_handler::ControlPointsEventHandlerMut,
     canvas::curve::control_points::WeightedPoint,
     canvas::curve::event_handler::CurveEventHandler,
     canvas::curve::formula::event_handler::FormulaCurveEventHandler,
+    canvas::curve::formula::event_handler::FormulaCurveEventHandlerMut,
     canvas::curve::samples::event_handler::SamplesEventHandler,
+    canvas::curve::samples::event_handler::SamplesEventHandlerMut,
     canvas::event_handler::CanvasEventHandler,
+    canvas::event_handler::CanvasEventHandlerMut,
     canvas::math::point::Point,
     canvas::math::vector::Vector,
     config::CurveType,
     event::PointId,
     event::{Change, Direction},
-    ui::frame::event_handler::CommandEventHandler,
+    ui::frame::event_handler::CommandEventHandlerMut,
 };
 
 pub mod input {
     use super::*;
 
     declare_handler! {
-        CommandEventHandler<'_> {
+        CommandEventHandlerMut<'_> {
             'events_mut: {
                 ToggleConvexHull () -> (),
                 ChangeWeight (Change) -> (),
@@ -51,6 +54,33 @@ pub mod canvas {
                 curve::GetPoint,
             }
 
+            'events: {
+                GetConvexHull () -> bool,
+
+                GetCurveType () -> CurveType,
+
+                GetCurveCenter () -> Option<Point<f32>>,
+
+                GetCurrentPoint () -> Point<f32>,
+                SelectPoint { guess: Point<f32>, radius: f32 } -> Option<PointId>,
+
+                GetCurvesLength () -> usize,
+                GetLength (usize) -> usize,
+                GetPointOnCurve (usize, PointId) -> Point<f32>,
+            }
+        }
+    }
+
+    declare_handler! {
+        CanvasEventHandlerMut<'_> {
+            'inherited: {
+                curve::SetSamples,
+                curve::GetSamples,
+                curve::control_points::SetInterpolationNodes,
+                curve::control_points::GetInterpolationNodes,
+                curve::GetPoint,
+            }
+
             'events_mut: {
                 ChangeCurrentPointWeight { weight: f32 } -> (),
                 DeleteCurrentPoint () -> (),
@@ -70,21 +100,6 @@ pub mod canvas {
                 MoveCurve { shift: Vector<f32> } -> (),
 
                 MovePointOnCurve (usize, PointId, Point<f32>) -> (),
-            }
-
-            'events: {
-                GetConvexHull () -> bool,
-
-                GetCurveType () -> CurveType,
-
-                GetCurveCenter () -> Option<Point<f32>>,
-
-                GetCurrentPoint () -> Point<f32>,
-                SelectPoint { guess: Point<f32>, radius: f32 } -> Option<PointId>,
-
-                GetCurvesLength () -> usize,
-                GetLength (usize) -> usize,
-                GetPointOnCurve (usize, PointId) -> Point<f32>,
             }
         }
     }
@@ -123,18 +138,22 @@ pub mod curve {
 
     declare_handler! {
         SamplesEventHandler<'_> {
-            'events_mut: {
-                SetSamples (u32) -> (),
-            }
-
             'events: {
                 GetSamples () -> u32,
             }
         }
     }
 
+    declare_handler! {
+        SamplesEventHandlerMut<'_> {
+            'events_mut: {
+                SetSamples (u32) -> (),
+            }
+        }
+    }
+
     pub mod formula {
-        use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
+        use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandlerMut;
         use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
 
         use super::*;
@@ -148,19 +167,41 @@ pub mod curve {
                 }
 
                 'unimplemented: {
-                    curve::control_points::DeletePoint,
-                    curve::control_points::MovePoint,
-                    curve::control_points::AddControlPoint,
                     curve::control_points::GetControlPointsLength,
-                    curve::control_points::weighted::AddWeightedControlPoint,
-                    curve::control_points::weighted::ChangeWeight,
                     curve::control_points::weighted::GetWeight,
                 }
             }
         }
 
         declare_handler! {
+            FormulaCurveEventHandlerMut<'_> {
+                'inherited: {
+                    curve::SetSamples,
+                    curve::GetSamples,
+                    SetTrochoidProperties,
+                }
+
+                'unimplemented: {
+                    curve::control_points::DeletePoint,
+                    curve::control_points::MovePoint,
+                    curve::control_points::AddControlPoint,
+                    curve::control_points::weighted::AddWeightedControlPoint,
+                    curve::control_points::weighted::ChangeWeight,
+                }
+            }
+        }
+
+        declare_handler! {
             TrochoidCurveEventHandler<'_> {
+                'inherited: {
+                    curve::SetSamples,
+                    curve::GetSamples,
+                }
+            }
+        }
+
+        declare_handler! {
+            TrochoidCurveEventHandlerMut<'_> {
                 'inherited: {
                     curve::SetSamples,
                     curve::GetSamples,
@@ -174,10 +215,15 @@ pub mod curve {
     }
 
     pub mod control_points {
-        use crate::canvas::v2::curve::bezier::event_handler::BezierCurveEventHandler;
+        use crate::canvas::v2::curve::bezier::event_handler::{
+            BezierCurveEventHandler, BezierCurveEventHandlerMut,
+        };
         use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandler;
+        use crate::canvas::v2::curve::interpolation::event_handler::InterpolationCurveEventHandlerMut;
         use crate::canvas::v2::curve::interpolation::InterpolationNodes;
-        use crate::canvas::v2::curve::polyline::event_handler::PolylineCurveEventHandler;
+        use crate::canvas::v2::curve::polyline::event_handler::{
+            PolylineCurveEventHandler, PolylineCurveEventHandlerMut,
+        };
 
         use super::*;
 
@@ -223,9 +269,31 @@ pub mod curve {
                 }
 
                 'unimplemented: {
+                    weighted::GetWeight,
+                }
+            }
+        }
+
+        declare_handler! {
+            BezierCurveEventHandlerMut<'_> {
+                'inherited: {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                    curve::SetSamples,
+                    curve::GetSamples,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+                    canvas::SelectPoint,
+                    curve::GetPoint
+                }
+
+                'unimplemented: {
                     weighted::AddWeightedControlPoint,
                     weighted::ChangeWeight,
-                    weighted::GetWeight,
                 }
             }
         }
@@ -248,17 +316,39 @@ pub mod curve {
                 }
 
                 'unimplemented: {
-                    weighted::AddWeightedControlPoint,
-                    weighted::ChangeWeight,
                     weighted::GetWeight,
-                }
-
-                'events_mut: {
-                    SetInterpolationNodes { nodes: InterpolationNodes } -> (),
                 }
 
                 'events: {
                     GetInterpolationNodes () -> InterpolationNodes,
+                }
+            }
+        }
+
+        declare_handler! {
+            InterpolationCurveEventHandlerMut<'_> {
+                'inherited: {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+                    curve::SetSamples,
+                    curve::GetSamples,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+                    canvas::SelectPoint,
+                    curve::GetPoint
+                }
+
+                'unimplemented: {
+                    weighted::AddWeightedControlPoint,
+                    weighted::ChangeWeight,
+                }
+
+                'events_mut: {
+                    SetInterpolationNodes { nodes: InterpolationNodes } -> (),
                 }
             }
         }
@@ -279,11 +369,31 @@ pub mod curve {
                 }
 
                 'unimplemented: {
+                    weighted::GetWeight,
+                    curve::GetSamples,
+                }
+            }
+        }
+
+        declare_handler! {
+            PolylineCurveEventHandlerMut<'_> {
+                'inherited: {
+                    GetControlPointsLength,
+                    AddControlPoint,
+                    MovePoint,
+                    DeletePoint,
+
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+                    canvas::SelectPoint,
+                    curve::GetPoint
+                }
+
+                'unimplemented: {
                     weighted::AddWeightedControlPoint,
                     weighted::ChangeWeight,
-                    weighted::GetWeight,
                     curve::SetSamples,
-                    curve::GetSamples,
                 }
             }
         }
@@ -298,25 +408,60 @@ pub mod curve {
                     curve::GetPoint
                 }
 
-                'events_mut: {
-                    AddControlPoint { point: Point<f32> } -> (),
-                    MovePoint { id: PointId, shift: Vector<f32> } -> (),
-                    DeletePoint { id: PointId } -> (),
-                }
-
                 'events: {
                     GetControlPointsLength () -> usize,
                 }
             }
         }
 
+        declare_handler! {
+            ControlPointsEventHandlerMut<'_> {
+                'inherited: {
+                    canvas::RotateCurve,
+                    canvas::MoveCurve,
+                    canvas::GetCurveCenter,
+                    canvas::SelectPoint,
+                    curve::GetPoint
+                }
+
+                'events_mut: {
+                    AddControlPoint { point: Point<f32> } -> (),
+                    MovePoint { id: PointId, shift: Vector<f32> } -> (),
+                    DeletePoint { id: PointId } -> (),
+                }
+            }
+        }
+
         pub mod weighted {
             use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
+            use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandlerMut;
 
             use super::*;
 
             declare_handler! {
                 RationalBezierCurveEventHandler<'_> {
+                    'inherited: {
+                        control_points::GetControlPointsLength,
+                        control_points::MovePoint,
+                        control_points::DeletePoint,
+                        curve::SetSamples,
+                        curve::GetSamples,
+
+                        canvas::RotateCurve,
+                        canvas::MoveCurve,
+                        canvas::GetCurveCenter,
+                        canvas::SelectPoint,
+                        curve::GetPoint
+                    }
+
+                    'events: {
+                        GetWeight { id: PointId } -> f32,
+                    }
+                }
+            }
+
+            declare_handler! {
+                RationalBezierCurveEventHandlerMut<'_> {
                     'inherited: {
                         control_points::GetControlPointsLength,
                         control_points::MovePoint,
@@ -338,10 +483,6 @@ pub mod curve {
                     'events_mut: {
                         ChangeWeight { id: PointId, weight: f32 } -> (),
                         AddWeightedControlPoint { point: WeightedPoint<f32, f32> } -> (),
-                    }
-
-                    'events: {
-                        GetWeight { id: PointId } -> f32,
                     }
                 }
             }

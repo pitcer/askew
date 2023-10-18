@@ -1,6 +1,6 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::event_handler::CurveEventHandler;
+use crate::canvas::curve::event_handler::{CurveEventHandler, CurveEventHandlerMut};
 use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::canvas::v2::curve::interpolation::InterpolationCurve;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
@@ -28,8 +28,8 @@ impl Curve {
         CurveEventHandler::new(self)
     }
 
-    pub fn event_handler_mut(&mut self) -> CurveEventHandler<'_> {
-        CurveEventHandler::new(self)
+    pub fn event_handler_mut(&mut self) -> CurveEventHandlerMut<'_> {
+        CurveEventHandlerMut::new(self)
     }
 
     #[must_use]

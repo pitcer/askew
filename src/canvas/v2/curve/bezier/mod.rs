@@ -5,7 +5,9 @@ use crate::canvas::curve::samples::Samples;
 use crate::canvas::math;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
-use crate::canvas::v2::curve::bezier::event_handler::BezierCurveEventHandler;
+use crate::canvas::v2::curve::bezier::event_handler::{
+    BezierCurveEventHandler, BezierCurveEventHandlerMut,
+};
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
@@ -34,8 +36,12 @@ impl BezierCurve {
         Self { control_points, polyline, properties, samples }
     }
 
-    pub fn event_handler(&mut self) -> BezierCurveEventHandler<'_> {
+    pub fn event_handler(&self) -> BezierCurveEventHandler<'_> {
         BezierCurveEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> BezierCurveEventHandlerMut<'_> {
+        BezierCurveEventHandlerMut::new(self)
     }
 }
 

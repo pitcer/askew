@@ -1,4 +1,6 @@
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
+use crate::canvas::curve::control_points::points::event_handler::{
+    ControlPointsEventHandler, ControlPointsEventHandlerMut,
+};
 use crate::canvas::v2::curve::interpolation::InterpolationCurve;
 use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
 use crate::event::curve::{GetSamples, SetSamples};
@@ -11,10 +13,20 @@ use crate::event::{
 };
 
 pub struct InterpolationCurveEventHandler<'a> {
+    curve: &'a InterpolationCurve,
+}
+
+pub struct InterpolationCurveEventHandlerMut<'a> {
     curve: &'a mut InterpolationCurve,
 }
 
 impl<'a> InterpolationCurveEventHandler<'a> {
+    pub fn new(curve: &'a InterpolationCurve) -> Self {
+        Self { curve }
+    }
+}
+
+impl<'a> InterpolationCurveEventHandlerMut<'a> {
     pub fn new(curve: &'a mut InterpolationCurve) -> Self {
         Self { curve }
     }
@@ -32,21 +44,21 @@ where
     }
 }
 
-impl<'a, E> DelegateEventHandlerMut<E> for InterpolationCurveEventHandler<'a>
+impl<'a, E> DelegateEventHandlerMut<E> for InterpolationCurveEventHandlerMut<'a>
 where
     E: EventMut,
-    for<'b> ControlPointsEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> ControlPointsEventHandlerMut<'b>: EventHandlerMut<E>,
 {
-    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+    type Delegate<'b> = ControlPointsEventHandlerMut<'b> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler()
+        self.curve.control_points.points.event_handler_mut()
     }
 }
 
-impl EventHandlerMut<SetSamples> for InterpolationCurveEventHandler<'_> {
+impl EventHandlerMut<SetSamples> for InterpolationCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples.event_handler().handle_mut(event)
+        self.curve.samples.event_handler_mut().handle_mut(event)
     }
 }
 
@@ -56,7 +68,7 @@ impl EventHandler<GetSamples> for InterpolationCurveEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<SetInterpolationNodes> for InterpolationCurveEventHandler<'_> {
+impl EventHandlerMut<SetInterpolationNodes> for InterpolationCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: SetInterpolationNodes) -> HandlerResult<SetInterpolationNodes> {
         self.curve.properties.nodes = event.nodes;
         Ok(())
@@ -80,7 +92,7 @@ delegate_handlers! {
 }
 
 delegate_handlers_mut! {
-    InterpolationCurveEventHandler<'_> {
+    InterpolationCurveEventHandlerMut<'_> {
         curve::control_points::AddControlPoint,
         curve::control_points::MovePoint,
         curve::control_points::DeletePoint,
@@ -97,7 +109,7 @@ unimplemented_handlers! {
 }
 
 unimplemented_handlers_mut! {
-    InterpolationCurveEventHandler<'_> {
+    InterpolationCurveEventHandlerMut<'_> {
         curve::control_points::weighted::AddWeightedControlPoint,
         curve::control_points::weighted::ChangeWeight,
     }

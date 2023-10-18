@@ -1,6 +1,6 @@
 use winit::dpi::PhysicalPosition;
 
-use crate::canvas::event_handler::CanvasEventHandler;
+use crate::canvas::event_handler::{CanvasEventHandler, CanvasEventHandlerMut};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::event::canvas::{
@@ -19,18 +19,18 @@ use crate::event::{EventHandler, HandlerResult};
 use crate::ui::frame::Frame;
 use crate::ui::mode::{Mode, ModeState};
 
-pub struct CommandEventHandler<'a> {
+pub struct CommandEventHandlerMut<'a> {
     frame: &'a mut Frame,
     mode: &'a mut ModeState,
 }
 
-impl<'a> CommandEventHandler<'a> {
+impl<'a> CommandEventHandlerMut<'a> {
     pub fn new(frame: &'a mut Frame, mode: &'a mut ModeState) -> Self {
         Self { frame, mode }
     }
 }
 
-impl<'a, E> DelegateEventHandler<E> for CommandEventHandler<'a>
+impl<'a, E> DelegateEventHandler<E> for CommandEventHandlerMut<'a>
 where
     E: Event,
     for<'b> CanvasEventHandler<'b>: EventHandler<E>,
@@ -42,19 +42,19 @@ where
     }
 }
 
-impl<'a, E> DelegateEventHandlerMut<E> for CommandEventHandler<'a>
+impl<'a, E> DelegateEventHandlerMut<E> for CommandEventHandlerMut<'a>
 where
     E: EventMut,
-    for<'b> CanvasEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> CanvasEventHandlerMut<'b>: EventHandlerMut<E>,
 {
-    type Delegate<'b> = CanvasEventHandler<'b> where Self: 'b;
+    type Delegate<'b> = CanvasEventHandlerMut<'b> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.frame.canvas.event_handler()
+        self.frame.canvas.event_handler_mut()
     }
 }
 
-impl EventHandlerMut<ToggleConvexHull> for CommandEventHandler<'_> {
+impl EventHandlerMut<ToggleConvexHull> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, _event: ToggleConvexHull) -> HandlerResult<ToggleConvexHull> {
         let convex_hull = self.delegate(GetConvexHull)?;
         self.delegate_mut(SetConvexHull(!convex_hull))?;
@@ -62,7 +62,7 @@ impl EventHandlerMut<ToggleConvexHull> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<ChangeWeight> for CommandEventHandler<'_> {
+impl EventHandlerMut<ChangeWeight> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: ChangeWeight) -> HandlerResult<ChangeWeight> {
         let factor = match event.0 {
             Change::Decrease => 1.5,
@@ -82,7 +82,7 @@ impl EventHandlerMut<ChangeWeight> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<MouseClick> for CommandEventHandler<'_> {
+impl EventHandlerMut<MouseClick> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
@@ -115,7 +115,7 @@ impl EventHandlerMut<MouseClick> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<MousePress> for CommandEventHandler<'_> {
+impl EventHandlerMut<MousePress> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: MousePress) -> HandlerResult<MousePress> {
         let click_point = scale_position(event.0);
         match self.mode.as_mode() {
@@ -137,7 +137,7 @@ impl EventHandlerMut<MousePress> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<MovePoint> for CommandEventHandler<'_> {
+impl EventHandlerMut<MovePoint> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: MovePoint) -> HandlerResult<MovePoint> {
         let direction = match event.0 {
             Direction::Up => Vector::new(0.0, -4.0),
@@ -154,7 +154,7 @@ impl EventHandlerMut<MovePoint> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<Delete> for CommandEventHandler<'_> {
+impl EventHandlerMut<Delete> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, _event: Delete) -> HandlerResult<Delete> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate_mut(DeleteCurve)?,
@@ -165,7 +165,7 @@ impl EventHandlerMut<Delete> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<ChangeIndex> for CommandEventHandler<'_> {
+impl EventHandlerMut<ChangeIndex> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: ChangeIndex) -> HandlerResult<ChangeIndex> {
         let change = match event.0 {
             Change::Decrease => -1,
@@ -180,7 +180,7 @@ impl EventHandlerMut<ChangeIndex> for CommandEventHandler<'_> {
     }
 }
 
-impl EventHandlerMut<Add> for CommandEventHandler<'_> {
+impl EventHandlerMut<Add> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, _event: Add) -> HandlerResult<Add> {
         match self.mode.as_mode() {
             Mode::Curve => self.delegate_mut(AddCurve)?,

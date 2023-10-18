@@ -1,4 +1,6 @@
-use crate::canvas::curve::control_points::points::event_handler::ControlPointsEventHandler;
+use crate::canvas::curve::control_points::points::event_handler::{
+    ControlPointsEventHandler, ControlPointsEventHandlerMut,
+};
 use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::event::curve::control_points::weighted;
 use crate::event::curve::{control_points, GetSamples, SetSamples};
@@ -11,10 +13,20 @@ use crate::event::{
 };
 
 pub struct BezierCurveEventHandler<'a> {
+    curve: &'a BezierCurve,
+}
+
+pub struct BezierCurveEventHandlerMut<'a> {
     curve: &'a mut BezierCurve,
 }
 
 impl<'a> BezierCurveEventHandler<'a> {
+    pub fn new(curve: &'a BezierCurve) -> Self {
+        Self { curve }
+    }
+}
+
+impl<'a> BezierCurveEventHandlerMut<'a> {
     pub fn new(curve: &'a mut BezierCurve) -> Self {
         Self { curve }
     }
@@ -32,21 +44,21 @@ where
     }
 }
 
-impl<'a, E> DelegateEventHandlerMut<E> for BezierCurveEventHandler<'a>
+impl<'a, E> DelegateEventHandlerMut<E> for BezierCurveEventHandlerMut<'a>
 where
     E: EventMut,
-    for<'b> ControlPointsEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> ControlPointsEventHandlerMut<'b>: EventHandlerMut<E>,
 {
-    type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
+    type Delegate<'b> = ControlPointsEventHandlerMut<'b> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler()
+        self.curve.control_points.points.event_handler_mut()
     }
 }
 
-impl EventHandlerMut<SetSamples> for BezierCurveEventHandler<'_> {
+impl EventHandlerMut<SetSamples> for BezierCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: SetSamples) -> HandlerResult<SetSamples> {
-        self.curve.samples.event_handler().handle_mut(event)
+        self.curve.samples.event_handler_mut().handle_mut(event)
     }
 }
 
@@ -67,7 +79,7 @@ delegate_handlers! {
 }
 
 delegate_handlers_mut! {
-    BezierCurveEventHandler<'_> {
+    BezierCurveEventHandlerMut<'_> {
         control_points::AddControlPoint,
         control_points::MovePoint,
         control_points::DeletePoint,
@@ -84,7 +96,7 @@ unimplemented_handlers! {
 }
 
 unimplemented_handlers_mut! {
-    BezierCurveEventHandler<'_> {
+    BezierCurveEventHandlerMut<'_> {
         weighted::AddWeightedControlPoint,
         weighted::ChangeWeight,
     }

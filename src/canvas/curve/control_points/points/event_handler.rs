@@ -11,10 +11,20 @@ use crate::event::curve::GetPoint;
 use crate::event::{Error, EventHandler, EventHandlerMut, HandlerResult};
 
 pub struct ControlPointsEventHandler<'a, P = CurvePoint> {
+    points: &'a ControlPoints<P>,
+}
+
+pub struct ControlPointsEventHandlerMut<'a, P = CurvePoint> {
     points: &'a mut ControlPoints<P>,
 }
 
 impl<'a, P> ControlPointsEventHandler<'a, P> {
+    pub fn new(points: &'a ControlPoints<P>) -> Self {
+        Self { points }
+    }
+}
+
+impl<'a, P> ControlPointsEventHandlerMut<'a, P> {
     pub fn new(points: &'a mut ControlPoints<P>) -> Self {
         Self { points }
     }
@@ -26,14 +36,14 @@ impl<P> EventHandler<GetControlPointsLength> for ControlPointsEventHandler<'_, P
     }
 }
 
-impl EventHandlerMut<AddControlPoint> for ControlPointsEventHandler<'_> {
+impl EventHandlerMut<AddControlPoint> for ControlPointsEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: AddControlPoint) -> HandlerResult<AddControlPoint> {
         self.points.add(event.point);
         Ok(())
     }
 }
 
-impl<P> EventHandlerMut<MovePoint> for ControlPointsEventHandler<'_, P>
+impl<P> EventHandlerMut<MovePoint> for ControlPointsEventHandlerMut<'_, P>
 where
     P: AsRef<Point<f32>> + AsMut<Point<f32>>,
 {
@@ -43,14 +53,14 @@ where
     }
 }
 
-impl<P> EventHandlerMut<DeletePoint> for ControlPointsEventHandler<'_, P> {
+impl<P> EventHandlerMut<DeletePoint> for ControlPointsEventHandlerMut<'_, P> {
     fn handle_mut(&mut self, event: DeletePoint) -> HandlerResult<DeletePoint> {
         self.points.remove(event.id).ok_or_else(|| Error::NoSuchPoint(event.id))?;
         Ok(())
     }
 }
 
-impl<P> EventHandlerMut<MoveCurve> for ControlPointsEventHandler<'_, P>
+impl<P> EventHandlerMut<MoveCurve> for ControlPointsEventHandlerMut<'_, P>
 where
     P: AsRef<Point<f32>> + AsMut<Point<f32>>,
 {
@@ -60,7 +70,7 @@ where
     }
 }
 
-impl<P> EventHandlerMut<RotateCurve> for ControlPointsEventHandler<'_, P>
+impl<P> EventHandlerMut<RotateCurve> for ControlPointsEventHandlerMut<'_, P>
 where
     P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Into<Point<f32>> + Copy,
 {

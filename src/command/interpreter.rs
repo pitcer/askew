@@ -19,7 +19,7 @@ use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolatio
 use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{DelegateEventHandler, DelegateEventHandlerMut, EventHandlerMut};
-use crate::ui::frame::event_handler::CommandEventHandler;
+use crate::ui::frame::event_handler::CommandEventHandlerMut;
 
 pub struct CommandInterpreter<'a> {
     state: ProgramView<'a>,
@@ -33,8 +33,8 @@ impl<'a> CommandInterpreter<'a> {
         Self { state }
     }
 
-    fn command_handler(&mut self) -> CommandEventHandler<'_> {
-        self.state.frame.event_handler(self.state.mode)
+    fn command_handler(&mut self) -> CommandEventHandlerMut<'_> {
+        self.state.frame.event_handler_mut(self.state.mode)
     }
 
     pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {
@@ -63,7 +63,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_get(&mut self, get: Get) -> InterpretResult {
-        let mut handler = self.command_handler();
+        let handler = self.command_handler();
 
         let message = match get {
             Get::ConvexHull => {
@@ -184,7 +184,7 @@ impl<'a> CommandInterpreter<'a> {
             .frame
             .canvas_mut()
             .current_curve_mut()
-            .event_handler()
+            .event_handler_mut()
             .handle_mut(SetTrochoidProperties(prop))?;
         Ok(None)
     }

@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use num_traits::{Num, NumCast};
 
-use crate::canvas::curve::samples::event_handler::SamplesEventHandler;
+use crate::canvas::curve::samples::event_handler::{SamplesEventHandler, SamplesEventHandlerMut};
 
 pub mod event_handler;
 
@@ -17,8 +17,12 @@ impl Samples {
         Self { samples }
     }
 
-    pub fn event_handler(&mut self) -> SamplesEventHandler<'_> {
+    pub fn event_handler(&self) -> SamplesEventHandler<'_> {
         SamplesEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> SamplesEventHandlerMut<'_> {
+        SamplesEventHandlerMut::new(self)
     }
 
     pub fn equally_spaced<T>(&self, range: RangeInclusive<T>) -> impl ExactSizeIterator<Item = T>

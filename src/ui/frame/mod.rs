@@ -8,7 +8,7 @@ use tiny_skia::Pixmap;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::Canvas;
 use crate::config::{CanvasConfig, FrameConfig};
-use crate::ui::frame::event_handler::CommandEventHandler;
+use crate::ui::frame::event_handler::CommandEventHandlerMut;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::properties::FrameProperties;
@@ -66,8 +66,11 @@ impl Frame {
         self.size = size;
     }
 
-    pub fn event_handler<'a>(&'a mut self, mode: &'a mut ModeState) -> CommandEventHandler<'a> {
-        CommandEventHandler::new(self, mode)
+    pub fn event_handler_mut<'a>(
+        &'a mut self,
+        mode: &'a mut ModeState,
+    ) -> CommandEventHandlerMut<'a> {
+        CommandEventHandlerMut::new(self, mode)
     }
 
     pub fn handle_close(&mut self) -> Result<()> {

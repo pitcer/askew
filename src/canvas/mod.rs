@@ -8,7 +8,7 @@ use tiny_skia::PixmapMut;
 use crate::canvas::curve::control_points::{CurvePoints, WeightedPoint};
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::curve::Curve;
-use crate::canvas::event_handler::CanvasEventHandler;
+use crate::canvas::event_handler::{CanvasEventHandler, CanvasEventHandlerMut};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
@@ -24,7 +24,7 @@ use crate::canvas::v2::curve::trochoid::TrochoidCurve;
 use crate::canvas::v2::{DrawOn, Update};
 use crate::config::{CanvasConfig, CurveType};
 use crate::event::canvas::AddPoint;
-use crate::event::{EventHandler, EventHandlerMut};
+use crate::event::EventHandlerMut;
 
 pub mod curve;
 pub mod event_handler;
@@ -127,8 +127,13 @@ impl Canvas {
         self.size = size;
     }
 
-    pub fn event_handler(&mut self) -> CanvasEventHandler<'_> {
+    #[must_use]
+    pub fn event_handler(&self) -> CanvasEventHandler<'_> {
         CanvasEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> CanvasEventHandlerMut<'_> {
+        CanvasEventHandlerMut::new(self)
     }
 
     pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
@@ -153,7 +158,7 @@ impl Canvas {
             let horizontal = random.gen_range(origin.horizontal()..=size.width());
             let vertical = random.gen_range(origin.vertical()..=size.height());
             let point = Point::new(horizontal, vertical);
-            self.event_handler().handle_mut(AddPoint::new(point))?;
+            self.event_handler_mut().handle_mut(AddPoint::new(point))?;
         }
         Ok(())
     }

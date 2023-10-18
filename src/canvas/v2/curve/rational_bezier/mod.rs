@@ -3,7 +3,9 @@ use tiny_skia::PixmapMut;
 use crate::canvas::curve::control_points::WeightedPoint;
 use crate::canvas::v2::base_polyline::BasePolyline;
 use crate::canvas::v2::control_points_curve::ControlPointsCurve;
-use crate::canvas::v2::curve::rational_bezier::event_handler::RationalBezierCurveEventHandler;
+use crate::canvas::v2::curve::rational_bezier::event_handler::{
+    RationalBezierCurveEventHandler, RationalBezierCurveEventHandlerMut,
+};
 use crate::canvas::v2::{DrawOn, Update};
 use crate::{
     canvas::curve::control_points::points::ControlPoints, canvas::curve::samples::Samples,
@@ -43,8 +45,12 @@ impl RationalBezierCurve {
         Self { control_points, polyline, properties, samples }
     }
 
-    pub fn event_handler(&mut self) -> RationalBezierCurveEventHandler<'_> {
+    pub fn event_handler(&self) -> RationalBezierCurveEventHandler<'_> {
         RationalBezierCurveEventHandler::new(self)
+    }
+
+    pub fn event_handler_mut(&mut self) -> RationalBezierCurveEventHandlerMut<'_> {
+        RationalBezierCurveEventHandlerMut::new(self)
     }
 }
 pub type RationalBezierPoints = ControlPoints<RationalBezierPoint>;

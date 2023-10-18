@@ -1,5 +1,7 @@
 use crate::canvas::curve::Curve;
-use crate::canvas::v2::curve::trochoid::event_handler::TrochoidCurveEventHandler;
+use crate::canvas::v2::curve::trochoid::event_handler::{
+    TrochoidCurveEventHandler, TrochoidCurveEventHandlerMut,
+};
 use crate::event::macros::{
     delegate_events, delegate_events_mut, unimplemented_handlers, unimplemented_handlers_mut,
 };
@@ -9,10 +11,20 @@ use crate::event::{
 };
 
 pub struct FormulaCurveEventHandler<'a> {
+    curve: &'a Curve,
+}
+
+pub struct FormulaCurveEventHandlerMut<'a> {
     curve: &'a mut Curve,
 }
 
 impl<'a> FormulaCurveEventHandler<'a> {
+    pub fn new(curve: &'a Curve) -> Self {
+        Self { curve }
+    }
+}
+
+impl<'a> FormulaCurveEventHandlerMut<'a> {
     pub fn new(curve: &'a mut Curve) -> Self {
         Self { curve }
     }
@@ -31,21 +43,21 @@ where
     }
 }
 
-impl<'a, E> DelegateEventMut<E> for FormulaCurveEventHandler<'a>
+impl<'a, E> DelegateEventMut<E> for FormulaCurveEventHandlerMut<'a>
 where
     E: EventMut,
-    for<'b> TrochoidCurveEventHandler<'b>: EventHandlerMut<E>,
+    for<'b> TrochoidCurveEventHandlerMut<'b>: EventHandlerMut<E>,
 {
     fn delegate_mut(&mut self, event: E) -> HandlerResult<E> {
         match self.curve {
-            Curve::Trochoid(curve) => curve.event_handler().handle_mut(event),
+            Curve::Trochoid(curve) => curve.event_handler_mut().handle_mut(event),
             _ => Err(Error::Unimplemented),
         }
     }
 }
 
 delegate_events_mut! {
-    FormulaCurveEventHandler<'_> {
+    FormulaCurveEventHandlerMut<'_> {
         curve::SetSamples,
         curve::formula::SetTrochoidProperties,
     }
@@ -65,7 +77,7 @@ unimplemented_handlers! {
 }
 
 unimplemented_handlers_mut! {
-    FormulaCurveEventHandler<'_> {
+    FormulaCurveEventHandlerMut<'_> {
         curve::control_points::DeletePoint,
         curve::control_points::MovePoint,
         curve::control_points::AddControlPoint,

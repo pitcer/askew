@@ -218,14 +218,14 @@ impl WindowRunner {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
-                self.frame.event_handler(&mut self.mode).delegate_mut(MoveCurve::new(shift))?;
+                self.frame.event_handler_mut(&mut self.mode).delegate_mut(MoveCurve::new(shift))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::RotateCurve { id, angle_radians } => {
                 self.frame
-                    .event_handler(&mut self.mode)
+                    .event_handler_mut(&mut self.mode)
                     .delegate_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
@@ -244,7 +244,8 @@ impl WindowRunner {
             }
             Request::GetPosition { id: _id } => {
                 // TODO: get position of curve specified by id
-                let center = self.frame.event_handler(&mut self.mode).delegate(GetCurveCenter)?;
+                let center =
+                    self.frame.event_handler_mut(&mut self.mode).delegate(GetCurveCenter)?;
                 // TODO: return None instead of (0, 0)
                 let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
                 responder.respond(Response::GetPosition {
