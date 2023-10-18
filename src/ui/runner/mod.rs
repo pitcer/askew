@@ -17,7 +17,6 @@ use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
 use crate::ui::input_handler::Input;
 use crate::ui::input_handler::InputHandler;
-use crate::ui::mode::ModeState;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
@@ -37,7 +36,6 @@ pub struct WindowRunner {
     frame: Frame,
     painter: Painter,
     command: CommandState,
-    mode: ModeState,
     event_handler: WindowEventHandler,
     ipc_server: Option<IpcServerHandle>,
     tasks: Tasks,
@@ -54,7 +52,6 @@ impl WindowRunner {
         sender: RunnerSender,
     ) -> Result<Self> {
         let command = CommandState::new();
-        let mode = ModeState::new();
         let event_handler = WindowEventHandler::new();
         let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
@@ -66,7 +63,6 @@ impl WindowRunner {
             frame,
             painter,
             command,
-            mode,
             event_handler,
             ipc_server,
             tasks,
@@ -89,12 +85,7 @@ impl WindowRunner {
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
                 let input = self.handle_window_event(event, control_flow)?;
                 if let Some(input) = input {
-                    let state = ProgramView::new(
-                        control_flow,
-                        &mut self.mode,
-                        &mut self.frame,
-                        &mut self.tasks,
-                    );
+                    let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
                     let handler = InputHandler::new(&mut self.command, state);
                     let result = handler.handle_input(input);
                     if let Err(error) = result {
@@ -110,12 +101,7 @@ impl WindowRunner {
                 for command in mem::take(&mut self.commands) {
                     log::debug!("<cyan>Initial command input:</> '{command}'");
 
-                    let state = ProgramView::new(
-                        control_flow,
-                        &mut self.mode,
-                        &mut self.frame,
-                        &mut self.tasks,
-                    );
+                    let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
                     let result = command::execute(&command, state)?;
 
                     log::info!("Initial command result: `{result:?}`");
@@ -138,7 +124,7 @@ impl WindowRunner {
         let size = self.window.size_rectangle();
         let mut buffer = self.window.buffer_mut()?;
         let panel = Panel::from_buffer(&mut buffer, size);
-        let view = WindowView::new(&self.frame, &self.command, &self.mode);
+        let view = WindowView::new(&self.frame, &self.command);
 
         self.painter.paint(view, panel)?;
 
@@ -158,8 +144,6 @@ impl WindowRunner {
                 Ok(None)
             }
             WindowEvent::CloseRequested => {
-                self.frame.handle_close()?;
-
                 if let Some(handle) = self.ipc_server.take() {
                     handle.close();
                 }
@@ -178,12 +162,7 @@ impl WindowRunner {
     ) -> Result<()> {
         match request {
             RunnerRequest::IpcMessage(message) => {
-                let state = ProgramView::new(
-                    control_flow,
-                    &mut self.mode,
-                    &mut self.frame,
-                    &mut self.tasks,
-                );
+                let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
                 let reply = message.handle(state);
                 let handle = self.ipc_server.as_ref().expect("IPC server should exist");
                 handle.send(reply)?;
@@ -218,14 +197,14 @@ impl WindowRunner {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
-                self.frame.event_handler_mut(&mut self.mode).delegate_mut(MoveCurve::new(shift))?;
+                self.frame.event_handler_mut().delegate_mut(MoveCurve::new(shift))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::RotateCurve { id, angle_radians } => {
                 self.frame
-                    .event_handler_mut(&mut self.mode)
+                    .event_handler_mut()
                     .delegate_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
@@ -244,8 +223,7 @@ impl WindowRunner {
             }
             Request::GetPosition { id: _id } => {
                 // TODO: get position of curve specified by id
-                let center =
-                    self.frame.event_handler_mut(&mut self.mode).delegate(GetCurveCenter)?;
+                let center = self.frame.event_handler_mut().delegate(GetCurveCenter)?;
                 // TODO: return None instead of (0, 0)
                 let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
                 responder.respond(Response::GetPosition {

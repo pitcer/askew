@@ -1,11 +1,10 @@
-use crate::ui::frame::Frame;
-use crate::ui::mode::ModeState;
-use crate::ui::runner::task::Tasks;
 use winit::event_loop::ControlFlow;
+
+use crate::ui::frame::Frame;
+use crate::ui::runner::task::Tasks;
 
 pub struct ProgramView<'a> {
     pub control_flow: &'a mut ControlFlow,
-    pub mode: &'a mut ModeState,
     pub frame: &'a mut Frame,
     pub tasks: &'a mut Tasks,
 }
@@ -13,10 +12,9 @@ pub struct ProgramView<'a> {
 impl<'a> ProgramView<'a> {
     pub fn new(
         control_flow: &'a mut ControlFlow,
-        mode: &'a mut ModeState,
         frame: &'a mut Frame,
         tasks: &'a mut Tasks,
     ) -> Self {
-        Self { control_flow, mode, frame, tasks }
+        Self { control_flow, frame, tasks }
     }
 }

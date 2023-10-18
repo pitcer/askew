@@ -12,7 +12,7 @@ use crate::ui::frame::event_handler::CommandEventHandlerMut;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::properties::FrameProperties;
-use crate::ui::mode::ModeState;
+use crate::ui::mode::{Mode, ModeState};
 
 pub mod event_handler;
 pub mod panel;
@@ -24,6 +24,7 @@ pub struct Frame {
     size: Rectangle<u32>,
     properties: FrameProperties,
     background: Option<Pixmap>,
+    mode: ModeState,
 }
 
 impl Frame {
@@ -45,8 +46,9 @@ impl Frame {
         }
 
         let properties = FrameProperties::new(frame_config);
+        let mode = ModeState::new();
 
-        Ok(Self { canvas, size, properties, background })
+        Ok(Self { canvas, size, properties, background, mode })
     }
 
     fn load_background(path: impl AsRef<Path>) -> Result<Pixmap> {
@@ -66,15 +68,8 @@ impl Frame {
         self.size = size;
     }
 
-    pub fn event_handler_mut<'a>(
-        &'a mut self,
-        mode: &'a mut ModeState,
-    ) -> CommandEventHandlerMut<'a> {
-        CommandEventHandlerMut::new(self, mode)
-    }
-
-    pub fn handle_close(&mut self) -> Result<()> {
-        Ok(())
+    pub fn event_handler_mut(&mut self) -> CommandEventHandlerMut<'_> {
+        CommandEventHandlerMut::new(self)
     }
 
     /// If path is `None`, then default image save path from config will be used.
@@ -136,5 +131,13 @@ impl Frame {
     #[must_use]
     pub fn properties(&self) -> &FrameProperties {
         &self.properties
+    }
+
+    pub fn current_mode(&self) -> Mode {
+        self.mode.as_mode()
+    }
+
+    pub fn mode_mut(&mut self) -> &mut ModeState {
+        &mut self.mode
     }
 }

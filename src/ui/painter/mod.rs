@@ -48,7 +48,7 @@ impl Painter {
         name.truncate(6);
         self.status_layout.setup(&self.font_loader).append_text(&format!(
             "{} {} {}/{} {}",
-            view.mode.as_mode(),
+            view.frame.current_mode(),
             name,
             canvas.properties().current_curve + 1,
             canvas.curves().len(),

@@ -34,7 +34,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn command_handler(&mut self) -> CommandEventHandlerMut<'_> {
-        self.state.frame.event_handler_mut(self.state.mode)
+        self.state.frame.event_handler_mut()
     }
 
     pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {

@@ -17,16 +17,15 @@ use crate::event::{
 };
 use crate::event::{EventHandler, HandlerResult};
 use crate::ui::frame::Frame;
-use crate::ui::mode::{Mode, ModeState};
+use crate::ui::mode::Mode;
 
 pub struct CommandEventHandlerMut<'a> {
     frame: &'a mut Frame,
-    mode: &'a mut ModeState,
 }
 
 impl<'a> CommandEventHandlerMut<'a> {
-    pub fn new(frame: &'a mut Frame, mode: &'a mut ModeState) -> Self {
-        Self { frame, mode }
+    pub fn new(frame: &'a mut Frame) -> Self {
+        Self { frame }
     }
 }
 
@@ -68,7 +67,7 @@ impl EventHandlerMut<ChangeWeight> for CommandEventHandlerMut<'_> {
             Change::Decrease => 1.5,
             Change::Increase => -1.5,
         };
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => {
                 self.delegate_mut(RotateCurve::new(std::f32::consts::PI * factor * 4.0 / 180.0))?;
             }
@@ -85,7 +84,7 @@ impl EventHandlerMut<ChangeWeight> for CommandEventHandlerMut<'_> {
 impl EventHandlerMut<MouseClick> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: MouseClick) -> HandlerResult<MouseClick> {
         let click_point = scale_position(event.0);
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => {
                 let Some(center) = self.delegate(GetCurveCenter)? else {
                     return Ok(());
@@ -118,7 +117,7 @@ impl EventHandlerMut<MouseClick> for CommandEventHandlerMut<'_> {
 impl EventHandlerMut<MousePress> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: MousePress) -> HandlerResult<MousePress> {
         let click_point = scale_position(event.0);
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => {
                 let Some(center) = self.delegate(GetCurveCenter)? else {
                     return Ok(());
@@ -145,7 +144,7 @@ impl EventHandlerMut<MovePoint> for CommandEventHandlerMut<'_> {
             Direction::Left => Vector::new(-4.0, 0.0),
             Direction::Right => Vector::new(4.0, 0.0),
         };
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => self.delegate_mut(MoveCurve::new(direction))?,
             Mode::Point => self.delegate_mut(MoveCurrentPoint::new(direction))?,
             Mode::PointAdd | Mode::PointSelect => {}
@@ -156,7 +155,7 @@ impl EventHandlerMut<MovePoint> for CommandEventHandlerMut<'_> {
 
 impl EventHandlerMut<Delete> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, _event: Delete) -> HandlerResult<Delete> {
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => self.delegate_mut(DeleteCurve)?,
             Mode::Point => self.delegate_mut(DeleteCurrentPoint)?,
             Mode::PointAdd | Mode::PointSelect => {}
@@ -171,7 +170,7 @@ impl EventHandlerMut<ChangeIndex> for CommandEventHandlerMut<'_> {
             Change::Decrease => -1,
             Change::Increase => 1,
         };
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => self.delegate_mut(ChangeCurrentCurveIndex::new(change))?,
             Mode::Point => self.delegate_mut(ChangeCurrentPointIndex::new(change))?,
             Mode::PointAdd | Mode::PointSelect => {}
@@ -182,9 +181,9 @@ impl EventHandlerMut<ChangeIndex> for CommandEventHandlerMut<'_> {
 
 impl EventHandlerMut<Add> for CommandEventHandlerMut<'_> {
     fn handle_mut(&mut self, _event: Add) -> HandlerResult<Add> {
-        match self.mode.as_mode() {
+        match self.frame.current_mode() {
             Mode::Curve => self.delegate_mut(AddCurve)?,
-            Mode::Point => self.mode.enter_add(),
+            Mode::Point => self.frame.mode_mut().enter_add(),
             Mode::PointAdd | Mode::PointSelect => {}
         }
         Ok(())

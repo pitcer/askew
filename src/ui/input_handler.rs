@@ -19,7 +19,7 @@ impl<'a> InputHandler<'a> {
     pub fn handle_input(self, input: Input) -> Result<()> {
         log::debug!("<cyan><b>Event received from input:</>\n<bright_black>{input:?}</>");
 
-        let mut handler = self.state.frame.event_handler_mut(self.state.mode);
+        let mut handler = self.state.frame.event_handler_mut();
 
         match self.command {
             CommandState::Closed(_) => {
@@ -68,18 +68,19 @@ impl<'a> InputHandler<'a> {
     fn exit_mode(self) {
         if let CommandState::Closed(command) = self.command {
             command.clear_message();
-            self.state.mode.exit();
+            self.state.frame.mode_mut().exit();
         } else {
             self.command.close();
         }
     }
 
     fn change_mode(self, mode: Mode) {
+        let mode_state = self.state.frame.mode_mut();
         match mode {
-            Mode::Curve => self.state.mode.exit(),
-            Mode::Point => self.state.mode.enter_point(),
-            Mode::PointAdd => self.state.mode.enter_add(),
-            Mode::PointSelect => self.state.mode.select(),
+            Mode::Curve => mode_state.exit(),
+            Mode::Point => mode_state.enter_point(),
+            Mode::PointAdd => mode_state.enter_add(),
+            Mode::PointSelect => mode_state.select(),
         }
     }
 }
@@ -96,10 +97,6 @@ impl Input {
         Self { event, text }
     }
 }
-
-// pub struct InputProgramState<'a> {
-//
-// }
 
 #[derive(Debug)]
 pub enum InputEvent {
