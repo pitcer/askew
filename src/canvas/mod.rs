@@ -12,8 +12,8 @@ use crate::canvas::event_handler::{CanvasEventHandler, CanvasEventHandlerMut};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
-use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::control_points_curve::ControlPointsCurve;
+use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
 use crate::canvas::v2::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
 use crate::canvas::v2::curve::polyline::PolylineCurve;
@@ -69,16 +69,18 @@ impl Canvas {
         match curve_type {
             CurveType::Polyline => {
                 let mut curve = PolylineCurve::new(
-                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
-                    BasePolyline::from_config(config),
+                    CurvePoints::new(points),
+                    VisualControlPoints::from_config(config),
+                    VisualBaseLine::from_config(config),
                 );
                 curve.update();
                 Curve::Polyline(Box::new(curve))
             }
             CurveType::Interpolation => {
                 let mut curve = InterpolationCurve::new(
-                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
-                    BasePolyline::from_config(config),
+                    CurvePoints::new(points),
+                    VisualControlPoints::from_config(config),
+                    VisualBaseLine::from_config(config),
                     InterpolationCurveProperties::new(config.default_interpolation_nodes),
                     samples,
                 );
@@ -87,8 +89,9 @@ impl Canvas {
             }
             CurveType::Bezier => {
                 let mut curve = BezierCurve::new(
-                    ControlPointsCurve::from_config(CurvePoints::new(points), config),
-                    BasePolyline::from_config(config),
+                    CurvePoints::new(points),
+                    VisualControlPoints::from_config(config),
+                    VisualBaseLine::from_config(config),
                     BezierCurveProperties::new(config.default_bezier_algorithm),
                     samples,
                 );
@@ -101,8 +104,9 @@ impl Canvas {
                     .map(|point| WeightedPoint::new(point, config.default_rational_bezier_weight))
                     .collect();
                 let mut curve = RationalBezierCurve::new(
-                    ControlPointsCurve::from_config(RationalBezierPoints::new(points), config),
-                    BasePolyline::from_config(config),
+                    RationalBezierPoints::new(points),
+                    VisualControlPoints::from_config(config),
+                    VisualBaseLine::from_config(config),
                     RationalBezierCurveProperties::new(config.default_rational_bezier_algorithm),
                     samples,
                 );
@@ -110,7 +114,7 @@ impl Canvas {
                 Curve::RationalBezier(Box::new(curve))
             }
             CurveType::Trochoid => Curve::Trochoid(Box::new(TrochoidCurve::new(
-                BasePolyline::from_config(config),
+                VisualBaseLine::from_config(config),
                 config.default_trochoid_properties,
                 samples,
             ))),

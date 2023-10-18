@@ -6,15 +6,18 @@ use crate::canvas::v2::DrawOn;
 use crate::config::rgb::Rgb;
 use crate::config::CanvasConfig;
 
+pub type OpenBaseLine = VisualBaseLine<false>;
+pub type ClosedBaseLine = VisualBaseLine<true>;
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct BasePolyline<const CLOSED: bool> {
+pub struct VisualBaseLine<const CLOSED: bool> {
     pub line: VisualLine<CLOSED>,
     pub points: VisualPoint,
     #[serde(skip)]
     point_buffer: Vec<Point>,
 }
 
-impl<const CLOSED: bool> BasePolyline<CLOSED> {
+impl<const CLOSED: bool> VisualBaseLine<CLOSED> {
     #[must_use]
     pub fn new(line: VisualLine<CLOSED>, points: VisualPoint) -> Self {
         let point_buffer = Vec::new();
@@ -46,14 +49,14 @@ impl<const CLOSED: bool> BasePolyline<CLOSED> {
     }
 }
 
-impl<const CLOSED: bool> DrawOn for BasePolyline<CLOSED> {
+impl<const CLOSED: bool> DrawOn for VisualBaseLine<CLOSED> {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
         self.line.draw_on(pixmap);
         self.points.draw_on(pixmap);
     }
 }
 
-impl<const CLOSED: bool> Default for BasePolyline<CLOSED> {
+impl<const CLOSED: bool> Default for VisualBaseLine<CLOSED> {
     fn default() -> Self {
         Self {
             line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE)),

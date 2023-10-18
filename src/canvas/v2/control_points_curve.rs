@@ -15,9 +15,7 @@ pub type ControlLine = VisualLine<false>;
 pub type ConvexHullLine = VisualLine<true>;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ControlPointsCurve<P> {
-    pub points: ControlPoints<P>,
-
+pub struct VisualControlPoints {
     pub control_points: VisualPoint,
     // TODO: add current control point
     pub control_line: ControlLine,
@@ -37,30 +35,21 @@ pub struct ControlPointsCurveProperties {
     pub center_of_mass: VisualPoint,
 }
 
-impl<P> ControlPointsCurve<P> {
+impl VisualControlPoints {
     #[must_use]
     pub fn new(
-        points: ControlPoints<P>,
         control_points: VisualPoint,
         control_line: ControlLine,
         convex_hull: ConvexHullLine,
         center_of_mass: VisualPoint,
     ) -> Self {
         let convex_hull_buffer = Vec::new();
-        Self {
-            points,
-            control_points,
-            control_line,
-            convex_hull,
-            convex_hull_buffer,
-            center_of_mass,
-        }
+        Self { control_points, control_line, convex_hull, convex_hull_buffer, center_of_mass }
     }
 
     #[must_use]
-    pub fn from_config(points: ControlPoints<P>, config: &CanvasConfig) -> Self {
+    pub fn from_config(config: &CanvasConfig) -> Self {
         Self {
-            points,
             control_points: VisualPoint::new(VisualPointProperties::new(
                 true,
                 config.default_point_radius,
@@ -86,24 +75,26 @@ impl<P> ControlPointsCurve<P> {
     }
 }
 
-impl<P> ControlPointsCurve<P>
-where
-    P: Into<SkiaPoint> + Copy,
-    CurvePoint: From<P>,
-{
-    pub fn rebuild_paths(&mut self) {
-        self.control_points.rebuild_path(self.points.copied_iterator());
-        self.control_line.rebuild_path(self.points.copied_iterator());
+impl VisualControlPoints {
+    pub fn rebuild_paths<P>(&mut self, points: &ControlPoints<P>)
+    where
+        P: Into<SkiaPoint> + Into<CurvePoint> + Copy,
+    {
+        self.control_points.rebuild_path(points.copied_iterator());
+        self.control_line.rebuild_path(points.copied_iterator());
 
-        self.rebuild_convex_hull_path();
+        self.rebuild_convex_hull_path(points);
 
-        let center_of_mass = self.points.center_of_mass().map(SkiaPoint::from).into_iter();
+        let center_of_mass = points.center_of_mass().map(SkiaPoint::from).into_iter();
         self.center_of_mass.rebuild_path(center_of_mass);
     }
 
-    fn rebuild_convex_hull_path(&mut self) {
+    fn rebuild_convex_hull_path<P>(&mut self, points: &ControlPoints<P>)
+    where
+        P: Into<SkiaPoint> + Into<CurvePoint> + Copy,
+    {
         self.convex_hull_buffer.clear();
-        let points = self.points.copied_iterator().map(|point| CurvePoint::from(point));
+        let points = points.copied_iterator().map(Into::<CurvePoint>::into);
         self.convex_hull_buffer.extend(points);
         let graham_scan = GrahamScan::new(mem::take(&mut self.convex_hull_buffer));
         self.convex_hull_buffer = graham_scan.convex_hull();
@@ -112,7 +103,7 @@ where
     }
 }
 
-impl<P> DrawOn for ControlPointsCurve<P> {
+impl DrawOn for VisualControlPoints {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
         self.control_line.draw_on(pixmap);
         self.convex_hull.draw_on(pixmap);
@@ -121,13 +112,9 @@ impl<P> DrawOn for ControlPointsCurve<P> {
     }
 }
 
-impl<P> Default for ControlPointsCurve<P>
-where
-    P: Default,
-{
+impl Default for VisualControlPoints {
     fn default() -> Self {
         Self {
-            points: ControlPoints::default(),
             control_points: VisualPoint::new(VisualPointProperties::new(true, 4.0, Rgb::WHITE)),
             control_line: VisualLine::new(VisualLineProperties::new(false, 4.0, Rgb::WHITE)),
             convex_hull: VisualLine::new(VisualLineProperties::new(false, 4.0, Rgb::WHITE)),

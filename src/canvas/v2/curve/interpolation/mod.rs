@@ -1,7 +1,8 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::control_points_curve::ControlPointsCurve;
+use crate::canvas::curve::control_points::points::ControlPoints;
+use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::interpolation::event_handler::{
     InterpolationCurveEventHandler, InterpolationCurveEventHandlerMut,
 };
@@ -15,8 +16,9 @@ pub mod event_handler;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct InterpolationCurve {
-    pub control_points: ControlPointsCurve<CurvePoint>,
-    pub polyline: BasePolyline<false>,
+    pub points: ControlPoints<CurvePoint>,
+    pub control_points: VisualControlPoints,
+    pub polyline: VisualBaseLine<false>,
     pub properties: InterpolationCurveProperties,
     pub samples: Samples,
 }
@@ -36,12 +38,13 @@ pub enum InterpolationNodes {
 impl InterpolationCurve {
     #[must_use]
     pub fn new(
-        control_points: ControlPointsCurve<CurvePoint>,
-        polyline: BasePolyline<false>,
+        points: ControlPoints<CurvePoint>,
+        control_points: VisualControlPoints,
+        polyline: VisualBaseLine<false>,
         properties: InterpolationCurveProperties,
         samples: Samples,
     ) -> Self {
-        Self { control_points, polyline, properties, samples }
+        Self { points, control_points, polyline, properties, samples }
     }
 
     pub fn event_handler(&self) -> InterpolationCurveEventHandler<'_> {
@@ -55,8 +58,8 @@ impl InterpolationCurve {
 
 impl Update for InterpolationCurve {
     fn update(&mut self) {
-        if self.control_points.points.length() > 1 {
-            let length = self.control_points.points.length();
+        if self.points.length() > 1 {
+            let length = self.points.length();
             let (ts, first, last) = match self.properties.nodes {
                 InterpolationNodes::Chebyshev => {
                     let ts = (1..=length)
@@ -75,7 +78,7 @@ impl Update for InterpolationCurve {
             };
 
             let (xs, ys): (Vec<_>, Vec<_>) =
-                self.control_points.points.iterator().map(|point| (*point).into()).unzip();
+                self.points.iterator().map(|point| (*point).into()).unzip();
             let path = self
                 .samples
                 .equally_spaced(first..=last)
@@ -83,7 +86,7 @@ impl Update for InterpolationCurve {
             self.polyline.rebuild_paths(path);
         }
 
-        self.control_points.rebuild_paths();
+        self.control_points.rebuild_paths(&self.points);
     }
 }
 

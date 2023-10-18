@@ -41,7 +41,7 @@ where
     type Delegate<'b> = ControlPointsEventHandler<'b, RationalBezierPoint> where Self: 'b;
 
     fn delegate_handler(&self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler()
+        self.curve.points.event_handler()
     }
 }
 
@@ -53,13 +53,13 @@ where
     type Delegate<'b> = ControlPointsEventHandlerMut<'b, RationalBezierPoint> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler_mut()
+        self.curve.points.event_handler_mut()
     }
 }
 
 impl EventHandlerMut<ChangeWeight> for RationalBezierCurveEventHandlerMut<'_> {
     fn handle_mut(&mut self, event: ChangeWeight) -> HandlerResult<ChangeWeight> {
-        if let Some(point) = self.curve.control_points.points.get_mut(event.id) {
+        if let Some(point) = self.curve.points.get_mut(event.id) {
             *point.weight_mut() = event.weight;
             Ok(())
         } else {
@@ -73,14 +73,14 @@ impl EventHandlerMut<AddWeightedControlPoint> for RationalBezierCurveEventHandle
         &mut self,
         event: AddWeightedControlPoint,
     ) -> HandlerResult<AddWeightedControlPoint> {
-        self.curve.control_points.points.add(event.point);
+        self.curve.points.add(event.point);
         Ok(())
     }
 }
 
 impl EventHandler<GetWeight> for RationalBezierCurveEventHandler<'_> {
     fn handle(&self, event: GetWeight) -> HandlerResult<GetWeight> {
-        if let Some(point) = self.curve.control_points.points.get(event.id) {
+        if let Some(point) = self.curve.points.get(event.id) {
             Ok(point.weight())
         } else {
             Err(Error::NoSuchPoint(event.id))

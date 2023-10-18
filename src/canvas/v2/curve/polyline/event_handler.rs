@@ -38,7 +38,7 @@ where
     type Delegate<'b> = ControlPointsEventHandler<'b> where Self: 'b;
 
     fn delegate_handler(&self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler()
+        self.curve.points.event_handler()
     }
 }
 
@@ -50,7 +50,7 @@ where
     type Delegate<'b> = ControlPointsEventHandlerMut<'b> where Self: 'b;
 
     fn delegate_handler_mut(&mut self) -> Self::Delegate<'_> {
-        self.curve.control_points.points.event_handler_mut()
+        self.curve.points.event_handler_mut()
     }
 }
 

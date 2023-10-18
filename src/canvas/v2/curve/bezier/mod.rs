@@ -1,10 +1,11 @@
 use tiny_skia::PixmapMut;
 
+use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math;
-use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::control_points_curve::ControlPointsCurve;
+use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::bezier::event_handler::{
     BezierCurveEventHandler, BezierCurveEventHandlerMut,
 };
@@ -14,8 +15,9 @@ pub mod event_handler;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BezierCurve {
-    pub control_points: ControlPointsCurve<CurvePoint>,
-    pub polyline: BasePolyline<false>,
+    pub points: ControlPoints<CurvePoint>,
+    pub control_points: VisualControlPoints,
+    pub polyline: VisualBaseLine<false>,
     pub properties: BezierCurveProperties,
     pub samples: Samples,
 }
@@ -28,12 +30,13 @@ pub struct BezierCurveProperties {
 impl BezierCurve {
     #[must_use]
     pub fn new(
-        control_points: ControlPointsCurve<CurvePoint>,
-        polyline: BasePolyline<false>,
+        points: ControlPoints<CurvePoint>,
+        control_points: VisualControlPoints,
+        polyline: VisualBaseLine<false>,
         properties: BezierCurveProperties,
         samples: Samples,
     ) -> Self {
-        Self { control_points, polyline, properties, samples }
+        Self { points, control_points, polyline, properties, samples }
     }
 
     pub fn event_handler(&self) -> BezierCurveEventHandler<'_> {
@@ -47,8 +50,8 @@ impl BezierCurve {
 
 impl Update for BezierCurve {
     fn update(&mut self) {
-        if self.control_points.points.length() > 1 {
-            let points = self.control_points.points.as_slice();
+        if self.points.length() > 1 {
+            let points = self.points.as_slice();
 
             let path = self.samples.equally_spaced(0.0..=1.0);
             match self.properties.algorithm {
@@ -61,7 +64,7 @@ impl Update for BezierCurve {
             };
         }
 
-        self.control_points.rebuild_paths();
+        self.control_points.rebuild_paths(&self.points);
     }
 }
 

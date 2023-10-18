@@ -80,12 +80,11 @@ impl EventHandlerMut<SetCurveType> for CanvasEventHandlerMut<'_> {
         replace_with::replace_with_or_abort(curve, |curve| {
             let samples = curve.event_handler().handle(GetSamples).ok();
             let points = match curve {
-                Curve::Polyline(curve) => Some(curve.control_points.points.into_inner()),
-                Curve::Interpolation(curve) => Some(curve.control_points.points.into_inner()),
-                Curve::Bezier(curve) => Some(curve.control_points.points.into_inner()),
+                Curve::Polyline(curve) => Some(curve.points.into_inner()),
+                Curve::Interpolation(curve) => Some(curve.points.into_inner()),
+                Curve::Bezier(curve) => Some(curve.points.into_inner()),
                 Curve::RationalBezier(curve) => Some(
                     curve
-                        .control_points
                         .points
                         .into_inner()
                         .into_iter()

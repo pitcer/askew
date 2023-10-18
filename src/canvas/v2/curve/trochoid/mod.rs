@@ -2,7 +2,7 @@ use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math::point::Point;
-use crate::canvas::v2::base_polyline::BasePolyline;
+use crate::canvas::v2::base_polyline::OpenBaseLine;
 use crate::canvas::v2::curve::trochoid::event_handler::{
     TrochoidCurveEventHandler, TrochoidCurveEventHandlerMut,
 };
@@ -12,7 +12,7 @@ pub mod event_handler;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct TrochoidCurve {
-    pub polyline: BasePolyline<false>,
+    pub base_line: OpenBaseLine,
     pub properties: TrochoidCurveProperties,
     pub samples: Samples,
 }
@@ -20,11 +20,11 @@ pub struct TrochoidCurve {
 impl TrochoidCurve {
     #[must_use]
     pub fn new(
-        polyline: BasePolyline<false>,
+        base_line: OpenBaseLine,
         properties: TrochoidCurveProperties,
         samples: Samples,
     ) -> Self {
-        Self { polyline, properties, samples }
+        Self { base_line, properties, samples }
     }
 
     pub fn event_handler(&self) -> TrochoidCurveEventHandler<'_> {
@@ -46,13 +46,13 @@ impl Update for TrochoidCurve {
             .samples
             .equally_spaced(range_start..=range_end)
             .map(move |t| Point::new(x(t) * 200.0 + 250.0, y(t) * 200.0 + 250.0));
-        self.polyline.rebuild_paths(path);
+        self.base_line.rebuild_paths(path);
     }
 }
 
 impl DrawOn for TrochoidCurve {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
-        self.polyline.draw_on(pixmap);
+        self.base_line.draw_on(pixmap);
     }
 }
 

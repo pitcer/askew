@@ -24,6 +24,7 @@ pub enum Curve {
 }
 
 impl Curve {
+    #[must_use]
     pub fn event_handler(&self) -> CurveEventHandler<'_> {
         CurveEventHandler::new(self)
     }

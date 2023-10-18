@@ -1,8 +1,9 @@
 use tiny_skia::PixmapMut;
 
+use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
-use crate::canvas::v2::base_polyline::BasePolyline;
-use crate::canvas::v2::control_points_curve::ControlPointsCurve;
+use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::polyline::event_handler::{
     PolylineCurveEventHandler, PolylineCurveEventHandlerMut,
 };
@@ -12,19 +13,22 @@ pub mod event_handler;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PolylineCurve {
-    pub control_points: ControlPointsCurve<CurvePoint>,
-    pub polyline: BasePolyline<false>,
+    pub points: ControlPoints<CurvePoint>,
+    pub control_points: VisualControlPoints,
+    pub polyline: VisualBaseLine<false>,
 }
 
 impl PolylineCurve {
     #[must_use]
     pub fn new(
-        control_points: ControlPointsCurve<CurvePoint>,
-        polyline: BasePolyline<false>,
+        points: ControlPoints<CurvePoint>,
+        control_points: VisualControlPoints,
+        polyline: VisualBaseLine<false>,
     ) -> Self {
-        Self { control_points, polyline }
+        Self { points, control_points, polyline }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> PolylineCurveEventHandler<'_> {
         PolylineCurveEventHandler::new(self)
     }
@@ -36,10 +40,10 @@ impl PolylineCurve {
 
 impl Update for PolylineCurve {
     fn update(&mut self) {
-        let points = self.control_points.points.copied_iterator();
+        let points = self.points.copied_iterator();
         self.polyline.rebuild_paths(points);
 
-        self.control_points.rebuild_paths();
+        self.control_points.rebuild_paths(&self.points);
     }
 }
 
