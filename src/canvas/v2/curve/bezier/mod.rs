@@ -39,6 +39,7 @@ impl BezierCurve {
         Self { points, control_points, polyline, properties, samples }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> BezierCurveEventHandler<'_> {
         BezierCurveEventHandler::new(self)
     }

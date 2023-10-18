@@ -19,6 +19,7 @@ pub struct PolylineCurveEventHandlerMut<'a> {
 }
 
 impl<'a> PolylineCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a PolylineCurve) -> Self {
         Self { curve }
     }

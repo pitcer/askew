@@ -21,6 +21,7 @@ impl<T> ControlPoints<T> {
         Self { points }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> ControlPointsEventHandler<'_, T> {
         ControlPointsEventHandler::new(self)
     }

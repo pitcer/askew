@@ -17,6 +17,7 @@ impl Samples {
         Self { samples }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> SamplesEventHandler<'_> {
         SamplesEventHandler::new(self)
     }

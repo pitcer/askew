@@ -11,6 +11,7 @@ pub struct SamplesEventHandlerMut<'a> {
 }
 
 impl<'a> SamplesEventHandler<'a> {
+    #[must_use]
     pub fn new(samples: &'a Samples) -> Self {
         Self { samples }
     }

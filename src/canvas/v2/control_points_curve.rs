@@ -16,23 +16,16 @@ pub type ConvexHullLine = VisualLine<true>;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualControlPoints {
-    pub control_points: VisualPoint,
+    control_points: VisualPoint,
     // TODO: add current control point
-    pub control_line: ControlLine,
+    control_line: ControlLine,
 
+    // TODO: make private
     pub convex_hull: ConvexHullLine,
     #[serde(skip)]
     convex_hull_buffer: Vec<CurvePoint>,
 
-    pub center_of_mass: VisualPoint,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ControlPointsCurveProperties {
-    pub control_points: VisualPoint,
-    pub control_line: ControlLine,
-    pub convex_hull: ConvexHullLine,
-    pub center_of_mass: VisualPoint,
+    center_of_mass: VisualPoint,
 }
 
 impl VisualControlPoints {
@@ -73,9 +66,7 @@ impl VisualControlPoints {
             )),
         }
     }
-}
 
-impl VisualControlPoints {
     pub fn rebuild_paths<P>(&mut self, points: &ControlPoints<P>)
     where
         P: Into<SkiaPoint> + Into<CurvePoint> + Copy,

@@ -11,8 +11,8 @@ pub type ClosedBaseLine = VisualBaseLine<true>;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualBaseLine<const CLOSED: bool> {
-    pub line: VisualLine<CLOSED>,
-    pub points: VisualPoint,
+    line: VisualLine<CLOSED>,
+    points: VisualPoint,
     #[serde(skip)]
     point_buffer: Vec<Point>,
 }

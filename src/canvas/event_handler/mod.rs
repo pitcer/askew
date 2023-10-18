@@ -24,6 +24,7 @@ pub struct CanvasEventHandlerMut<'a> {
 }
 
 impl<'a> CanvasEventHandler<'a> {
+    #[must_use]
     pub fn new(canvas: &'a Canvas) -> Self {
         Self { canvas }
     }
@@ -34,6 +35,7 @@ impl<'a> CanvasEventHandlerMut<'a> {
         Self { canvas }
     }
 
+    #[must_use]
     pub fn as_immut(&'a self) -> CanvasEventHandler<'a> {
         CanvasEventHandler::new(self.canvas)
     }

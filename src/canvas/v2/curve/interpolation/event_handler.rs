@@ -21,6 +21,7 @@ pub struct InterpolationCurveEventHandlerMut<'a> {
 }
 
 impl<'a> InterpolationCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a InterpolationCurve) -> Self {
         Self { curve }
     }

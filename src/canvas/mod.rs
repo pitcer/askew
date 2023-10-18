@@ -66,59 +66,47 @@ impl Canvas {
     ) -> Curve {
         let points = points.unwrap_or_default();
         let samples = Samples::new(samples.unwrap_or(config.curve_samples) as usize);
-        match curve_type {
-            CurveType::Polyline => {
-                let mut curve = PolylineCurve::new(
-                    CurvePoints::new(points),
-                    VisualControlPoints::from_config(config),
-                    VisualBaseLine::from_config(config),
-                );
-                curve.update();
-                Curve::Polyline(Box::new(curve))
-            }
-            CurveType::Interpolation => {
-                let mut curve = InterpolationCurve::new(
-                    CurvePoints::new(points),
-                    VisualControlPoints::from_config(config),
-                    VisualBaseLine::from_config(config),
-                    InterpolationCurveProperties::new(config.default_interpolation_nodes),
-                    samples,
-                );
-                curve.update();
-                Curve::Interpolation(Box::new(curve))
-            }
-            CurveType::Bezier => {
-                let mut curve = BezierCurve::new(
-                    CurvePoints::new(points),
-                    VisualControlPoints::from_config(config),
-                    VisualBaseLine::from_config(config),
-                    BezierCurveProperties::new(config.default_bezier_algorithm),
-                    samples,
-                );
-                curve.update();
-                Curve::Bezier(Box::new(curve))
-            }
+        let mut curve = match curve_type {
+            CurveType::Polyline => Curve::Polyline(Box::new(PolylineCurve::new(
+                CurvePoints::new(points),
+                VisualControlPoints::from_config(config),
+                VisualBaseLine::from_config(config),
+            ))),
+            CurveType::Interpolation => Curve::Interpolation(Box::new(InterpolationCurve::new(
+                CurvePoints::new(points),
+                VisualControlPoints::from_config(config),
+                VisualBaseLine::from_config(config),
+                InterpolationCurveProperties::new(config.default_interpolation_nodes),
+                samples,
+            ))),
+            CurveType::Bezier => Curve::Bezier(Box::new(BezierCurve::new(
+                CurvePoints::new(points),
+                VisualControlPoints::from_config(config),
+                VisualBaseLine::from_config(config),
+                BezierCurveProperties::new(config.default_bezier_algorithm),
+                samples,
+            ))),
             CurveType::RationalBezier => {
                 let points = points
                     .into_iter()
                     .map(|point| WeightedPoint::new(point, config.default_rational_bezier_weight))
                     .collect();
-                let mut curve = RationalBezierCurve::new(
+                Curve::RationalBezier(Box::new(RationalBezierCurve::new(
                     RationalBezierPoints::new(points),
                     VisualControlPoints::from_config(config),
                     VisualBaseLine::from_config(config),
                     RationalBezierCurveProperties::new(config.default_rational_bezier_algorithm),
                     samples,
-                );
-                curve.update();
-                Curve::RationalBezier(Box::new(curve))
+                )))
             }
             CurveType::Trochoid => Curve::Trochoid(Box::new(TrochoidCurve::new(
                 VisualBaseLine::from_config(config),
                 config.default_trochoid_properties,
                 samples,
             ))),
-        }
+        };
+        curve.update();
+        curve
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {

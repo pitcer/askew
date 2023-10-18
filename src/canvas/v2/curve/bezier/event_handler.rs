@@ -21,6 +21,7 @@ pub struct BezierCurveEventHandlerMut<'a> {
 }
 
 impl<'a> BezierCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a BezierCurve) -> Self {
         Self { curve }
     }

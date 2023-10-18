@@ -47,6 +47,7 @@ impl InterpolationCurve {
         Self { points, control_points, polyline, properties, samples }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> InterpolationCurveEventHandler<'_> {
         InterpolationCurveEventHandler::new(self)
     }

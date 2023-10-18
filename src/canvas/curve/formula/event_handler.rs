@@ -19,6 +19,7 @@ pub struct FormulaCurveEventHandlerMut<'a> {
 }
 
 impl<'a> FormulaCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a Curve) -> Self {
         Self { curve }
     }

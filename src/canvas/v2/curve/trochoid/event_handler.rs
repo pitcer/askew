@@ -12,6 +12,7 @@ pub struct TrochoidCurveEventHandlerMut<'a> {
 }
 
 impl<'a> TrochoidCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a TrochoidCurve) -> Self {
         Self { curve }
     }

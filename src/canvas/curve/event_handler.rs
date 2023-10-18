@@ -27,6 +27,7 @@ pub struct CurveEventHandlerMut<'a> {
 }
 
 impl<'a> CurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a Curve) -> Self {
         Self { curve }
     }

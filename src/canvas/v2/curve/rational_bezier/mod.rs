@@ -47,6 +47,7 @@ impl RationalBezierCurve {
         Self { points, control_points, base_line, properties, samples }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> RationalBezierCurveEventHandler<'_> {
         RationalBezierCurveEventHandler::new(self)
     }

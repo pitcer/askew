@@ -29,6 +29,7 @@ pub struct ControlPointsCurveEventHandlerMut<'a> {
 }
 
 impl<'a> ControlPointsCurveEventHandler<'a> {
+    #[must_use]
     pub fn new(curve: &'a Curve) -> Self {
         Self { curve }
     }

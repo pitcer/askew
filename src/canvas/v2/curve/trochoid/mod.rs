@@ -27,6 +27,7 @@ impl TrochoidCurve {
         Self { base_line, properties, samples }
     }
 
+    #[must_use]
     pub fn event_handler(&self) -> TrochoidCurveEventHandler<'_> {
         TrochoidCurveEventHandler::new(self)
     }
