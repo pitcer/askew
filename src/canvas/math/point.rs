@@ -5,7 +5,7 @@ use num_traits::Num;
 
 use crate::canvas::math::vector::Vector;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 pub struct Point<T> {
     horizontal: T,
     vertical: T,

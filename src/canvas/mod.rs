@@ -5,20 +5,20 @@ use anyhow::Result;
 use rand::Rng;
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::control_points::{CurvePoints, WeightedPoint};
+use crate::canvas::curve::control_points::{CurveControlPoints, WeightedPoint};
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::curve::Curve;
 use crate::canvas::event_handler::{CanvasEventHandler, CanvasEventHandlerMut};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
-use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::base_line::VisualBaseLine;
 use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
 use crate::canvas::v2::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
 use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::{
-    RationalBezierCurve, RationalBezierCurveProperties, RationalBezierPoints,
+    RationalBezierCurve, RationalBezierCurveProperties, WeightedControlPoints,
 };
 use crate::canvas::v2::curve::trochoid::TrochoidCurve;
 use crate::canvas::v2::{DrawOn, Update};
@@ -31,6 +31,7 @@ pub mod event_handler;
 pub mod math;
 pub mod paint;
 pub mod properties;
+pub mod request;
 pub mod v2;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -68,19 +69,19 @@ impl Canvas {
         let samples = Samples::new(samples.unwrap_or(config.curve_samples) as usize);
         let mut curve = match curve_type {
             CurveType::Polyline => Curve::Polyline(Box::new(PolylineCurve::new(
-                CurvePoints::new(points),
+                CurveControlPoints::new(points),
                 VisualControlPoints::from_config(config),
                 VisualBaseLine::from_config(config),
             ))),
             CurveType::Interpolation => Curve::Interpolation(Box::new(InterpolationCurve::new(
-                CurvePoints::new(points),
+                CurveControlPoints::new(points),
                 VisualControlPoints::from_config(config),
                 VisualBaseLine::from_config(config),
                 InterpolationCurveProperties::new(config.default_interpolation_nodes),
                 samples,
             ))),
             CurveType::Bezier => Curve::Bezier(Box::new(BezierCurve::new(
-                CurvePoints::new(points),
+                CurveControlPoints::new(points),
                 VisualControlPoints::from_config(config),
                 VisualBaseLine::from_config(config),
                 BezierCurveProperties::new(config.default_bezier_algorithm),
@@ -92,7 +93,7 @@ impl Canvas {
                     .map(|point| WeightedPoint::new(point, config.default_rational_bezier_weight))
                     .collect();
                 Curve::RationalBezier(Box::new(RationalBezierCurve::new(
-                    RationalBezierPoints::new(points),
+                    WeightedControlPoints::new(points),
                     VisualControlPoints::from_config(config),
                     VisualBaseLine::from_config(config),
                     RationalBezierCurveProperties::new(config.default_rational_bezier_algorithm),

@@ -68,3 +68,9 @@ impl DrawOn for Curve {
         }
     }
 }
+
+impl Default for Curve {
+    fn default() -> Self {
+        Self::Polyline(Box::default())
+    }
+}

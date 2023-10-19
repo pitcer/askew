@@ -4,7 +4,7 @@ use num_traits::Num;
 
 use crate::canvas::math::point::Point;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Vector<T> {
     horizontal: T,
     vertical: T,

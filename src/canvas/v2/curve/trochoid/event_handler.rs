@@ -3,10 +3,12 @@ use crate::event::curve::formula::SetTrochoidProperties;
 use crate::event::curve::{GetSamples, SetSamples};
 use crate::event::{EventHandler, EventHandlerMut, HandlerResult};
 
+#[deprecated]
 pub struct TrochoidCurveEventHandler<'a> {
     curve: &'a TrochoidCurve,
 }
 
+#[deprecated]
 pub struct TrochoidCurveEventHandlerMut<'a> {
     curve: &'a mut TrochoidCurve,
 }

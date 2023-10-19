@@ -2,13 +2,14 @@ use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::math::point::Point;
-use crate::canvas::v2::base_polyline::OpenBaseLine;
+use crate::canvas::v2::base_line::OpenBaseLine;
 use crate::canvas::v2::curve::trochoid::event_handler::{
     TrochoidCurveEventHandler, TrochoidCurveEventHandlerMut,
 };
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
+pub mod request;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct TrochoidCurve {
@@ -27,11 +28,13 @@ impl TrochoidCurve {
         Self { base_line, properties, samples }
     }
 
+    #[deprecated]
     #[must_use]
     pub fn event_handler(&self) -> TrochoidCurveEventHandler<'_> {
         TrochoidCurveEventHandler::new(self)
     }
 
+    #[deprecated]
     pub fn event_handler_mut(&mut self) -> TrochoidCurveEventHandlerMut<'_> {
         TrochoidCurveEventHandlerMut::new(self)
     }

@@ -3,16 +3,21 @@ pub use declare::*;
 pub mod declare;
 pub mod macros;
 
+#[deprecated]
 pub trait Ret {
     type Return;
 }
 
+#[deprecated]
 pub trait Event: Ret {}
 
+#[deprecated]
 pub trait EventMut: Ret {}
 
+#[deprecated]
 pub type HandlerResult<E> = anyhow::Result<<E as Ret>::Return, Error>;
 
+#[deprecated]
 pub trait EventHandler<E>
 where
     E: Event,
@@ -20,6 +25,7 @@ where
     fn handle(&self, event: E) -> HandlerResult<E>;
 }
 
+#[deprecated]
 pub trait EventHandlerMut<E>
 where
     E: EventMut,
@@ -27,8 +33,10 @@ where
     fn handle_mut(&mut self, event: E) -> HandlerResult<E>;
 }
 
+#[deprecated]
 pub trait UnimplementedHandler<E> {}
 
+#[deprecated]
 pub trait DelegateEventHandler<E>
 where
     E: Event,
@@ -44,6 +52,7 @@ where
     }
 }
 
+#[deprecated]
 pub trait DelegateEventHandlerMut<E>
 where
     E: EventMut,
@@ -59,6 +68,7 @@ where
     }
 }
 
+#[deprecated]
 pub trait DelegateEvent<E>
 where
     E: Event,
@@ -66,6 +76,7 @@ where
     fn delegate(&self, event: E) -> HandlerResult<E>;
 }
 
+#[deprecated]
 pub trait DelegateEventMut<E>
 where
     E: EventMut,
@@ -73,6 +84,7 @@ where
     fn delegate_mut(&mut self, event: E) -> HandlerResult<E>;
 }
 
+#[deprecated]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("unimplemented handler")]

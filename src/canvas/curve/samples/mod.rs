@@ -5,6 +5,7 @@ use num_traits::{Num, NumCast};
 use crate::canvas::curve::samples::event_handler::{SamplesEventHandler, SamplesEventHandlerMut};
 
 pub mod event_handler;
+pub mod request;
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Samples {
@@ -39,10 +40,5 @@ impl Samples {
                 .expect("index should be representable by the given type");
             range_start + (index * delta) / length
         })
-    }
-
-    #[must_use]
-    pub fn samples(&self) -> usize {
-        self.samples
     }
 }

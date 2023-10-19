@@ -10,10 +10,12 @@ use crate::event::curve::control_points::{
 use crate::event::curve::GetPoint;
 use crate::event::{Error, EventHandler, EventHandlerMut, HandlerResult};
 
+#[deprecated]
 pub struct ControlPointsEventHandler<'a, P = CurvePoint> {
     points: &'a ControlPoints<P>,
 }
 
+#[deprecated]
 pub struct ControlPointsEventHandlerMut<'a, P = CurvePoint> {
     points: &'a mut ControlPoints<P>,
 }

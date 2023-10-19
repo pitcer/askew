@@ -1,3 +1,4 @@
+#[deprecated]
 macro_rules! unimplemented_handlers {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
@@ -12,6 +13,7 @@ macro_rules! unimplemented_handlers {
     };
 }
 
+#[deprecated]
 macro_rules! unimplemented_handlers_mut {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
@@ -26,6 +28,7 @@ macro_rules! unimplemented_handlers_mut {
     };
 }
 
+#[deprecated]
 macro_rules! delegate_handlers {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
@@ -38,6 +41,7 @@ macro_rules! delegate_handlers {
     };
 }
 
+#[deprecated]
 macro_rules! delegate_handlers_mut {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
@@ -51,6 +55,7 @@ macro_rules! delegate_handlers_mut {
     };
 }
 
+#[deprecated]
 // TODO: merge delegare_events_mut and delegate_events like in declare macro
 macro_rules! delegate_events_mut {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
@@ -64,6 +69,7 @@ macro_rules! delegate_events_mut {
     };
 }
 
+#[deprecated]
 macro_rules! delegate_events {
     ($handler:ty { $($event:ty),+ $(,)? }) => {
         $(
@@ -76,6 +82,7 @@ macro_rules! delegate_events {
     };
 }
 
+#[deprecated]
 macro_rules! declare_handler {
     ( $handler:ty {
         $('inherited: $inherited:tt)?
@@ -137,6 +144,7 @@ macro_rules! declare_handler {
     (@declare_struct $name:ident {
         $($field:ident: $field_type:ty),+ $(,)?
     }) => {
+        #[deprecated]
         #[derive(Debug)]
         pub struct $name {
             $(pub $field: $field_type,)+
@@ -151,6 +159,7 @@ macro_rules! declare_handler {
     };
 
     (@declare_struct $name:ident()) => {
+        #[deprecated]
         #[derive(Debug)]
         pub struct $name;
     };
@@ -158,6 +167,7 @@ macro_rules! declare_handler {
     (@declare_struct $name:ident (
         $($field_type:ty),+ $(,)?
     )) => {
+        #[deprecated]
         #[derive(Debug)]
         pub struct $name(
             $(pub $field_type,)+

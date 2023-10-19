@@ -12,10 +12,12 @@ use crate::event::{
     EventHandlerMut, EventMut, HandlerResult,
 };
 
+#[deprecated]
 pub struct BezierCurveEventHandler<'a> {
     curve: &'a BezierCurve,
 }
 
+#[deprecated]
 pub struct BezierCurveEventHandlerMut<'a> {
     curve: &'a mut BezierCurve,
 }

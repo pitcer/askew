@@ -5,10 +5,10 @@ use crate::canvas::math::point::Point;
 pub mod event_handler;
 pub mod points;
 
-pub type CurvePoints = ControlPoints<CurvePoint>;
+pub type CurveControlPoints = ControlPoints<CurvePoint>;
 pub type CurvePoint = Point<f32>;
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct WeightedPoint<T, W> {
     point: Point<T>,
     weight: W,

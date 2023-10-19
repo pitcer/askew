@@ -10,10 +10,12 @@ use crate::event::{
     EventHandlerMut, EventMut,
 };
 
+#[deprecated]
 pub struct PolylineCurveEventHandler<'a> {
     curve: &'a PolylineCurve,
 }
 
+#[deprecated]
 pub struct PolylineCurveEventHandlerMut<'a> {
     curve: &'a mut PolylineCurve,
 }

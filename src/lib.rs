@@ -69,6 +69,7 @@ pub mod command;
 pub mod config;
 pub mod event;
 pub mod ipc;
+pub mod request;
 pub mod ui;
 pub mod wasm;
 

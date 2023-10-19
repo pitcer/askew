@@ -2,7 +2,7 @@ use tiny_skia::PixmapMut;
 
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
-use crate::canvas::v2::base_polyline::VisualBaseLine;
+use crate::canvas::v2::base_line::VisualBaseLine;
 use crate::canvas::v2::control_points_curve::VisualControlPoints;
 use crate::canvas::v2::curve::polyline::event_handler::{
     PolylineCurveEventHandler, PolylineCurveEventHandlerMut,
@@ -10,8 +10,9 @@ use crate::canvas::v2::curve::polyline::event_handler::{
 use crate::canvas::v2::{DrawOn, Update};
 
 pub mod event_handler;
+pub mod request;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PolylineCurve {
     pub points: ControlPoints<CurvePoint>,
     pub control_points: VisualControlPoints,

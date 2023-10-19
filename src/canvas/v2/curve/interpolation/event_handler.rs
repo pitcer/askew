@@ -12,10 +12,12 @@ use crate::event::{
     EventHandlerMut, EventMut, HandlerResult,
 };
 
+#[deprecated]
 pub struct InterpolationCurveEventHandler<'a> {
     curve: &'a InterpolationCurve,
 }
 
+#[deprecated]
 pub struct InterpolationCurveEventHandlerMut<'a> {
     curve: &'a mut InterpolationCurve,
 }

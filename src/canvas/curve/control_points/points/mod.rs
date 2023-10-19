@@ -9,6 +9,7 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 
 pub mod event_handler;
+pub mod request;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ControlPoints<T> {
@@ -21,11 +22,13 @@ impl<T> ControlPoints<T> {
         Self { points }
     }
 
+    #[deprecated]
     #[must_use]
     pub fn event_handler(&self) -> ControlPointsEventHandler<'_, T> {
         ControlPointsEventHandler::new(self)
     }
 
+    #[deprecated]
     pub fn event_handler_mut(&mut self) -> ControlPointsEventHandlerMut<'_, T> {
         ControlPointsEventHandlerMut::new(self)
     }

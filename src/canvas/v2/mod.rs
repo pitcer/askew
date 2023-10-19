@@ -1,8 +1,9 @@
 use tiny_skia::PixmapMut;
 
-pub mod base_polyline;
+pub mod base_line;
 pub mod control_points_curve;
 pub mod curve;
+pub mod request;
 pub mod shape;
 pub mod visual_path;
 
