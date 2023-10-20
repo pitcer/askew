@@ -1,11 +1,11 @@
 use crate::canvas::curve::control_points::CurveControlPoints;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
-use crate::canvas::v2::request::{
+use crate::canvas::v2::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetInterpolationNodes, GetPoint, GetWeight, MoveCurve, MovePoint, RotateCurve,
     SelectPoint, SetInterpolationNodes, SetTrochoidProperties,
 };
-use crate::canvas::v2::request::{GetSamples, SetSamples};
+use crate::canvas::v2::request::declare::{GetSamples, SetSamples};
 use crate::request::macros::delegate_requests;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 

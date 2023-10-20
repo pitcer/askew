@@ -1,3 +1,4 @@
+use crate::request::PointId;
 pub use declare::*;
 
 pub mod declare;
@@ -95,20 +96,4 @@ pub enum Error {
     NoSuchCurve(usize),
     #[error("other error: {0}")]
     Other(anyhow::Error),
-}
-
-pub type PointId = usize;
-
-#[derive(Debug)]
-pub enum Change {
-    Decrease,
-    Increase,
-}
-
-#[derive(Debug)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
 }

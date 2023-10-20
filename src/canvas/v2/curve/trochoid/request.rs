@@ -1,6 +1,6 @@
 use crate::canvas::curve::samples::Samples;
 use crate::canvas::v2::curve::trochoid::TrochoidCurve;
-use crate::canvas::v2::request::{GetSamples, SetSamples, SetTrochoidProperties};
+use crate::canvas::v2::request::declare::{GetSamples, SetSamples, SetTrochoidProperties};
 use crate::request::macros::delegate_requests;
 use crate::request::{RequestHandlerMut, RequestSubHandler, RequestSubHandlerMut, ResponseMut};
 

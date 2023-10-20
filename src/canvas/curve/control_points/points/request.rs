@@ -4,7 +4,7 @@ use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::curve::control_points::CurvePoint;
 use crate::canvas::math::point::Point;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierPoint;
-use crate::canvas::v2::request::{
+use crate::canvas::v2::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetPoint, GetWeight, MoveCurve, MovePoint, RotateCurve, SelectPoint,
 };

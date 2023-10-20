@@ -8,7 +8,6 @@ use tiny_skia::Pixmap;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::Canvas;
 use crate::config::{CanvasConfig, FrameConfig};
-use crate::ui::frame::event_handler::CommandEventHandlerMut;
 use crate::ui::frame::panel::pixel::Pixel;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::properties::FrameProperties;
@@ -17,6 +16,7 @@ use crate::ui::mode::{Mode, ModeState};
 pub mod event_handler;
 pub mod panel;
 pub mod properties;
+pub mod request;
 
 #[derive(Debug)]
 pub struct Frame {
@@ -66,10 +66,6 @@ impl Frame {
     pub fn resize(&mut self, size: Rectangle<u32>) {
         self.canvas.resize(size.into());
         self.size = size;
-    }
-
-    pub fn event_handler_mut(&mut self) -> CommandEventHandlerMut<'_> {
-        CommandEventHandlerMut::new(self)
     }
 
     /// If path is `None`, then default image save path from config will be used.

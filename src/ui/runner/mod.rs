@@ -7,11 +7,12 @@ use winit::event_loop::ControlFlow;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
+use crate::canvas::request::declare::RotateCurveById;
+use crate::canvas::v2::request::declare::{GetCurveCenter, MoveCurve};
 use crate::command;
 use crate::command::program_view::ProgramView;
-use crate::event::canvas::{GetCurveCenter, MoveCurve, RotateCurveById};
-use crate::event::{DelegateEventHandler, DelegateEventHandlerMut};
 use crate::ipc::server::IpcServerHandle;
+use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
@@ -197,15 +198,13 @@ impl WindowRunner {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
-                self.frame.event_handler_mut().delegate_mut(MoveCurve::new(shift))?;
+                self.frame.sub_handle_mut(MoveCurve::new(shift))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::RotateCurve { id, angle_radians } => {
-                self.frame
-                    .event_handler_mut()
-                    .delegate_mut(RotateCurveById::new(angle_radians, id as usize))?;
+                self.frame.sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
@@ -223,7 +222,7 @@ impl WindowRunner {
             }
             Request::GetPosition { id: _id } => {
                 // TODO: get position of curve specified by id
-                let center = self.frame.event_handler_mut().delegate(GetCurveCenter)?;
+                let center = self.frame.sub_handle(GetCurveCenter)?;
                 // TODO: return None instead of (0, 0)
                 let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
                 responder.respond(Response::GetPosition {

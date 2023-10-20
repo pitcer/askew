@@ -2,8 +2,11 @@ use anyhow::Result;
 use winit::keyboard::SmolStr;
 
 use crate::command::program_view::ProgramView;
-use crate::event::{input, EventHandlerMut};
+use crate::request::RequestHandlerMut;
 use crate::ui::command_state::CommandState;
+use crate::ui::frame::request::declare::{
+    Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
+};
 use crate::ui::mode::Mode;
 
 pub struct InputHandler<'a> {
@@ -19,20 +22,20 @@ impl<'a> InputHandler<'a> {
     pub fn handle_input(self, input: Input) -> Result<()> {
         log::debug!("<cyan><b>Event received from input:</>\n<bright_black>{input:?}</>");
 
-        let mut handler = self.state.frame.event_handler_mut();
+        let frame = &mut *self.state.frame;
 
         match self.command {
             CommandState::Closed(_) => {
                 if let Some(event) = input.event {
                     match event {
-                        InputEvent::ToggleConvexHull(event) => handler.handle_mut(event)?,
-                        InputEvent::ChangeWeight(event) => handler.handle_mut(event)?,
-                        InputEvent::MovePoint(event) => handler.handle_mut(event)?,
-                        InputEvent::MouseClick(event) => handler.handle_mut(event)?,
-                        InputEvent::MousePress(event) => handler.handle_mut(event)?,
-                        InputEvent::AddCurve(event) => handler.handle_mut(event)?,
-                        InputEvent::Delete(event) => handler.handle_mut(event)?,
-                        InputEvent::ChangeIndex(event) => handler.handle_mut(event)?,
+                        InputEvent::ToggleConvexHull(event) => frame.handle_mut(event)?,
+                        InputEvent::ChangeWeight(event) => frame.handle_mut(event)?,
+                        InputEvent::MovePoint(event) => frame.handle_mut(event)?,
+                        InputEvent::MouseClick(event) => frame.handle_mut(event)?,
+                        InputEvent::MousePress(event) => frame.handle_mut(event)?,
+                        InputEvent::AddCurve(event) => frame.handle_mut(event)?,
+                        InputEvent::Delete(event) => frame.handle_mut(event)?,
+                        InputEvent::ChangeIndex(event) => frame.handle_mut(event)?,
                         InputEvent::ChangeMode(mode) => self.change_mode(mode),
                         InputEvent::EnterCommand => {
                             self.command.open();
@@ -100,14 +103,14 @@ impl Input {
 
 #[derive(Debug)]
 pub enum InputEvent {
-    ToggleConvexHull(input::ToggleConvexHull),
-    ChangeWeight(input::ChangeWeight),
-    MovePoint(input::MovePoint),
-    MouseClick(input::MouseClick),
-    MousePress(input::MousePress),
-    AddCurve(input::Add),
-    Delete(input::Delete),
-    ChangeIndex(input::ChangeIndex),
+    ToggleConvexHull(ToggleConvexHull),
+    ChangeWeight(ChangeWeight),
+    MovePoint(MovePoint),
+    MouseClick(MouseClick),
+    MousePress(MousePress),
+    AddCurve(Add),
+    Delete(Delete),
+    ChangeIndex(ChangeIndex),
     EnterCommand,
     ExecuteCommand,
     ExitMode,

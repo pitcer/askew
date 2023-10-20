@@ -1,5 +1,3 @@
-use crate::event::PointId;
-
 pub mod macros;
 pub mod sieve;
 #[cfg(test)]
@@ -13,30 +11,66 @@ pub trait RequestMut {
     type Response;
 }
 
-pub type Response<T> = anyhow::Result<<T as Request>::Response, Error>;
+pub type Response<R> = anyhow::Result<<R as Request>::Response, Error>;
 
-pub type ResponseMut<T> = anyhow::Result<<T as RequestMut>::Response, Error>;
+pub type ResponseMut<R> = anyhow::Result<<R as RequestMut>::Response, Error>;
 
-pub trait RequestHandler<T>
+pub trait RequestHandler<R>
 where
-    T: Request,
+    R: Request,
 {
-    fn handle(&self, request: T) -> Response<T>;
+    fn handle(&self, request: R) -> Response<R>;
 }
 
-pub trait RequestHandlerMut<T>
+impl<R, H> RequestHandler<R> for &H
 where
-    T: RequestMut,
+    H: RequestHandler<R>,
+    R: Request,
 {
-    fn handle_mut(&mut self, request: T) -> ResponseMut<T>;
+    fn handle(&self, request: R) -> Response<R> {
+        (*self).handle(request)
+    }
 }
 
-pub trait RequestSubHandler<T> {
-    fn sub_handler(&self) -> &T;
+pub trait RequestHandlerMut<R>
+where
+    R: RequestMut,
+{
+    fn handle_mut(&mut self, request: R) -> ResponseMut<R>;
 }
 
-pub trait RequestSubHandlerMut<T> {
-    fn sub_handler_mut(&mut self) -> &mut T;
+impl<R, H> RequestHandlerMut<R> for &mut H
+where
+    H: RequestHandlerMut<R>,
+    R: RequestMut,
+{
+    fn handle_mut(&mut self, request: R) -> ResponseMut<R> {
+        (*self).handle_mut(request)
+    }
+}
+
+pub trait RequestSubHandler<H> {
+    fn sub_handler(&self) -> &H;
+
+    fn sub_handle<R>(&self, request: R) -> Response<R>
+    where
+        H: RequestHandler<R>,
+        R: Request,
+    {
+        self.sub_handler().handle(request)
+    }
+}
+
+pub trait RequestSubHandlerMut<H> {
+    fn sub_handler_mut(&mut self) -> &mut H;
+
+    fn sub_handle_mut<R>(&mut self, request: R) -> ResponseMut<R>
+    where
+        H: RequestHandlerMut<R>,
+        R: RequestMut,
+    {
+        self.sub_handler_mut().handle_mut(request)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -49,4 +83,20 @@ pub enum Error {
     NoSuchCurve(usize),
     #[error("other error: `{0}`")]
     Other(anyhow::Error),
+}
+
+pub type PointId = usize;
+
+#[derive(Debug)]
+pub enum Change {
+    Decrease,
+    Increase,
+}
+
+#[derive(Debug)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
 }

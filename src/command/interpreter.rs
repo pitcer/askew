@@ -6,20 +6,20 @@ use itertools::Itertools;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
+use crate::canvas::request::declare::{
+    GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MovePointOnCurve, RotateCurveById,
+    SetConvexHull, SetCurveType,
+};
 use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::v2::request::declare::{
+    GetInterpolationNodes, GetSamples, MoveCurve, RotateCurve, SetInterpolationNodes, SetSamples,
+    SetTrochoidProperties,
+};
 use crate::command::message::Message;
 use crate::command::parser::{Command, Get, Set, Task, Toggle};
 use crate::command::program_view::ProgramView;
 use crate::config::CurveType;
-use crate::event::canvas::{
-    GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MoveCurve, MovePointOnCurve,
-    RotateCurve, RotateCurveById, SetConvexHull, SetCurveType,
-};
-use crate::event::curve::control_points::{GetInterpolationNodes, SetInterpolationNodes};
-use crate::event::curve::formula::SetTrochoidProperties;
-use crate::event::curve::{GetSamples, SetSamples};
-use crate::event::{DelegateEventHandler, DelegateEventHandlerMut, EventHandlerMut};
-use crate::ui::frame::event_handler::CommandEventHandlerMut;
+use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 
 pub struct CommandInterpreter<'a> {
     state: ProgramView<'a>,
@@ -31,10 +31,6 @@ impl<'a> CommandInterpreter<'a> {
     #[must_use]
     pub fn new(state: ProgramView<'a>) -> Self {
         Self { state }
-    }
-
-    fn command_handler(&mut self) -> CommandEventHandlerMut<'_> {
-        self.state.frame.event_handler_mut()
     }
 
     pub fn interpret(&mut self, command: Command) -> Result<Option<Message>, Error> {
@@ -63,19 +59,18 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_get(&mut self, get: Get) -> InterpretResult {
-        let handler = self.command_handler();
-
+        let frame = &mut *self.state.frame;
         let message = match get {
             Get::ConvexHull => {
-                let convex_hull = handler.delegate(GetConvexHull)?;
+                let convex_hull = frame.sub_handle(GetConvexHull)?;
                 format!("{convex_hull}")
             }
             Get::InterpolationNodes => {
-                let nodes = handler.delegate(GetInterpolationNodes)?;
+                let nodes = frame.sub_handle(GetInterpolationNodes)?;
                 format!("{nodes:?}")
             }
             Get::Samples => {
-                let samples = handler.delegate(GetSamples)?;
+                let samples = frame.sub_handle(GetSamples)?;
                 format!("{samples}")
             }
         };
@@ -83,25 +78,25 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_set(&mut self, set: Set) -> InterpretResult {
-        let mut handler = self.command_handler();
+        let frame = &mut *self.state.frame;
 
         match set {
-            Set::ConvexHull { value } => handler.delegate_mut(SetConvexHull(value))?,
+            Set::ConvexHull { value } => frame.sub_handle_mut(SetConvexHull(value))?,
             Set::InterpolationNodes { value } => {
-                handler.delegate_mut(SetInterpolationNodes::new(value))?;
+                frame.sub_handle_mut(SetInterpolationNodes::new(value))?;
             }
-            Set::Samples { value } => handler.delegate_mut(SetSamples(value))?,
+            Set::Samples { value } => frame.sub_handle_mut(SetSamples(value))?,
         }
         Ok(None)
     }
 
     fn interpret_toggle(&mut self, toggle: Toggle) -> InterpretResult {
-        let mut handler = self.command_handler();
+        let frame = &mut *self.state.frame;
 
         match toggle {
             Toggle::ConvexHull => {
-                let value = handler.delegate(GetConvexHull)?;
-                handler.delegate_mut(SetConvexHull(!value))?;
+                let value = frame.sub_handle(GetConvexHull)?;
+                frame.sub_handle_mut(SetConvexHull(!value))?;
             }
             Toggle::ControlLine => {
                 // TODO: handle for current curve instead
@@ -113,20 +108,20 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_rotate(&mut self, angle: u16, curve: Option<usize>) -> InterpretResult {
-        let mut handler = self.command_handler();
+        let frame = &mut *self.state.frame;
         let radians = consts::PI * f32::from(angle) / 180.0;
         if let Some(curve) = curve {
-            handler.delegate_mut(RotateCurveById::new(radians, curve))?;
+            frame.sub_handle_mut(RotateCurveById::new(radians, curve))?;
         } else {
-            handler.delegate_mut(RotateCurve::new(radians))?;
+            frame.sub_handle_mut(RotateCurve::new(radians))?;
         }
         Ok(Some(Message::info(format!("Curve rotated by {angle} deg"))))
     }
 
     fn interpret_move(&mut self, horizontal: f32, vertical: f32) -> InterpretResult {
-        let mut handler = self.command_handler();
+        let frame = &mut *self.state.frame;
         let shift = Vector::new(horizontal, vertical);
-        handler.delegate_mut(MoveCurve::new(shift))?;
+        frame.sub_handle_mut(MoveCurve::new(shift))?;
         Ok(Some(Message::info(format!("Curve moved by ({horizontal}, {vertical})"))))
     }
 
@@ -151,41 +146,32 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {
-        self.command_handler().delegate_mut(SetCurveType(curve_type))?;
+        self.state.frame.sub_handle_mut(SetCurveType(curve_type))?;
         Ok(Some(Message::info(format!("Set curve type to {curve_type}"))))
     }
 
     fn get_curves_length(&mut self) -> InterpretResult {
-        let result = self.command_handler().delegate(GetCurvesLength)?;
+        let result = self.state.frame.sub_handle(GetCurvesLength)?;
         Ok(Some(Message::info(format!("{result}"))))
     }
 
     fn get_length(&mut self, curve_id: usize) -> InterpretResult {
-        let result = self.command_handler().delegate(GetLength(curve_id))?;
+        let result = self.state.frame.sub_handle(GetLength(curve_id))?;
         Ok(Some(Message::info(format!("{result}"))))
     }
 
     fn get_point(&mut self, curve_id: usize, point_id: usize) -> InterpretResult {
-        let result = self.command_handler().delegate(GetPointOnCurve(curve_id, point_id))?;
+        let result = self.state.frame.sub_handle(GetPointOnCurve(curve_id, point_id))?;
         Ok(Some(Message::info(format!("{},{}", result.horizontal(), result.vertical()))))
     }
 
     fn move_point(&mut self, curve_id: usize, point_id: usize, x: f32, y: f32) -> InterpretResult {
-        self.command_handler().delegate_mut(MovePointOnCurve(
-            curve_id,
-            point_id,
-            Point::new(x, y),
-        ))?;
+        self.state.frame.sub_handle_mut(MovePointOnCurve(curve_id, point_id, Point::new(x, y)))?;
         Ok(None)
     }
 
     fn trochoid(&mut self, prop: TrochoidCurveProperties) -> InterpretResult {
-        self.state
-            .frame
-            .canvas_mut()
-            .current_curve_mut()
-            .event_handler_mut()
-            .handle_mut(SetTrochoidProperties(prop))?;
+        self.state.frame.sub_handler_mut().sub_handle_mut(SetTrochoidProperties(prop))?;
         Ok(None)
     }
 

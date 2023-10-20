@@ -57,6 +57,19 @@ fn sieve_composition() {
     assert!(result.is_ok());
 }
 
+#[test]
+fn sieve_composition_ref() {
+    let handler = Handler;
+    let sieve = RequestSieve::<ExcludeFoo, _>::new(&handler);
+    let sieve = RequestSieve::<ExcludeBar, _>::new(sieve);
+    let result = sieve.handle(Foo);
+    assert!(result.is_err());
+    let result = sieve.handle(Bar);
+    assert!(result.is_err());
+    let result = sieve.handle(Qux);
+    assert!(result.is_ok());
+}
+
 pub struct Handler;
 
 impl RequestHandler<Foo> for Handler {

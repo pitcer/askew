@@ -3,12 +3,10 @@ use winit::dpi::PhysicalPosition;
 use winit::event::{DeviceId, ElementState, KeyEvent, Modifiers, MouseButton, WindowEvent};
 use winit::keyboard::Key;
 
-use input::Add;
-
-use crate::event::input::{
-    ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
+use crate::request::{Change, Direction};
+use crate::ui::frame::request::declare::{
+    Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
 };
-use crate::event::{input, Change, Direction};
 use crate::ui::input_handler::{Input, InputEvent};
 use crate::ui::mode::Mode;
 

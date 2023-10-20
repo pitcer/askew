@@ -24,20 +24,3 @@ impl<N, T> RequestSubHandlerMut<T> for RequestSieve<N, T> {
         &mut self.handler
     }
 }
-
-#[deprecated(note = "remove after testing sieve")]
-mod experimental {
-    use super::{RequestSieve, RequestSubHandler, RequestSubHandlerMut};
-
-    impl<N, T> RequestSubHandler<T> for RequestSieve<N, &T> {
-        fn sub_handler(&self) -> &T {
-            self.handler
-        }
-    }
-
-    impl<N, T> RequestSubHandlerMut<T> for RequestSieve<N, &mut T> {
-        fn sub_handler_mut(&mut self) -> &mut T {
-            self.handler
-        }
-    }
-}

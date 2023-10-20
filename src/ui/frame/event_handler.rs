@@ -12,17 +12,19 @@ use crate::event::input::{
     Add, ChangeIndex, ChangeWeight, Delete, MouseClick, MousePress, MovePoint, ToggleConvexHull,
 };
 use crate::event::{
-    Change, DelegateEventHandler, DelegateEventHandlerMut, Direction, Event, EventHandlerMut,
-    EventMut,
+    DelegateEventHandler, DelegateEventHandlerMut, Event, EventHandlerMut, EventMut,
 };
 use crate::event::{EventHandler, HandlerResult};
+use crate::request::{Change, Direction};
 use crate::ui::frame::Frame;
 use crate::ui::mode::Mode;
 
+#[deprecated]
 pub struct CommandEventHandlerMut<'a> {
     frame: &'a mut Frame,
 }
 
+#[deprecated]
 impl<'a> CommandEventHandlerMut<'a> {
     pub fn new(frame: &'a mut Frame) -> Self {
         Self { frame }

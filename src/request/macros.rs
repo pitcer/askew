@@ -20,7 +20,7 @@ macro_rules! declare_requests {
     };
 
     (@declare_struct $name:ident, { $($field:ident: $field_type:ty),+ $(,)? }) => {
-        #[derive(Debug, Default)]
+        #[derive(Debug)]
         pub struct $name {
             $(pub $field: $field_type,)+
         }
@@ -34,12 +34,12 @@ macro_rules! declare_requests {
     };
 
     (@declare_struct $name:ident, ()) => {
-        #[derive(Debug, Default)]
+        #[derive(Debug)]
         pub struct $name;
     };
 
     (@declare_struct $name:ident, ($($field_type:ty),+ $(,)?)) => {
-        #[derive(Debug, Default)]
+        #[derive(Debug)]
         pub struct $name(
             $(pub $field_type,)+
         );

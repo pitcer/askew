@@ -3,22 +3,17 @@
 use winit::dpi::PhysicalPosition;
 
 use crate::event::macros::declare_handler;
+use crate::request::{Change, Direction, PointId};
 use crate::{
     canvas::curve::control_points::points::event_handler::ControlPointsEventHandler,
     canvas::curve::control_points::points::event_handler::ControlPointsEventHandlerMut,
-    canvas::curve::control_points::WeightedPoint,
-    canvas::curve::event_handler::CurveEventHandler,
+    canvas::curve::control_points::WeightedPoint, canvas::curve::event_handler::CurveEventHandler,
     canvas::curve::formula::event_handler::FormulaCurveEventHandler,
     canvas::curve::formula::event_handler::FormulaCurveEventHandlerMut,
     canvas::curve::samples::event_handler::SamplesEventHandler,
     canvas::curve::samples::event_handler::SamplesEventHandlerMut,
-    canvas::event_handler::CanvasEventHandler,
-    canvas::event_handler::CanvasEventHandlerMut,
-    canvas::math::point::Point,
-    canvas::math::vector::Vector,
-    config::CurveType,
-    event::PointId,
-    event::{Change, Direction},
+    canvas::event_handler::CanvasEventHandler, canvas::event_handler::CanvasEventHandlerMut,
+    canvas::math::point::Point, canvas::math::vector::Vector, config::CurveType,
     ui::frame::event_handler::CommandEventHandlerMut,
 };
 

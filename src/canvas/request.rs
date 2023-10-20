@@ -1,1 +1,0 @@
-// TODO: reimplement canvas handler
