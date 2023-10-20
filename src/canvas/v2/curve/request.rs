@@ -5,7 +5,6 @@ use crate::canvas::v2::curve::polyline::PolylineCurve;
 use crate::canvas::v2::curve::rational_bezier::RationalBezierCurve;
 use crate::canvas::v2::curve::trochoid::TrochoidCurve;
 use crate::canvas::v2::request::{ExcludeControlPointsRequests, ExcludeInterpolationRequests};
-use crate::request::macros::delegate_requests;
 use crate::request::{
     Request, RequestHandler, RequestHandlerMut, RequestMut, Response, ResponseMut,
 };

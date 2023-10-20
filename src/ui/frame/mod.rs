@@ -13,7 +13,6 @@ use crate::ui::frame::panel::Panel;
 use crate::ui::frame::properties::FrameProperties;
 use crate::ui::mode::{Mode, ModeState};
 
-pub mod event_handler;
 pub mod panel;
 pub mod properties;
 pub mod request;
@@ -129,6 +128,7 @@ impl Frame {
         &self.properties
     }
 
+    #[must_use]
     pub fn current_mode(&self) -> Mode {
         self.mode.as_mode()
     }

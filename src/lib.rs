@@ -67,7 +67,6 @@ pub mod canvas;
 pub mod cli;
 pub mod command;
 pub mod config;
-pub mod event;
 pub mod ipc;
 pub mod request;
 pub mod ui;

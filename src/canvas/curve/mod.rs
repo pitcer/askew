@@ -1,6 +1,5 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::event_handler::{CurveEventHandler, CurveEventHandlerMut};
 use crate::canvas::v2::curve::bezier::BezierCurve;
 use crate::canvas::v2::curve::interpolation::InterpolationCurve;
 use crate::canvas::v2::curve::polyline::PolylineCurve;
@@ -10,8 +9,6 @@ use crate::canvas::v2::{DrawOn, Update};
 use crate::config::CurveType;
 
 pub mod control_points;
-pub mod event_handler;
-pub mod formula;
 pub mod samples;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -24,15 +21,6 @@ pub enum Curve {
 }
 
 impl Curve {
-    #[must_use]
-    pub fn event_handler(&self) -> CurveEventHandler<'_> {
-        CurveEventHandler::new(self)
-    }
-
-    pub fn event_handler_mut(&mut self) -> CurveEventHandlerMut<'_> {
-        CurveEventHandlerMut::new(self)
-    }
-
     #[must_use]
     pub fn curve_type(&self) -> CurveType {
         match self {

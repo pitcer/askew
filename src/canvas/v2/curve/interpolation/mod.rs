@@ -3,16 +3,12 @@ use tiny_skia::PixmapMut;
 use crate::canvas::curve::control_points::points::ControlPoints;
 use crate::canvas::v2::base_line::VisualBaseLine;
 use crate::canvas::v2::control_points_curve::VisualControlPoints;
-use crate::canvas::v2::curve::interpolation::event_handler::{
-    InterpolationCurveEventHandler, InterpolationCurveEventHandlerMut,
-};
 use crate::canvas::v2::{DrawOn, Update};
 use crate::{
     canvas::curve::control_points::CurvePoint, canvas::curve::samples::Samples, canvas::math,
     canvas::math::point::Point,
 };
 
-pub mod event_handler;
 pub mod request;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -46,17 +42,6 @@ impl InterpolationCurve {
         samples: Samples,
     ) -> Self {
         Self { points, control_points, polyline, properties, samples }
-    }
-
-    #[deprecated]
-    #[must_use]
-    pub fn event_handler(&self) -> InterpolationCurveEventHandler<'_> {
-        InterpolationCurveEventHandler::new(self)
-    }
-
-    #[deprecated]
-    pub fn event_handler_mut(&mut self) -> InterpolationCurveEventHandlerMut<'_> {
-        InterpolationCurveEventHandlerMut::new(self)
     }
 }
 

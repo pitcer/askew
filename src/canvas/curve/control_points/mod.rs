@@ -2,7 +2,6 @@ use points::ControlPoints;
 
 use crate::canvas::math::point::Point;
 
-pub mod event_handler;
 pub mod points;
 
 pub type CurveControlPoints = ControlPoints<CurvePoint>;
