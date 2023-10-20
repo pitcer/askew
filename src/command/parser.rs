@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 use std::str;
 
+use crate::canvas::shape::interpolation::InterpolationNodes;
 use crate::canvas::shape::trochoid::TrochoidCurveProperties;
-use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
 use crate::config::ShapeType;
 
 #[derive(Debug)]
@@ -151,19 +151,19 @@ pub enum Set {
     #[command()]
     ConvexHull {
         #[arg()]
-        value: <ConvexHull as Property>::Type,
+        value: bool,
     },
 
     #[command()]
     InterpolationNodes {
         #[arg()]
-        value: <InterpolationNodesProperty as Property>::Type,
+        value: InterpolationNodes,
     },
 
     #[command()]
     Samples {
         #[arg()]
-        value: <Samples as Property>::Type,
+        value: u32,
     },
 }
 

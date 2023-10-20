@@ -9,12 +9,8 @@ use crate::canvas::shape::interpolation::InterpolationNodes;
 use crate::canvas::shape::rational_bezier::RationalBezierCurveAlgorithm;
 use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::cli::RunArguments;
-use crate::config::property::{
-    Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
-};
 use crate::config::rgb::Rgb;
 
-pub mod property;
 pub mod rgb;
 pub mod trochoid_properties;
 
@@ -203,11 +199,11 @@ impl Default for UiConfig {
         Self {
             font_size: 16,
             font_path: PathBuf::from("JetBrainsMonoNL-Regular.ttf"),
-            background_color: UiBackgroundColor.value(),
-            status_bar_color: UiStatusBarColor.value(),
-            command_bar_color: UiCommandBarColor.value(),
-            text_color: UiTextColor.value(),
-            text_error_color: UiTextErrorColor.value(),
+            background_color: Rgb::new(32, 32, 32),
+            status_bar_color: Rgb::new(42, 42, 42),
+            command_bar_color: Rgb::new(42, 42, 42),
+            text_color: Rgb::new(249, 250, 244),
+            text_error_color: Rgb::new(179, 26, 64),
         }
     }
 }
