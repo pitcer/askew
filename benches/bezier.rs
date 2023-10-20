@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::Rng;
 
-use askew::canvas::curve::control_points::kind::rational_bezier::RationalBezierPoint;
+use askew::canvas::curve::rational_bezier::RationalBezierPoint;
 use askew::canvas::math;
 use askew::canvas::math::point::Point;
 

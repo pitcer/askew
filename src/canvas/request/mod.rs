@@ -1,15 +1,15 @@
-use crate::canvas::curve::control_points::WeightedPoint;
+use crate::canvas::control_points::point::WeightedPoint;
+use crate::canvas::curve::request::declare::{
+    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
+    GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
+    RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples,
+};
 use crate::canvas::curve::Curve;
 use crate::canvas::request::declare::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveType, GetCurvesLength,
     GetLength, GetPointOnCurve, MoveCurrentPoint, MovePointOnCurve, RotateCurveById, SetConvexHull,
     SetCurveType,
-};
-use crate::canvas::v2::request::declare::{
-    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
-    RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples,
 };
 use crate::canvas::{math, Canvas};
 use crate::request::macros::delegate_requests;

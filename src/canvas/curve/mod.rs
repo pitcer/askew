@@ -1,15 +1,29 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::v2::curve::bezier::BezierCurve;
-use crate::canvas::v2::curve::interpolation::InterpolationCurve;
-use crate::canvas::v2::curve::polyline::PolylineCurve;
-use crate::canvas::v2::curve::rational_bezier::RationalBezierCurve;
-use crate::canvas::v2::curve::trochoid::TrochoidCurve;
-use crate::canvas::v2::{DrawOn, Update};
+use crate::canvas::curve::bezier::BezierCurve;
+use crate::canvas::curve::interpolation::InterpolationCurve;
+use crate::canvas::curve::polyline::PolylineCurve;
+use crate::canvas::curve::rational_bezier::RationalBezierCurve;
+use crate::canvas::curve::trochoid::TrochoidCurve;
 use crate::config::CurveType;
 
-pub mod control_points;
-pub mod samples;
+pub mod bezier;
+pub mod interpolation;
+pub mod polyline;
+pub mod rational_bezier;
+pub mod request;
+pub mod trochoid;
+
+// TODO: will this trait be useful anywhere?
+pub trait DrawOn {
+    fn draw_on(&self, pixmap: &mut PixmapMut<'_>);
+}
+
+// TODO: in event handler add mut events that will call that method (all curves
+// must implement this trait)
+pub trait Update {
+    fn update(&mut self);
+}
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum Curve {

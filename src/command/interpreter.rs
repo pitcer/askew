@@ -4,16 +4,16 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
+use crate::canvas::curve::request::declare::{
+    GetInterpolationNodes, GetSamples, MoveCurve, RotateCurve, SetInterpolationNodes, SetSamples,
+    SetTrochoidProperties,
+};
+use crate::canvas::curve::trochoid::TrochoidCurveProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::{
     GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MovePointOnCurve, RotateCurveById,
     SetConvexHull, SetCurveType,
-};
-use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
-use crate::canvas::v2::request::declare::{
-    GetInterpolationNodes, GetSamples, MoveCurve, RotateCurve, SetInterpolationNodes, SetSamples,
-    SetTrochoidProperties,
 };
 use crate::command::message::Message;
 use crate::command::parser::{Command, Get, Set, Task, Toggle};

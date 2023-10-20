@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::canvas::v2::curve::bezier::BezierCurveAlgorithm;
-use crate::canvas::v2::curve::interpolation::InterpolationNodes;
-use crate::canvas::v2::curve::rational_bezier::RationalBezierCurveAlgorithm;
-use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::curve::bezier::BezierCurveAlgorithm;
+use crate::canvas::curve::interpolation::InterpolationNodes;
+use crate::canvas::curve::rational_bezier::RationalBezierCurveAlgorithm;
+use crate::canvas::curve::trochoid::TrochoidCurveProperties;
 use crate::cli::RunArguments;
 use crate::config::property::{
     Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,

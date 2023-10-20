@@ -5,32 +5,36 @@ use anyhow::Result;
 use rand::Rng;
 use tiny_skia::PixmapMut;
 
-use crate::canvas::curve::control_points::{CurveControlPoints, WeightedPoint};
-use crate::canvas::curve::samples::Samples;
-use crate::canvas::curve::Curve;
+use control_points::point::{CurveControlPoints, WeightedPoint};
+use curve::{Curve, DrawOn, Update};
+
+use crate::canvas::base_line::VisualBaseLine;
+use crate::canvas::control_points_curve::VisualControlPoints;
+use crate::canvas::curve::bezier::{BezierCurve, BezierCurveProperties};
+use crate::canvas::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
+use crate::canvas::curve::polyline::PolylineCurve;
+use crate::canvas::curve::rational_bezier::{
+    RationalBezierCurve, RationalBezierCurveProperties, WeightedControlPoints,
+};
+use crate::canvas::curve::trochoid::TrochoidCurve;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::request::declare::AddPoint;
-use crate::canvas::v2::base_line::VisualBaseLine;
-use crate::canvas::v2::control_points_curve::VisualControlPoints;
-use crate::canvas::v2::curve::bezier::{BezierCurve, BezierCurveProperties};
-use crate::canvas::v2::curve::interpolation::{InterpolationCurve, InterpolationCurveProperties};
-use crate::canvas::v2::curve::polyline::PolylineCurve;
-use crate::canvas::v2::curve::rational_bezier::{
-    RationalBezierCurve, RationalBezierCurveProperties, WeightedControlPoints,
-};
-use crate::canvas::v2::curve::trochoid::TrochoidCurve;
-use crate::canvas::v2::{DrawOn, Update};
+use crate::canvas::samples::Samples;
 use crate::config::{CanvasConfig, CurveType};
 use crate::request::RequestHandlerMut;
 
+pub mod base_line;
+pub mod control_points;
+pub mod control_points_curve;
 pub mod curve;
 pub mod math;
 pub mod paint;
 pub mod properties;
 pub mod request;
-pub mod v2;
+pub mod samples;
+pub mod visual_path;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Canvas {

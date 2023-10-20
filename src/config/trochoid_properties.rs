@@ -4,7 +4,7 @@ use std::str;
 
 use anyhow::{anyhow, Result};
 
-use crate::canvas::v2::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::curve::trochoid::TrochoidCurveProperties;
 
 pub fn parse(input: &str) -> Result<TrochoidCurveProperties> {
     let properties = input.split(',').map(str::parse).collect::<Result<Vec<_>, _>>()?;
