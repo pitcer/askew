@@ -1,20 +1,17 @@
 use crate::canvas::control_points::point::CurveControlPoints;
-use crate::canvas::curve::interpolation::InterpolationCurve;
-use crate::canvas::curve::request::declare::{
+use crate::canvas::samples::Samples;
+use crate::canvas::shape::bezier::BezierCurve;
+use crate::canvas::shape::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetInterpolationNodes, GetPoint, GetWeight, MoveCurve, MovePoint, RotateCurve,
     SelectPoint, SetInterpolationNodes, SetTrochoidProperties,
 };
-use crate::canvas::curve::request::declare::{GetSamples, SetSamples};
-use crate::canvas::samples::Samples;
+use crate::canvas::shape::request::declare::{GetSamples, SetSamples};
 use crate::request::macros::delegate_requests;
-use crate::request::{
-    RequestHandler, RequestHandlerMut, RequestSubHandler, RequestSubHandlerMut, Response,
-    ResponseMut,
-};
+use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 
 delegate_requests! {
-    InterpolationCurve {
+    BezierCurve {
         // ControlPoints requests
         { mut AddControlPoint => CurveControlPoints },
         { mut MovePoint => CurveControlPoints },
@@ -33,43 +30,34 @@ delegate_requests! {
         { mut SetSamples => Samples },
         { GetSamples => Samples },
 
+        // InterpolationCurve requests
+        { mut SetInterpolationNodes => ! },
+        { GetInterpolationNodes => ! },
+
         // TrochoidCurve requests
         { mut SetTrochoidProperties => ! },
     }
 }
 
-impl RequestHandler<GetInterpolationNodes> for InterpolationCurve {
-    fn handle(&self, _event: GetInterpolationNodes) -> Response<GetInterpolationNodes> {
-        Ok(self.properties.nodes)
-    }
-}
-
-impl RequestHandlerMut<SetInterpolationNodes> for InterpolationCurve {
-    fn handle_mut(&mut self, event: SetInterpolationNodes) -> ResponseMut<SetInterpolationNodes> {
-        self.properties.nodes = event.nodes;
-        Ok(())
-    }
-}
-
-impl RequestSubHandler<CurveControlPoints> for InterpolationCurve {
+impl RequestSubHandler<CurveControlPoints> for BezierCurve {
     fn sub_handler(&self) -> &CurveControlPoints {
         &self.points
     }
 }
 
-impl RequestSubHandlerMut<CurveControlPoints> for InterpolationCurve {
+impl RequestSubHandlerMut<CurveControlPoints> for BezierCurve {
     fn sub_handler_mut(&mut self) -> &mut CurveControlPoints {
         &mut self.points
     }
 }
 
-impl RequestSubHandler<Samples> for InterpolationCurve {
+impl RequestSubHandler<Samples> for BezierCurve {
     fn sub_handler(&self) -> &Samples {
         &self.samples
     }
 }
 
-impl RequestSubHandlerMut<Samples> for InterpolationCurve {
+impl RequestSubHandlerMut<Samples> for BezierCurve {
     fn sub_handler_mut(&mut self) -> &mut Samples {
         &mut self.samples
     }

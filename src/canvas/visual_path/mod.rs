@@ -1,7 +1,7 @@
 use anyhow::Result;
 use tiny_skia::{Path, PathBuilder, PixmapMut, Point};
 
-use crate::canvas::curve::DrawOn;
+use crate::canvas::shape::DrawOn;
 use crate::canvas::visual_path::private::{VisualPathDetails, VisualPathProperties};
 
 pub mod line;

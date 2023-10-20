@@ -4,8 +4,8 @@ use tiny_skia::{PixmapMut, Point as SkiaPoint};
 
 use crate::canvas::control_points::point::CurvePoint;
 use crate::canvas::control_points::ControlPoints;
-use crate::canvas::curve::DrawOn;
 use crate::canvas::math::convex_hull::GrahamScan;
+use crate::canvas::shape::DrawOn;
 use crate::canvas::visual_path::line::{VisualLine, VisualLineProperties};
 use crate::canvas::visual_path::point::{VisualPoint, VisualPointProperties};
 use crate::config::rgb::Rgb;

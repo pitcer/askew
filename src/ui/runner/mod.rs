@@ -5,10 +5,10 @@ use anyhow::{anyhow, Result};
 use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::ControlFlow;
 
-use crate::canvas::curve::request::declare::{GetCurveCenter, MoveCurve};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::RotateCurveById;
+use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
 use crate::command;
 use crate::command::program_view::ProgramView;
 use crate::ipc::server::IpcServerHandle;

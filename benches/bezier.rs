@@ -1,9 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::Rng;
 
-use askew::canvas::curve::rational_bezier::RationalBezierPoint;
 use askew::canvas::math;
 use askew::canvas::math::point::Point;
+use askew::canvas::shape::rational_bezier::RationalBezierPoint;
 
 fn bench_bezier(criterion: &mut Criterion) {
     let mut random = rand::thread_rng();

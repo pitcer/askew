@@ -2,12 +2,12 @@ use std::fmt::Debug;
 
 use crate::canvas::control_points::point::CurvePoint;
 use crate::canvas::control_points::ControlPoints;
-use crate::canvas::curve::rational_bezier::RationalBezierPoint;
-use crate::canvas::curve::request::declare::{
+use crate::canvas::math::point::Point;
+use crate::canvas::shape::rational_bezier::RationalBezierPoint;
+use crate::canvas::shape::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetPoint, GetWeight, MoveCurve, MovePoint, RotateCurve, SelectPoint,
 };
-use crate::canvas::math::point::Point;
 use crate::request::{Error, RequestHandler, RequestHandlerMut, Response, ResponseMut};
 
 impl RequestHandlerMut<AddControlPoint> for ControlPoints<CurvePoint> {

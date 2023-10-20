@@ -1,9 +1,9 @@
 use tiny_skia::PixmapMut;
 
 use crate::canvas::base_line::OpenBaseLine;
-use crate::canvas::curve::{DrawOn, Update};
 use crate::canvas::math::point::Point;
 use crate::canvas::samples::Samples;
+use crate::canvas::shape::{DrawOn, Update};
 
 pub mod request;
 

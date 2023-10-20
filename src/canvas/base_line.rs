@@ -1,6 +1,6 @@
 use tiny_skia::{PixmapMut, Point};
 
-use crate::canvas::curve::DrawOn;
+use crate::canvas::shape::DrawOn;
 use crate::canvas::visual_path::line::{VisualLine, VisualLineProperties};
 use crate::canvas::visual_path::point::{VisualPoint, VisualPointProperties};
 use crate::config::rgb::Rgb;

@@ -4,21 +4,21 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::canvas::curve::request::declare::{
-    GetInterpolationNodes, GetSamples, MoveCurve, RotateCurve, SetInterpolationNodes, SetSamples,
-    SetTrochoidProperties,
-};
-use crate::canvas::curve::trochoid::TrochoidCurveProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::{
     GetConvexHull, GetCurvesLength, GetLength, GetPointOnCurve, MovePointOnCurve, RotateCurveById,
     SetConvexHull, SetCurveType,
 };
+use crate::canvas::shape::request::declare::{
+    GetInterpolationNodes, GetSamples, MoveCurve, RotateCurve, SetInterpolationNodes, SetSamples,
+    SetTrochoidProperties,
+};
+use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::command::message::Message;
 use crate::command::parser::{Command, Get, Set, Task, Toggle};
 use crate::command::program_view::ProgramView;
-use crate::config::CurveType;
+use crate::config::ShapeType;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 
 pub struct CommandInterpreter<'a> {
@@ -145,7 +145,7 @@ impl<'a> CommandInterpreter<'a> {
         Ok(Some(Message::info(format!("Canvas PNG image saved into '{path}'"))))
     }
 
-    fn interpret_set_curve_type(&mut self, curve_type: CurveType) -> InterpretResult {
+    fn interpret_set_curve_type(&mut self, curve_type: ShapeType) -> InterpretResult {
         self.state.frame.sub_handle_mut(SetCurveType(curve_type))?;
         Ok(Some(Message::info(format!("Set curve type to {curve_type}"))))
     }

@@ -1,5 +1,5 @@
-use crate::canvas::curve::request::declare::{GetSamples, SetSamples};
 use crate::canvas::samples::Samples;
+use crate::canvas::shape::request::declare::{GetSamples, SetSamples};
 use crate::request::{RequestHandler, RequestHandlerMut, Response, ResponseMut};
 
 impl RequestHandlerMut<SetSamples> for Samples {

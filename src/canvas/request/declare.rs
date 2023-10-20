@@ -1,12 +1,12 @@
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
-use crate::config::CurveType;
+use crate::config::ShapeType;
 use crate::request::macros::declare_requests;
 use crate::request::PointId;
 
 declare_requests! {
     { GetConvexHull () -> bool },
-    { GetCurveType () -> CurveType },
+    { GetCurveType () -> ShapeType },
     // Delegated from curve
     // { GetCurveCenter () -> Option<Point<f32>> },
     { GetCurrentPoint () -> Point<f32> },
@@ -25,7 +25,7 @@ declare_requests! {
     { mut DeleteCurve () -> () },
     { mut ChangeCurrentCurveIndex { change: i32 } -> () },
     { mut SetConvexHull (bool) -> () },
-    { mut SetCurveType (CurveType) -> () },
+    { mut SetCurveType (ShapeType) -> () },
     { mut RotateCurveById { angle: f32, curve: usize } -> () },
     // Delegated from curve
     // { mut RotateCurve { angle: f32 } -> () },

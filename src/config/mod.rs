@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::canvas::curve::bezier::BezierCurveAlgorithm;
-use crate::canvas::curve::interpolation::InterpolationNodes;
-use crate::canvas::curve::rational_bezier::RationalBezierCurveAlgorithm;
-use crate::canvas::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::shape::bezier::BezierCurveAlgorithm;
+use crate::canvas::shape::interpolation::InterpolationNodes;
+use crate::canvas::shape::rational_bezier::RationalBezierCurveAlgorithm;
+use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::cli::RunArguments;
 use crate::config::property::{
     Property, UiBackgroundColor, UiCommandBarColor, UiStatusBarColor, UiTextColor, UiTextErrorColor,
@@ -123,7 +123,7 @@ pub struct CanvasConfig {
 
     pub curve_samples: u32,
 
-    pub default_curve_type: CurveType,
+    pub default_curve_type: ShapeType,
 
     pub default_bezier_algorithm: BezierCurveAlgorithm,
 
@@ -159,7 +159,7 @@ impl Default for CanvasConfig {
             show_control_line: false,
             show_center_of_mass: true,
             curve_samples: 1000,
-            default_curve_type: CurveType::Polyline,
+            default_curve_type: ShapeType::Polyline,
             default_bezier_algorithm: BezierCurveAlgorithm::ChudyWozny,
             default_rational_bezier_algorithm: RationalBezierCurveAlgorithm::ChudyWozny,
             default_interpolation_nodes: InterpolationNodes::Chebyshev,
@@ -213,23 +213,25 @@ impl Default for UiConfig {
 }
 
 #[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
-pub enum CurveType {
+pub enum ShapeType {
     #[default]
     Polyline,
     Interpolation,
     Bezier,
     RationalBezier,
     Trochoid,
+    RegularPolygon,
 }
 
-impl Display for CurveType {
+impl Display for ShapeType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            CurveType::Polyline => write!(f, "Polyline"),
-            CurveType::Interpolation => write!(f, "Interpolation"),
-            CurveType::Bezier => write!(f, "Bezier"),
-            CurveType::RationalBezier => write!(f, "RationalBezier"),
-            CurveType::Trochoid => write!(f, "Trochoid"),
+            ShapeType::Polyline => write!(f, "Polyline"),
+            ShapeType::Interpolation => write!(f, "Interpolation"),
+            ShapeType::Bezier => write!(f, "Bezier"),
+            ShapeType::RationalBezier => write!(f, "RationalBezier"),
+            ShapeType::Trochoid => write!(f, "Trochoid"),
+            ShapeType::RegularPolygon => write!(f, "RegularPolygon"),
         }
     }
 }

@@ -1,11 +1,11 @@
-use crate::canvas::curve::rational_bezier::{RationalBezierCurve, WeightedControlPoints};
-use crate::canvas::curve::request::declare::{
+use crate::canvas::samples::Samples;
+use crate::canvas::shape::rational_bezier::{RationalBezierCurve, WeightedControlPoints};
+use crate::canvas::shape::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetInterpolationNodes, GetPoint, GetWeight, MoveCurve, MovePoint, RotateCurve,
     SelectPoint, SetInterpolationNodes, SetTrochoidProperties,
 };
-use crate::canvas::curve::request::declare::{GetSamples, SetSamples};
-use crate::canvas::samples::Samples;
+use crate::canvas::shape::request::declare::{GetSamples, SetSamples};
 use crate::request::macros::delegate_requests;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 

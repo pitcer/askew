@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use std::str;
 
-use crate::canvas::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::config::property::{ConvexHull, InterpolationNodesProperty, Property, Samples};
-use crate::config::CurveType;
+use crate::config::ShapeType;
 
 #[derive(Debug)]
 pub struct CommandParser<'a> {
@@ -83,7 +83,7 @@ pub enum Command {
     #[command()]
     SetCurveType {
         #[arg()]
-        curve_type: CurveType,
+        curve_type: ShapeType,
     },
 
     #[command()]

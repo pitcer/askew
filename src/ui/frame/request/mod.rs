@@ -1,6 +1,5 @@
 use winit::dpi::PhysicalPosition;
 
-use crate::canvas::curve::request::declare::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::{
@@ -8,6 +7,7 @@ use crate::canvas::request::declare::{
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, MoveCurrentPoint,
     SetConvexHull,
 };
+use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve, RotateCurve, SelectPoint};
 use crate::canvas::Canvas;
 use crate::request::{
     Change, Direction, RequestHandler, RequestHandlerMut, RequestSubHandler, RequestSubHandlerMut,

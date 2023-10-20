@@ -1,9 +1,9 @@
-use crate::canvas::curve::bezier::BezierCurveAlgorithm;
-use crate::canvas::curve::interpolation::InterpolationNodes;
-use crate::canvas::curve::rational_bezier::RationalBezierCurveAlgorithm;
-use crate::canvas::curve::trochoid::TrochoidCurveProperties;
+use crate::canvas::shape::bezier::BezierCurveAlgorithm;
+use crate::canvas::shape::interpolation::InterpolationNodes;
+use crate::canvas::shape::rational_bezier::RationalBezierCurveAlgorithm;
+use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::config::rgb::Rgb;
-use crate::config::CurveType;
+use crate::config::ShapeType;
 
 pub trait Property {
     type Type;
@@ -45,7 +45,7 @@ declare_properties! {
     LineWidth("line_width", f32, 2.0),
     Samples("samples", u32, 1000),
     DefaultWeight("default_weight", f32, 1.0),
-    DefaultCurveType("curve_type", CurveType, CurveType::Polyline),
+    DefaultCurveType("curve_type", ShapeType, ShapeType::Polyline),
     DefaultBezierAlgorithm("bezier_algorithm", BezierCurveAlgorithm, BezierCurveAlgorithm::DeCasteljau),
     DefaultRationalBezierAlgorithm(
         "rational_bezier_algorithm",

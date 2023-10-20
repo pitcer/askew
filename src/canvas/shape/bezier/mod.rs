@@ -4,9 +4,9 @@ use crate::canvas::base_line::VisualBaseLine;
 use crate::canvas::control_points::point::CurvePoint;
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
-use crate::canvas::curve::{DrawOn, Update};
 use crate::canvas::math;
 use crate::canvas::samples::Samples;
+use crate::canvas::shape::{DrawOn, Update};
 
 pub mod request;
 

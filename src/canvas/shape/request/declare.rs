@@ -1,8 +1,8 @@
 use crate::canvas::control_points::point::WeightedPoint;
-use crate::canvas::curve::interpolation::InterpolationNodes;
-use crate::canvas::curve::trochoid::TrochoidCurveProperties;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
+use crate::canvas::shape::interpolation::InterpolationNodes;
+use crate::canvas::shape::trochoid::TrochoidCurveProperties;
 use crate::request::macros::declare_requests;
 use crate::request::PointId;
 

@@ -1,4 +1,4 @@
-use crate::canvas::curve::request::declare::{
+use crate::canvas::shape::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
     GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
     RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples, SetTrochoidProperties,
@@ -67,5 +67,37 @@ delegate_requests! {
 
         // TrochoidCurve requests
         { mut SetTrochoidProperties => T },
+    }
+}
+
+pub type ExcludeAllRequests<T> = RequestSieve<ExcludeAll, T>;
+pub struct ExcludeAll;
+
+delegate_requests! {
+    <T> ExcludeAllRequests<T> {
+        // ControlPoints requests
+        { mut AddControlPoint => ! },
+        { mut MovePoint => ! },
+        { mut DeletePoint => ! },
+        { mut RotateCurve => ! },
+        { mut MoveCurve => ! },
+        { mut ChangeWeight => ! },
+        { mut AddWeightedControlPoint => ! },
+        { GetControlPointsLength => ! },
+        { GetCurveCenter => ! },
+        { SelectPoint => ! },
+        { GetPoint => ! },
+        { GetWeight => ! },
+
+        // Samples requests
+        { mut SetSamples => ! },
+        { GetSamples => ! },
+
+        // InterpolationCurve requests
+        { mut SetInterpolationNodes => ! },
+        { GetInterpolationNodes => ! },
+
+        // TrochoidCurve requests
+        { mut SetTrochoidProperties => ! },
     }
 }

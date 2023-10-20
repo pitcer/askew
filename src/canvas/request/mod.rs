@@ -1,16 +1,16 @@
 use crate::canvas::control_points::point::WeightedPoint;
-use crate::canvas::curve::request::declare::{
-    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
-    GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
-    RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples,
-};
-use crate::canvas::curve::Curve;
 use crate::canvas::request::declare::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveType, GetCurvesLength,
     GetLength, GetPointOnCurve, MoveCurrentPoint, MovePointOnCurve, RotateCurveById, SetConvexHull,
     SetCurveType,
 };
+use crate::canvas::shape::request::declare::{
+    AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
+    GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
+    RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples,
+};
+use crate::canvas::shape::Shape;
 use crate::canvas::{math, Canvas};
 use crate::request::macros::delegate_requests;
 use crate::request::{
@@ -22,15 +22,15 @@ pub mod declare;
 
 delegate_requests! {
     Canvas {
-        { GetSamples => Curve },
-        { GetInterpolationNodes => Curve },
-        { GetCurveCenter => Curve },
-        { SelectPoint => Curve },
-        { GetPoint => Curve },
-        { mut SetSamples => Curve },
-        { mut SetInterpolationNodes => Curve },
-        { mut MoveCurve => Curve },
-        { mut RotateCurve => Curve },
+        { GetSamples => Shape },
+        { GetInterpolationNodes => Shape },
+        { GetCurveCenter => Shape },
+        { SelectPoint => Shape },
+        { GetPoint => Shape },
+        { mut SetSamples => Shape },
+        { mut SetInterpolationNodes => Shape },
+        { mut MoveCurve => Shape },
+        { mut RotateCurve => Shape },
 
         // TODO: reimplement in curve internals
         { GetConvexHull => ! },
@@ -38,14 +38,14 @@ delegate_requests! {
     }
 }
 
-impl RequestSubHandler<Curve> for Canvas {
-    fn sub_handler(&self) -> &Curve {
+impl RequestSubHandler<Shape> for Canvas {
+    fn sub_handler(&self) -> &Shape {
         self.current_curve()
     }
 }
 
-impl RequestSubHandlerMut<Curve> for Canvas {
-    fn sub_handler_mut(&mut self) -> &mut Curve {
+impl RequestSubHandlerMut<Shape> for Canvas {
+    fn sub_handler_mut(&mut self) -> &mut Shape {
         self.current_curve_mut()
     }
 }
@@ -175,10 +175,10 @@ impl RequestHandlerMut<SetCurveType> for Canvas {
         replace_with::replace_with_or_abort(curve, |curve| {
             let samples = curve.handle(GetSamples).ok();
             let points = match curve {
-                Curve::Polyline(curve) => Some(curve.points.into_inner()),
-                Curve::Interpolation(curve) => Some(curve.points.into_inner()),
-                Curve::Bezier(curve) => Some(curve.points.into_inner()),
-                Curve::RationalBezier(curve) => Some(
+                Shape::Polyline(curve) => Some(curve.points.into_inner()),
+                Shape::Interpolation(curve) => Some(curve.points.into_inner()),
+                Shape::Bezier(curve) => Some(curve.points.into_inner()),
+                Shape::RationalBezier(curve) => Some(
                     curve
                         .points
                         .into_inner()
@@ -186,7 +186,8 @@ impl RequestHandlerMut<SetCurveType> for Canvas {
                         .map(WeightedPoint::point)
                         .collect::<Vec<_>>(),
                 ),
-                Curve::Trochoid(_) => None,
+                Shape::Trochoid(_) => None,
+                Shape::RegularPolygon(_) => None,
             };
             Canvas::create_curve(&self.config, event.0, points, samples)
         });

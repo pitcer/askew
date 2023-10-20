@@ -1,43 +1,41 @@
 use tiny_skia::PixmapMut;
 
-use crate::canvas::base_line::VisualBaseLine;
+use crate::canvas::base_line::ClosedBaseLine;
 use crate::canvas::control_points::point::CurvePoint;
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
-use crate::canvas::curve::{DrawOn, Update};
+use crate::canvas::shape::{DrawOn, Update};
 
-pub mod request;
-
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-pub struct PolylineCurve {
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Polygon {
     pub points: ControlPoints<CurvePoint>,
     pub control_points: VisualControlPoints,
-    pub polyline: VisualBaseLine<false>,
+    pub base_line: ClosedBaseLine,
 }
 
-impl PolylineCurve {
+impl Polygon {
     #[must_use]
     pub fn new(
         points: ControlPoints<CurvePoint>,
         control_points: VisualControlPoints,
-        polyline: VisualBaseLine<false>,
+        base_line: ClosedBaseLine,
     ) -> Self {
-        Self { points, control_points, polyline }
+        Self { points, control_points, base_line }
     }
 }
 
-impl Update for PolylineCurve {
+impl Update for Polygon {
     fn update(&mut self) {
         let points = self.points.copied_iterator();
-        self.polyline.rebuild_paths(points);
+        self.base_line.rebuild_paths(points);
 
         self.control_points.rebuild_paths(&self.points);
     }
 }
 
-impl DrawOn for PolylineCurve {
+impl DrawOn for Polygon {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
-        self.polyline.draw_on(pixmap);
+        self.base_line.draw_on(pixmap);
         self.control_points.draw_on(pixmap);
     }
 }
