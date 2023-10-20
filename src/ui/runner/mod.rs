@@ -26,7 +26,7 @@ use crate::ui::runner::task::Tasks;
 use crate::ui::window::Window;
 use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
-use crate::wasm::RequestHandle;
+use crate::wasm::state::RequestHandle;
 
 pub mod request;
 pub mod task;

@@ -37,6 +37,7 @@ static_assertions = "1.1.0"
 thiserror = "1.0.50"
 time = "0.3.30"
 toml = "0.8.2"
+wasmtime-wasi = "14.0.0"
 
 [dependencies.bytemuck]
 version = "1.14.0"
@@ -76,7 +77,7 @@ default-features = false
 features = ["std", "simd"]
 
 [dependencies.wasmtime]
-version = "13.0.0"
+version = "14.0.0"
 # Disables 'cache', 'jitdump', 'parallel-compilation', 'pooling-allocator', 'vtune', 'wat'
 default-features = false
 features = ["async", "component-model", "cranelift"]

@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 use anyhow::Result;
 
 use crate::wasm::request::Response;
-use crate::wasm::Responder;
+use crate::wasm::state::Responder;
 
 pub struct SleepingTasks {
     tasks: BinaryHeap<Reverse<SleepingTask>>,
