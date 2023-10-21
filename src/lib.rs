@@ -108,8 +108,8 @@ fn run(config: Config) -> Result<()> {
     let mut handler =
         WindowRunner::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
 
-    event_loop.run(move |event, _, control_flow| {
-        let result = handler.run(event, control_flow);
+    event_loop.run(move |event, target| {
+        let result = handler.run(event, target);
         result.expect("Error in event loop");
     })?;
 

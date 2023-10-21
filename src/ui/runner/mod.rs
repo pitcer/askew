@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use winit::event::{Event, StartCause, WindowEvent};
-use winit::event_loop::ControlFlow;
+use winit::event_loop::{ControlFlow, EventLoopWindowTarget};
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
@@ -74,19 +74,15 @@ impl WindowRunner {
     pub fn run(
         &mut self,
         event: Event<RunnerRequest>,
-        control_flow: &mut ControlFlow,
+        target: &EventLoopWindowTarget<RunnerRequest>,
     ) -> Result<()> {
         log::debug!("<cyan><b>Event loop:</>\n<bright_black>{event:?}</>");
 
         match event {
-            Event::RedrawRequested(window_id) if self.window.has_id(window_id) => {
-                self.frame.canvas_mut().update_all();
-                self.paint()?;
-            }
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
-                let input = self.handle_window_event(event, control_flow)?;
+                let input = self.handle_window_event(event, target)?;
                 if let Some(input) = input {
-                    let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
+                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
                     let handler = InputHandler::new(&mut self.command, state);
                     let result = handler.handle_input(input);
                     if let Err(error) = result {
@@ -95,14 +91,12 @@ impl WindowRunner {
                     self.window.request_redraw();
                 }
             }
-            Event::UserEvent(request) => self.handle_request(request, control_flow)?,
+            Event::UserEvent(request) => self.handle_request(request, target)?,
             Event::NewEvents(StartCause::Init) => {
-                control_flow.set_wait();
-
                 for command in mem::take(&mut self.commands) {
                     log::debug!("<cyan>Initial command input:</> '{command}'");
 
-                    let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
+                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
                     let result = command::execute(&command, state)?;
 
                     log::info!("Initial command result: `{result:?}`");
@@ -111,8 +105,8 @@ impl WindowRunner {
             Event::NewEvents(StartCause::ResumeTimeReached { start: _start, requested_resume }) => {
                 let wake_time = self.sleeping_tasks.wake(requested_resume)?;
                 match wake_time {
-                    None => control_flow.set_wait(),
-                    Some(wake_time) => control_flow.set_wait_until(wake_time),
+                    None => target.set_control_flow(ControlFlow::Wait),
+                    Some(wake_time) => target.set_control_flow(ControlFlow::WaitUntil(wake_time)),
                 }
             }
             _ => {}
@@ -137,9 +131,14 @@ impl WindowRunner {
     pub fn handle_window_event(
         &mut self,
         event: WindowEvent,
-        control_flow: &mut ControlFlow,
+        target: &EventLoopWindowTarget<RunnerRequest>,
     ) -> Result<Option<Input>> {
         match event {
+            WindowEvent::RedrawRequested => {
+                self.frame.canvas_mut().update_all();
+                self.paint()?;
+                Ok(None)
+            }
             WindowEvent::Resized(size) => {
                 self.window.resize_surface(size)?;
                 Ok(None)
@@ -149,7 +148,7 @@ impl WindowRunner {
                     handle.close();
                 }
 
-                control_flow.set_exit();
+                target.exit();
                 Ok(None)
             }
             _ => self.event_handler.handle(event),
@@ -159,18 +158,18 @@ impl WindowRunner {
     fn handle_request(
         &mut self,
         request: RunnerRequest,
-        control_flow: &mut ControlFlow,
+        target: &EventLoopWindowTarget<RunnerRequest>,
     ) -> Result<()> {
         match request {
             RunnerRequest::IpcMessage(message) => {
-                let state = ProgramView::new(control_flow, &mut self.frame, &mut self.tasks);
+                let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
                 let reply = message.handle(state);
                 let handle = self.ipc_server.as_ref().expect("IPC server should exist");
                 handle.send(reply)?;
                 self.window.request_redraw();
                 Ok(())
             }
-            RunnerRequest::TaskRequest(request) => self.handle_task_request(request, control_flow),
+            RunnerRequest::TaskRequest(request) => self.handle_task_request(request, target),
             RunnerRequest::ProgressTask(task) => {
                 let task_id = task.task_id();
                 task.progress();
@@ -191,7 +190,7 @@ impl WindowRunner {
     fn handle_task_request(
         &mut self,
         request: RequestHandle,
-        control_flow: &mut ControlFlow,
+        target: &EventLoopWindowTarget<RunnerRequest>,
     ) -> Result<()> {
         let RequestHandle { request, responder } = request;
         match request {
@@ -217,7 +216,7 @@ impl WindowRunner {
 
                 let duration = Duration::new(seconds, nanoseconds);
                 let wake_time = self.sleeping_tasks.sleep(responder, duration);
-                control_flow.set_wait_until(wake_time);
+                target.set_control_flow(ControlFlow::WaitUntil(wake_time));
                 Ok(())
             }
             Request::GetPosition { id: _id } => {

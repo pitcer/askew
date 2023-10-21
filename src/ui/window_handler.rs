@@ -1,7 +1,7 @@
 use anyhow::Result;
 use winit::dpi::PhysicalPosition;
 use winit::event::{DeviceId, ElementState, KeyEvent, Modifiers, MouseButton, WindowEvent};
-use winit::keyboard::Key;
+use winit::keyboard::{Key, NamedKey};
 
 use crate::request::{Change, Direction};
 use crate::ui::frame::request::declare::{
@@ -85,8 +85,8 @@ impl WindowEventHandler {
         let event = 'map_event: {
             let event = match input.logical_key.as_ref() {
                 Key::Character(":") => InputEvent::EnterCommand,
-                Key::Enter => InputEvent::ExecuteCommand,
-                Key::Escape => InputEvent::ExitMode,
+                Key::Named(NamedKey::Enter) => InputEvent::ExecuteCommand,
+                Key::Named(NamedKey::Escape) => InputEvent::ExitMode,
 
                 Key::Character("p") => InputEvent::ChangeMode(Mode::Point),
                 Key::Character("s") => InputEvent::ChangeMode(Mode::PointSelect),
@@ -101,10 +101,16 @@ impl WindowEventHandler {
 
                 Key::Character("h") => InputEvent::ToggleConvexHull(ToggleConvexHull),
 
-                Key::ArrowUp => InputEvent::MovePoint(MovePoint(Direction::Up)),
-                Key::ArrowDown => InputEvent::MovePoint(MovePoint(Direction::Down)),
-                Key::ArrowLeft => InputEvent::MovePoint(MovePoint(Direction::Left)),
-                Key::ArrowRight => InputEvent::MovePoint(MovePoint(Direction::Right)),
+                Key::Named(NamedKey::ArrowUp) => InputEvent::MovePoint(MovePoint(Direction::Up)),
+                Key::Named(NamedKey::ArrowDown) => {
+                    InputEvent::MovePoint(MovePoint(Direction::Down))
+                }
+                Key::Named(NamedKey::ArrowLeft) => {
+                    InputEvent::MovePoint(MovePoint(Direction::Left))
+                }
+                Key::Named(NamedKey::ArrowRight) => {
+                    InputEvent::MovePoint(MovePoint(Direction::Right))
+                }
 
                 _ => break 'map_event None,
             };

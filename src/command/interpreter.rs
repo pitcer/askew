@@ -203,7 +203,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn quit(&mut self) -> InterpretResult {
-        self.state.control_flow.set_exit();
+        self.state.target.exit();
         Ok(Some(Message::info("Quit...".to_owned())))
     }
 }
