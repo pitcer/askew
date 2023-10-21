@@ -68,7 +68,7 @@ default-features = false
 features = ["termcolor", "local-offset", "paris"]
 
 [dependencies.softbuffer]
-version = "0.3.1"
+version = "0.3.2"
 default-features = false
 
 [dependencies.tiny-skia]
@@ -85,7 +85,7 @@ features = ["async", "component-model", "cranelift"]
 [dependencies.winit]
 version = "0.29.2"
 default-features = false
-# TODO: remove after softbuffer 0.3.2 update
+# TODO: remove after softbuffer will update rwh to 0.6.0
 features = ["rwh_05"]
 
 [dev-dependencies]
