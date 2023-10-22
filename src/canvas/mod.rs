@@ -57,8 +57,15 @@ impl Canvas {
 
     pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
         let file = File::open(path)?;
-        let canvas = serde_json::from_reader::<_, Canvas>(file)?;
+        let mut canvas = serde_json::from_reader::<_, Canvas>(file)?;
+        canvas.update_all();
         Ok(canvas)
+    }
+
+    fn update_all(&mut self) {
+        for curve in &mut self.curves {
+            curve.update();
+        }
     }
 
     #[must_use]
@@ -128,13 +135,6 @@ impl Canvas {
     pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
         for curve in &self.curves {
             curve.draw_on(pixmap);
-        }
-    }
-
-    #[deprecated(note = "Remove after implementing updates in event handler")]
-    pub fn update_all(&mut self) {
-        for curve in &mut self.curves {
-            curve.update();
         }
     }
 

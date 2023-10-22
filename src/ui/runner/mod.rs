@@ -135,7 +135,6 @@ impl WindowRunner {
     ) -> Result<Option<Input>> {
         match event {
             WindowEvent::RedrawRequested => {
-                self.frame.canvas_mut().update_all();
                 self.paint()?;
                 Ok(None)
             }

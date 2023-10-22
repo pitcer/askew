@@ -7,7 +7,7 @@ use crate::canvas::shape::request::sieve::{
     ExcludeAllRequests, ExcludeControlPointsRequests, ExcludeInterpolationRequests,
 };
 use crate::canvas::shape::trochoid::TrochoidCurve;
-use crate::canvas::shape::Shape;
+use crate::canvas::shape::{Shape, Update};
 use crate::request::{
     Request, RequestHandler, RequestHandlerMut, RequestMut, Response, ResponseMut,
 };
@@ -53,7 +53,7 @@ where
     for<'a> ExcludeAllRequests<&'a mut RegularPolygon>: RequestHandlerMut<T>,
 {
     fn handle_mut(&mut self, request: T) -> ResponseMut<T> {
-        match self {
+        let result = match self {
             Shape::Polyline(curve) => curve.handle_mut(request),
             Shape::Interpolation(curve) => curve.handle_mut(request),
             Shape::Bezier(curve) => curve.handle_mut(request),
@@ -65,6 +65,12 @@ where
             Shape::RegularPolygon(shape) => {
                 ExcludeAllRequests::new(shape.as_mut()).handle_mut(request)
             }
+        };
+
+        if result.is_ok() {
+            self.update();
         }
+
+        result
     }
 }
