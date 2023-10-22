@@ -10,13 +10,13 @@ use crate::ui::frame::request::declare::{
 use crate::ui::input_handler::{Input, InputEvent};
 use crate::ui::mode::Mode;
 
-pub struct WindowEventHandler {
+pub struct InputEventHandler {
     cursor_position: PhysicalPosition<f64>,
     modifiers: Modifiers,
     mouse_left_state: ElementState,
 }
 
-impl WindowEventHandler {
+impl InputEventHandler {
     #[must_use]
     pub fn new() -> Self {
         let cursor_position = PhysicalPosition::new(0.0, 0.0);
@@ -120,7 +120,7 @@ impl WindowEventHandler {
     }
 }
 
-impl Default for WindowEventHandler {
+impl Default for InputEventHandler {
     fn default() -> Self {
         Self::new()
     }

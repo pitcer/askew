@@ -16,7 +16,7 @@ use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
-use crate::ui::input_handler::Input;
+use crate::ui::input_event_handler::InputEventHandler;
 use crate::ui::input_handler::InputHandler;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
@@ -24,7 +24,6 @@ use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::runner::task::sleep::SleepingTasks;
 use crate::ui::runner::task::Tasks;
 use crate::ui::window::Window;
-use crate::ui::window_handler::WindowEventHandler;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::state::RequestHandle;
 
@@ -37,7 +36,7 @@ pub struct WindowRunner {
     frame: Frame,
     painter: Painter,
     command: CommandState,
-    event_handler: WindowEventHandler,
+    event_handler: InputEventHandler,
     ipc_server: Option<IpcServerHandle>,
     tasks: Tasks,
     sleeping_tasks: SleepingTasks,
@@ -53,7 +52,7 @@ impl WindowRunner {
         sender: RunnerSender,
     ) -> Result<Self> {
         let command = CommandState::new();
-        let event_handler = WindowEventHandler::new();
+        let event_handler = InputEventHandler::new();
         let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
         let sleeping_tasks = SleepingTasks::new();
@@ -80,16 +79,7 @@ impl WindowRunner {
 
         match event {
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
-                let input = self.handle_window_event(event, target)?;
-                if let Some(input) = input {
-                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
-                    let handler = InputHandler::new(&mut self.command, state);
-                    let result = handler.handle_input(input);
-                    if let Err(error) = result {
-                        log::debug!("{error}");
-                    }
-                    self.window.request_redraw();
-                }
+                self.handle_window_event(event, target)?;
             }
             Event::UserEvent(request) => self.handle_request(request, target)?,
             Event::NewEvents(StartCause::Init) => {
@@ -132,15 +122,13 @@ impl WindowRunner {
         &mut self,
         event: WindowEvent,
         target: &EventLoopWindowTarget<RunnerRequest>,
-    ) -> Result<Option<Input>> {
+    ) -> Result<()> {
         match event {
             WindowEvent::RedrawRequested => {
                 self.paint()?;
-                Ok(None)
             }
             WindowEvent::Resized(size) => {
                 self.window.resize_surface(size)?;
-                Ok(None)
             }
             WindowEvent::CloseRequested => {
                 if let Some(handle) = self.ipc_server.take() {
@@ -148,10 +136,21 @@ impl WindowRunner {
                 }
 
                 target.exit();
-                Ok(None)
             }
-            _ => self.event_handler.handle(event),
+            _ => {
+                let input = self.event_handler.handle(event)?;
+                if let Some(input) = input {
+                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
+                    let handler = InputHandler::new(&mut self.command, state);
+                    let result = handler.handle_input(input);
+                    if let Err(error) = result {
+                        log::debug!("{error}");
+                    }
+                    self.window.request_redraw();
+                }
+            }
         }
+        Ok(())
     }
 
     fn handle_request(
