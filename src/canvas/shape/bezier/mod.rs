@@ -19,7 +19,7 @@ pub struct BezierCurve {
     pub samples: Samples,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct BezierCurveProperties {
     algorithm: BezierCurveAlgorithm,
 }

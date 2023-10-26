@@ -53,7 +53,7 @@ impl RequestSubHandlerMut<Shape> for Canvas {
 impl RequestHandlerMut<AddCurve> for Canvas {
     fn handle_mut(&mut self, _event: AddCurve) -> ResponseMut<AddCurve> {
         let curve_type = self.config.default_curve_type;
-        let curve = Canvas::create_curve(&self.config, curve_type, None, None);
+        let curve = Shape::new(curve_type, &self.config);
         self.curves.push(curve);
         self.properties.current_curve += 1;
         Ok(())
@@ -171,26 +171,7 @@ impl RequestHandlerMut<ChangeCurrentPointIndex> for Canvas {
 
 impl RequestHandlerMut<SetCurveType> for Canvas {
     fn handle_mut(&mut self, event: SetCurveType) -> ResponseMut<SetCurveType> {
-        let curve = &mut self.curves[self.properties.current_curve];
-        replace_with::replace_with_or_abort(curve, |curve| {
-            let samples = curve.handle(GetSamples).ok();
-            let points = match curve {
-                Shape::Polyline(curve) => Some(curve.points.into_inner()),
-                Shape::Interpolation(curve) => Some(curve.points.into_inner()),
-                Shape::Bezier(curve) => Some(curve.points.into_inner()),
-                Shape::RationalBezier(curve) => Some(
-                    curve
-                        .points
-                        .into_inner()
-                        .into_iter()
-                        .map(WeightedPoint::point)
-                        .collect::<Vec<_>>(),
-                ),
-                Shape::Trochoid(_) => None,
-                Shape::RegularPolygon(_) => None,
-            };
-            Canvas::create_curve(&self.config, event.0, points, samples)
-        });
+        self.change_shape_type(self.properties.current_curve, event.0);
         Ok(())
     }
 }

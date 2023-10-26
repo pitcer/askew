@@ -18,7 +18,7 @@ pub struct InterpolationCurve {
     pub samples: Samples,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct InterpolationCurveProperties {
     pub nodes: InterpolationNodes,
 }

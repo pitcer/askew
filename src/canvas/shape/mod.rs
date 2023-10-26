@@ -5,8 +5,9 @@ use crate::canvas::shape::interpolation::InterpolationCurve;
 use crate::canvas::shape::polyline::PolylineCurve;
 use crate::canvas::shape::rational_bezier::RationalBezierCurve;
 use crate::canvas::shape::regular_polygon::RegularPolygon;
+use crate::canvas::shape::shape_changer::ShapeChanger;
 use crate::canvas::shape::trochoid::TrochoidCurve;
-use crate::config::ShapeType;
+use crate::config::{CanvasConfig, ShapeType};
 
 pub mod bezier;
 pub mod interpolation;
@@ -14,6 +15,7 @@ pub mod polyline;
 pub mod rational_bezier;
 pub mod regular_polygon;
 pub mod request;
+pub mod shape_changer;
 pub mod trochoid;
 
 // TODO: will this trait be useful anywhere?
@@ -38,6 +40,11 @@ pub enum Shape {
 }
 
 impl Shape {
+    pub fn new(shape_type: ShapeType, default_values: &CanvasConfig) -> Self {
+        let shape_changer = ShapeChanger::new(default_values);
+        shape_changer.into_shape(shape_type)
+    }
+
     #[must_use]
     pub fn curve_type(&self) -> ShapeType {
         match self {

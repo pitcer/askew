@@ -12,7 +12,7 @@ pub mod request;
 pub struct PolylineCurve {
     pub points: ControlPoints<CurvePoint>,
     pub control_points: VisualControlPoints,
-    pub polyline: VisualBaseLine<false>,
+    pub base_line: VisualBaseLine<false>,
 }
 
 impl PolylineCurve {
@@ -20,16 +20,16 @@ impl PolylineCurve {
     pub fn new(
         points: ControlPoints<CurvePoint>,
         control_points: VisualControlPoints,
-        polyline: VisualBaseLine<false>,
+        base_line: VisualBaseLine<false>,
     ) -> Self {
-        Self { points, control_points, polyline }
+        Self { points, control_points, base_line }
     }
 }
 
 impl Update for PolylineCurve {
     fn update(&mut self) {
         let points = self.points.copied_iterator();
-        self.polyline.rebuild_paths(points);
+        self.base_line.rebuild_paths(points);
 
         self.control_points.rebuild_paths(&self.points);
     }
@@ -37,7 +37,7 @@ impl Update for PolylineCurve {
 
 impl DrawOn for PolylineCurve {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
-        self.polyline.draw_on(pixmap);
+        self.base_line.draw_on(pixmap);
         self.control_points.draw_on(pixmap);
     }
 }

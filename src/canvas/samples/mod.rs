@@ -4,7 +4,7 @@ use num_traits::{Num, NumCast};
 
 pub mod request;
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Samples {
     samples: usize,
 }

@@ -51,6 +51,7 @@ use clap::Parser;
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
 use winit::event_loop::EventLoopBuilder;
+use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
 use winit::window::WindowBuilder;
 
 use cli::{Command, SubCommands};
@@ -93,7 +94,7 @@ pub fn main() -> Result<()> {
 }
 
 fn run(config: Config) -> Result<()> {
-    let event_loop = EventLoopBuilder::with_user_event().build()?;
+    let mut event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
     let window = Window::from_winit(window)?;
     let size = window.size_rectangle();
@@ -108,7 +109,7 @@ fn run(config: Config) -> Result<()> {
     let mut handler =
         WindowRunner::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
 
-    event_loop.run(move |event, target| {
+    event_loop.run_on_demand(|event, target| {
         let result = handler.run(event, target);
         result.expect("Error in event loop");
     })?;

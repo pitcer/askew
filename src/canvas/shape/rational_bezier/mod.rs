@@ -18,7 +18,7 @@ pub struct RationalBezierCurve {
     pub samples: Samples,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct RationalBezierCurveProperties {
     algorithm: RationalBezierCurveAlgorithm,
 }
