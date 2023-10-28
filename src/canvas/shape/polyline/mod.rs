@@ -4,15 +4,16 @@ use crate::canvas::base_line::VisualBaseLine;
 use crate::canvas::control_points::point::CurvePoint;
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
+use crate::canvas::shape::shape_changer::ShapeCommonValues;
 use crate::canvas::shape::{DrawOn, Update};
 
 pub mod request;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PolylineCurve {
-    pub points: ControlPoints<CurvePoint>,
-    pub control_points: VisualControlPoints,
-    pub base_line: VisualBaseLine<false>,
+    points: ControlPoints<CurvePoint>,
+    control_points: VisualControlPoints,
+    base_line: VisualBaseLine<false>,
 }
 
 impl PolylineCurve {
@@ -39,5 +40,16 @@ impl DrawOn for PolylineCurve {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
         self.base_line.draw_on(pixmap);
         self.control_points.draw_on(pixmap);
+    }
+}
+
+impl From<PolylineCurve> for ShapeCommonValues {
+    fn from(value: PolylineCurve) -> Self {
+        Self {
+            points: Some(value.points),
+            control_points: Some(value.control_points),
+            open_base_line: Some(value.base_line),
+            ..Default::default()
+        }
     }
 }

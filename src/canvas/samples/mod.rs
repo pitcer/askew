@@ -1,10 +1,11 @@
 use std::ops::RangeInclusive;
 
+use crate::config::CanvasConfig;
 use num_traits::{Num, NumCast};
 
 pub mod request;
 
-#[derive(Debug, Copy, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Samples {
     samples: usize,
 }
@@ -28,5 +29,17 @@ impl Samples {
                 .expect("index should be representable by the given type");
             range_start + (index * delta) / length
         })
+    }
+}
+
+impl Default for Samples {
+    fn default() -> Self {
+        Self::new(2)
+    }
+}
+
+impl From<&CanvasConfig> for Samples {
+    fn from(value: &CanvasConfig) -> Self {
+        Self { samples: value.curve_samples as usize }
     }
 }

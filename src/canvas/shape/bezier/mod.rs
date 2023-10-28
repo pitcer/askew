@@ -6,17 +6,19 @@ use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
 use crate::canvas::math;
 use crate::canvas::samples::Samples;
+use crate::canvas::shape::shape_changer::ShapeCommonValues;
 use crate::canvas::shape::{DrawOn, Update};
+use crate::config::CanvasConfig;
 
 pub mod request;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BezierCurve {
-    pub points: ControlPoints<CurvePoint>,
-    pub control_points: VisualControlPoints,
-    pub polyline: VisualBaseLine<false>,
-    pub properties: BezierCurveProperties,
-    pub samples: Samples,
+    points: ControlPoints<CurvePoint>,
+    control_points: VisualControlPoints,
+    polyline: VisualBaseLine<false>,
+    properties: BezierCurveProperties,
+    samples: Samples,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -64,10 +66,29 @@ impl DrawOn for BezierCurve {
     }
 }
 
+impl From<BezierCurve> for ShapeCommonValues {
+    fn from(value: BezierCurve) -> Self {
+        Self {
+            points: Some(value.points),
+            control_points: Some(value.control_points),
+            open_base_line: Some(value.polyline),
+            bezier_properties: Some(value.properties),
+            samples: Some(value.samples),
+            ..Default::default()
+        }
+    }
+}
+
 impl BezierCurveProperties {
     #[must_use]
     pub fn new(algorithm: BezierCurveAlgorithm) -> Self {
         Self { algorithm }
+    }
+}
+
+impl From<&CanvasConfig> for BezierCurveProperties {
+    fn from(value: &CanvasConfig) -> Self {
+        Self { algorithm: value.default_bezier_algorithm }
     }
 }
 

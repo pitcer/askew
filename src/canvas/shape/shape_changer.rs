@@ -14,65 +14,34 @@ use crate::config::{CanvasConfig, ShapeType};
 
 #[derive(Debug)]
 pub struct ShapeChanger<'a> {
-    values: CommonShapeValues,
+    values: ShapeCommonValues,
     default_values: &'a CanvasConfig,
 }
 
 #[derive(Debug, Default)]
-struct CommonShapeValues {
-    points: Option<CurveControlPoints>,
-    weighted_points: Option<WeightedControlPoints>,
-    control_points: Option<VisualControlPoints>,
-    open_base_line: Option<OpenBaseLine>,
-    closed_base_line: Option<ClosedBaseLine>,
-    samples: Option<Samples>,
-    interpolation_properties: Option<InterpolationCurveProperties>,
-    bezier_properties: Option<BezierCurveProperties>,
-    rational_bezier_properties: Option<RationalBezierCurveProperties>,
-    trochoid_properties: Option<TrochoidCurveProperties>,
+pub struct ShapeCommonValues {
+    pub points: Option<CurveControlPoints>,
+    pub weighted_points: Option<WeightedControlPoints>,
+    pub control_points: Option<VisualControlPoints>,
+    pub open_base_line: Option<OpenBaseLine>,
+    pub closed_base_line: Option<ClosedBaseLine>,
+    pub samples: Option<Samples>,
+    pub interpolation_properties: Option<InterpolationCurveProperties>,
+    pub bezier_properties: Option<BezierCurveProperties>,
+    pub rational_bezier_properties: Option<RationalBezierCurveProperties>,
+    pub trochoid_properties: Option<TrochoidCurveProperties>,
 }
 
 impl<'a> ShapeChanger<'a> {
     #[must_use]
     pub fn new(default_values: &'a CanvasConfig) -> Self {
-        let values = CommonShapeValues::default();
+        let values = ShapeCommonValues::default();
         Self { values, default_values }
     }
 
     #[must_use]
     pub fn from_shape(shape: Shape, default_values: &'a CanvasConfig) -> Self {
-        let mut values = CommonShapeValues::default();
-        match shape {
-            Shape::Polyline(shape) => {
-                values.points = Some(shape.points);
-                values.control_points = Some(shape.control_points);
-                values.open_base_line = Some(shape.base_line);
-            }
-            Shape::Interpolation(shape) => {
-                values.points = Some(shape.points);
-                values.control_points = Some(shape.control_points);
-                values.open_base_line = Some(shape.polyline);
-                values.samples = Some(shape.samples);
-            }
-            Shape::Bezier(shape) => {
-                values.points = Some(shape.points);
-                values.control_points = Some(shape.control_points);
-                values.open_base_line = Some(shape.polyline);
-                values.samples = Some(shape.samples);
-            }
-            Shape::RationalBezier(shape) => {
-                values.weighted_points = Some(shape.points);
-                values.control_points = Some(shape.control_points);
-                values.open_base_line = Some(shape.base_line);
-                values.samples = Some(shape.samples);
-            }
-            Shape::Trochoid(shape) => {
-                values.open_base_line = Some(shape.base_line);
-                values.samples = Some(shape.samples);
-                values.trochoid_properties = Some(shape.properties);
-            }
-            Shape::RegularPolygon(_) => todo!(),
-        }
+        let values = shape.into();
         Self { values, default_values }
     }
 
@@ -116,7 +85,6 @@ impl<'a> ShapeChanger<'a> {
         shape
     }
 
-    // TODO: instead of default use `default_values` to construct default properties
     fn curve_control_points(&mut self) -> CurveControlPoints {
         // TODO: reuse weighted points if they are present
         self.values.points.take().unwrap_or_default()
@@ -128,34 +96,41 @@ impl<'a> ShapeChanger<'a> {
     }
 
     fn control_points(&mut self) -> VisualControlPoints {
-        self.values.control_points.take().unwrap_or_default()
+        take_or_from(&mut self.values.control_points, self.default_values)
     }
 
     fn open_base_line(&mut self) -> OpenBaseLine {
-        self.values.open_base_line.take().unwrap_or_default()
+        take_or_from(&mut self.values.open_base_line, self.default_values)
     }
 
     fn closed_base_line(&mut self) -> ClosedBaseLine {
-        self.values.closed_base_line.take().unwrap_or_default()
+        take_or_from(&mut self.values.closed_base_line, self.default_values)
     }
 
     fn samples(&mut self) -> Samples {
-        self.values.samples.take().unwrap_or_default()
+        take_or_from(&mut self.values.samples, self.default_values)
     }
 
     fn interpolation_properties(&mut self) -> InterpolationCurveProperties {
-        self.values.interpolation_properties.take().unwrap_or_default()
+        take_or_from(&mut self.values.interpolation_properties, self.default_values)
     }
 
     fn bezier_properties(&mut self) -> BezierCurveProperties {
-        self.values.bezier_properties.take().unwrap_or_default()
+        take_or_from(&mut self.values.bezier_properties, self.default_values)
     }
 
     fn rational_bezier_properties(&mut self) -> RationalBezierCurveProperties {
-        self.values.rational_bezier_properties.take().unwrap_or_default()
+        take_or_from(&mut self.values.rational_bezier_properties, self.default_values)
     }
 
     fn trochoid_properties(&mut self) -> TrochoidCurveProperties {
-        self.values.trochoid_properties.take().unwrap_or_default()
+        take_or_from(&mut self.values.trochoid_properties, self.default_values)
     }
+}
+
+fn take_or_from<T, U>(option: &mut Option<T>, default_value: U) -> T
+where
+    T: From<U>,
+{
+    option.take().unwrap_or_else(|| default_value.into())
 }

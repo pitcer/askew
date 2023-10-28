@@ -3,15 +3,17 @@ use tiny_skia::PixmapMut;
 use crate::canvas::base_line::OpenBaseLine;
 use crate::canvas::math::point::Point;
 use crate::canvas::samples::Samples;
+use crate::canvas::shape::shape_changer::ShapeCommonValues;
 use crate::canvas::shape::{DrawOn, Update};
+use crate::config::CanvasConfig;
 
 pub mod request;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct TrochoidCurve {
-    pub base_line: OpenBaseLine,
-    pub properties: TrochoidCurveProperties,
-    pub samples: Samples,
+    base_line: OpenBaseLine,
+    properties: TrochoidCurveProperties,
+    samples: Samples,
 }
 
 impl TrochoidCurve {
@@ -45,6 +47,17 @@ impl DrawOn for TrochoidCurve {
     }
 }
 
+impl From<TrochoidCurve> for ShapeCommonValues {
+    fn from(value: TrochoidCurve) -> Self {
+        Self {
+            open_base_line: Some(value.base_line),
+            samples: Some(value.samples),
+            trochoid_properties: Some(value.properties),
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, clap::Args)]
 pub struct TrochoidCurveProperties {
     #[arg()]
@@ -65,6 +78,12 @@ impl TrochoidCurveProperties {
     #[must_use]
     pub fn new(range_start: f32, range_end: f32, r_1: f32, r_2: f32, w_1: f32, w_2: f32) -> Self {
         Self { range_start, range_end, r_1, r_2, w_1, w_2 }
+    }
+}
+
+impl From<&CanvasConfig> for TrochoidCurveProperties {
+    fn from(value: &CanvasConfig) -> Self {
+        value.default_trochoid_properties
     }
 }
 

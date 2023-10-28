@@ -5,7 +5,7 @@ use crate::canvas::shape::interpolation::InterpolationCurve;
 use crate::canvas::shape::polyline::PolylineCurve;
 use crate::canvas::shape::rational_bezier::RationalBezierCurve;
 use crate::canvas::shape::regular_polygon::RegularPolygon;
-use crate::canvas::shape::shape_changer::ShapeChanger;
+use crate::canvas::shape::shape_changer::{ShapeChanger, ShapeCommonValues};
 use crate::canvas::shape::trochoid::TrochoidCurve;
 use crate::config::{CanvasConfig, ShapeType};
 
@@ -40,6 +40,7 @@ pub enum Shape {
 }
 
 impl Shape {
+    #[must_use]
     pub fn new(shape_type: ShapeType, default_values: &CanvasConfig) -> Self {
         let shape_changer = ShapeChanger::new(default_values);
         shape_changer.into_shape(shape_type)
@@ -80,6 +81,19 @@ impl DrawOn for Shape {
             Shape::RationalBezier(curve) => curve.draw_on(pixmap),
             Shape::Trochoid(curve) => curve.draw_on(pixmap),
             Shape::RegularPolygon(shape) => shape.draw_on(pixmap),
+        }
+    }
+}
+
+impl From<Shape> for ShapeCommonValues {
+    fn from(value: Shape) -> Self {
+        match value {
+            Shape::Polyline(shape) => (*shape).into(),
+            Shape::Interpolation(shape) => (*shape).into(),
+            Shape::Bezier(shape) => (*shape).into(),
+            Shape::RationalBezier(shape) => (*shape).into(),
+            Shape::Trochoid(shape) => (*shape).into(),
+            Shape::RegularPolygon(_) => todo!(),
         }
     }
 }

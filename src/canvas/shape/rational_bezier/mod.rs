@@ -4,18 +4,20 @@ use crate::canvas::base_line::VisualBaseLine;
 use crate::canvas::control_points::point::WeightedPoint;
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
+use crate::canvas::shape::shape_changer::ShapeCommonValues;
 use crate::canvas::shape::{DrawOn, Update};
+use crate::config::CanvasConfig;
 use crate::{canvas::math, canvas::samples::Samples};
 
 pub mod request;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RationalBezierCurve {
-    pub points: ControlPoints<RationalBezierPoint>,
-    pub control_points: VisualControlPoints,
-    pub base_line: VisualBaseLine<false>,
-    pub properties: RationalBezierCurveProperties,
-    pub samples: Samples,
+    points: ControlPoints<RationalBezierPoint>,
+    control_points: VisualControlPoints,
+    base_line: VisualBaseLine<false>,
+    properties: RationalBezierCurveProperties,
+    samples: Samples,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -75,9 +77,28 @@ impl DrawOn for RationalBezierCurve {
     }
 }
 
+impl From<RationalBezierCurve> for ShapeCommonValues {
+    fn from(value: RationalBezierCurve) -> Self {
+        Self {
+            weighted_points: Some(value.points),
+            control_points: Some(value.control_points),
+            open_base_line: Some(value.base_line),
+            rational_bezier_properties: Some(value.properties),
+            samples: Some(value.samples),
+            ..Default::default()
+        }
+    }
+}
+
 impl RationalBezierCurveProperties {
     #[must_use]
     pub fn new(algorithm: RationalBezierCurveAlgorithm) -> Self {
         Self { algorithm }
+    }
+}
+
+impl From<&CanvasConfig> for RationalBezierCurveProperties {
+    fn from(value: &CanvasConfig) -> Self {
+        Self { algorithm: value.default_rational_bezier_algorithm }
     }
 }

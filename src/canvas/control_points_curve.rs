@@ -40,33 +40,6 @@ impl VisualControlPoints {
         Self { control_points, control_line, convex_hull, convex_hull_buffer, center_of_mass }
     }
 
-    #[must_use]
-    pub fn from_config(config: &CanvasConfig) -> Self {
-        Self {
-            control_points: VisualPoint::new(VisualPointProperties::new(
-                true,
-                config.default_point_radius,
-                config.control_points_color,
-            )),
-            control_line: VisualLine::new(VisualLineProperties::new(
-                config.show_control_line,
-                config.default_line_width,
-                config.convex_hull_color,
-            )),
-            convex_hull: VisualLine::new(VisualLineProperties::new(
-                config.show_convex_hull,
-                config.default_line_width,
-                config.convex_hull_color,
-            )),
-            convex_hull_buffer: Vec::new(),
-            center_of_mass: VisualPoint::new(VisualPointProperties::new(
-                config.show_center_of_mass,
-                config.default_point_radius * 2.0,
-                Rgb::new(0, 255, 0),
-            )),
-        }
-    }
-
     pub fn rebuild_paths<P>(&mut self, points: &ControlPoints<P>)
     where
         P: Into<SkiaPoint> + Into<CurvePoint> + Copy,
@@ -111,6 +84,34 @@ impl Default for VisualControlPoints {
             convex_hull: VisualLine::new(VisualLineProperties::new(false, 4.0, Rgb::WHITE)),
             convex_hull_buffer: Vec::new(),
             center_of_mass: VisualPoint::new(VisualPointProperties::new(true, 4.0, Rgb::WHITE)),
+        }
+    }
+}
+
+impl From<&CanvasConfig> for VisualControlPoints {
+    fn from(value: &CanvasConfig) -> Self {
+        Self {
+            control_points: VisualPoint::new(VisualPointProperties::new(
+                true,
+                value.default_point_radius,
+                value.control_points_color,
+            )),
+            control_line: VisualLine::new(VisualLineProperties::new(
+                value.show_control_line,
+                value.default_line_width,
+                value.convex_hull_color,
+            )),
+            convex_hull: VisualLine::new(VisualLineProperties::new(
+                value.show_convex_hull,
+                value.default_line_width,
+                value.convex_hull_color,
+            )),
+            convex_hull_buffer: Vec::new(),
+            center_of_mass: VisualPoint::new(VisualPointProperties::new(
+                value.show_center_of_mass,
+                value.default_point_radius * 2.0,
+                Rgb::new(0, 255, 0),
+            )),
         }
     }
 }

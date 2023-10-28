@@ -24,19 +24,6 @@ impl<const CLOSED: bool> VisualBaseLine<CLOSED> {
         Self { line, points, point_buffer }
     }
 
-    #[must_use]
-    pub fn from_config(config: &CanvasConfig) -> Self {
-        Self {
-            line: VisualLine::new(VisualLineProperties::new(
-                true,
-                config.default_line_width,
-                config.line_color,
-            )),
-            points: VisualPoint::new(VisualPointProperties::new(false, 3.0, Rgb::WHITE)),
-            point_buffer: Vec::new(),
-        }
-    }
-
     pub fn rebuild_paths<P>(&mut self, points: impl Iterator<Item = P>)
     where
         P: Into<Point>,
@@ -61,6 +48,20 @@ impl<const CLOSED: bool> Default for VisualBaseLine<CLOSED> {
         Self {
             line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE)),
             points: VisualPoint::new(VisualPointProperties::new(false, 4.0, Rgb::WHITE)),
+            point_buffer: Vec::new(),
+        }
+    }
+}
+
+impl<const CLOSED: bool> From<&CanvasConfig> for VisualBaseLine<CLOSED> {
+    fn from(value: &CanvasConfig) -> Self {
+        Self {
+            line: VisualLine::new(VisualLineProperties::new(
+                true,
+                value.default_line_width,
+                value.line_color,
+            )),
+            points: VisualPoint::new(VisualPointProperties::new(false, 3.0, Rgb::WHITE)),
             point_buffer: Vec::new(),
         }
     }
