@@ -1,4 +1,3 @@
-use softbuffer::Buffer;
 use tiny_skia::{FillRule, Paint, Path, PixmapMut, PixmapPaint, PixmapRef, Stroke, Transform};
 
 use pixel::Pixel;
@@ -6,6 +5,7 @@ use pixel::Pixel;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
+use crate::ui::window::Buffer;
 
 pub mod bar;
 pub mod pixel;

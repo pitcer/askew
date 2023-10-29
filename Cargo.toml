@@ -74,7 +74,10 @@ default-features = false
 features = ["termcolor", "local-offset", "paris"]
 
 [dependencies.softbuffer]
-version = "0.3.2"
+# Remove git version after the next release
+#version = "0.3.2"
+git = "https://github.com/rust-windowing/softbuffer/"
+rev = "2eef592745a6c307176bad86107b2c232ccdeef3"
 default-features = false
 
 [dependencies.tiny-skia]
@@ -91,8 +94,7 @@ features = ["async", "component-model", "cranelift"]
 [dependencies.winit]
 version = "0.29.3"
 default-features = false
-# TODO: remove after softbuffer will update rwh to 0.6.0
-features = ["rwh_05"]
+features = ["rwh_06"]
 
 [dev-dependencies]
 criterion = "0.5.1"

@@ -1,23 +1,28 @@
 use std::num::NonZeroU32;
+use std::rc::Rc;
 
 use anyhow::{anyhow, Result};
-use softbuffer::{Buffer, Context, Surface};
+use softbuffer::Context;
 use winit::dpi::PhysicalSize;
 use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 
+type Surface = softbuffer::Surface<Rc<WinitWindow>, Rc<WinitWindow>>;
+pub type Buffer<'a> = softbuffer::Buffer<'a, Rc<WinitWindow>, Rc<WinitWindow>>;
+
 pub struct Window {
-    window: WinitWindow,
+    window: Rc<WinitWindow>,
     surface: Surface,
 }
 
 impl Window {
     pub fn from_winit(window: WinitWindow) -> Result<Self> {
-        let context = unsafe { Context::new(&window) }.expect("platform should be supported");
+        let window = Rc::new(window);
+        let context = Context::new(Rc::clone(&window)).expect("platform should be supported");
         let surface =
-            unsafe { Surface::new(&context, &window) }.expect("platform should be supported");
+            Surface::new(&context, Rc::clone(&window)).expect("platform should be supported");
         let size = window.inner_size();
         let mut window = Self { window, surface };
         window.resize_surface(size)?;

@@ -1669,8 +1669,7 @@ dependencies = [
  "log",
  "ndk-sys",
  "num_enum",
- "raw-window-handle 0.5.2",
- "raw-window-handle 0.6.0",
+ "raw-window-handle",
  "thiserror",
 ]
 
@@ -2075,12 +2074,6 @@ dependencies = [
 
 [[package]]
 name = "raw-window-handle"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
-
-[[package]]
-name = "raw-window-handle"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42a9830a0e1b9fb145ebb365b8bc4ccd75f290f98c0247deafbbe2c75cefb544"
@@ -2397,8 +2390,7 @@ dependencies = [
 [[package]]
 name = "softbuffer"
 version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0c651aec504a26e45df1f8c8df237ee7eef8e31b3f13b267a69a374adafbbd1"
+source = "git+https://github.com/rust-windowing/softbuffer/?rev=2eef592745a6c307176bad86107b2c232ccdeef3#2eef592745a6c307176bad86107b2c232ccdeef3"
 dependencies = [
  "as-raw-xcb-connection",
  "bytemuck",
@@ -2411,7 +2403,7 @@ dependencies = [
  "log",
  "memmap2",
  "objc",
- "raw-window-handle 0.5.2",
+ "raw-window-handle",
  "redox_syscall 0.4.1",
  "rustix",
  "tiny-xlib",
@@ -3678,7 +3670,7 @@ dependencies = [
  "once_cell",
  "orbclient",
  "percent-encoding",
- "raw-window-handle 0.5.2",
+ "raw-window-handle",
  "redox_syscall 0.3.5",
  "rustix",
  "smithay-client-toolkit",
