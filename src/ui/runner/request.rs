@@ -1,4 +1,3 @@
-use async_task::Runnable;
 use winit::event_loop::EventLoopProxy;
 
 use crate::ipc::server::IpcMessage;
@@ -12,5 +11,4 @@ pub enum RunnerRequest {
     IpcMessage(IpcMessage),
     TaskRequest(RequestHandle),
     ProgressTask(TaskHandle),
-    ProgressIpcServer(Runnable),
 }

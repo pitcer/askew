@@ -45,13 +45,16 @@
 )]
 
 use std::convert;
+use std::time::Duration;
 
 use anyhow::Result;
+use async_executor::Executor;
+use async_io::Async;
 use clap::Parser;
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
-use winit::event_loop::EventLoopBuilder;
-use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopBuilder};
+use winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
 use winit::window::WindowBuilder;
 
 use cli::{Command, SubCommands};
@@ -59,8 +62,10 @@ use ipc::client::IpcClient;
 use ipc::server::IpcServer;
 
 use crate::config::Config;
+use crate::ipc::server::IpcServerHandle;
 use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
+use crate::ui::runner::request::RunnerRequest;
 use crate::ui::runner::WindowRunner;
 use crate::ui::window::Window;
 
@@ -94,7 +99,7 @@ pub fn main() -> Result<()> {
 }
 
 fn run(config: Config) -> Result<()> {
-    let mut event_loop = EventLoopBuilder::with_user_event().build()?;
+    let event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
     let window = Window::from_winit(window)?;
     let size = window.size_rectangle();
@@ -103,18 +108,50 @@ fn run(config: Config) -> Result<()> {
 
     // TODO: add option to disable IPC server
     let proxy = event_loop.create_proxy();
-    let ipc_server = IpcServer::run(&config.ipc_socket_path, proxy)?;
+    let (server_future, server_sender) = IpcServer::run(&config.ipc_socket_path, proxy)?;
+
+    let executor = Executor::new();
+    let server_task = executor.spawn(server_future);
+    let ipc_server = IpcServerHandle::new(server_task, server_sender);
 
     let proxy = event_loop.create_proxy();
-    let mut handler =
+    let handler =
         WindowRunner::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
 
-    event_loop.run_on_demand(|event, target| {
-        let result = handler.run(event, target);
-        result.expect("Error in event loop");
-    })?;
+    let event_loop_future = run_event_loop(event_loop, handler);
+    let event_loop_task = executor.run(event_loop_future);
+    async_io::block_on(event_loop_task)?;
 
     Ok(())
+}
+
+async fn run_event_loop(
+    event_loop: EventLoop<RunnerRequest>,
+    mut handler: WindowRunner,
+) -> Result<(i32, EventLoop<RunnerRequest>)> {
+    // Prevents blocking on `pump_events`.
+    event_loop.set_control_flow(ControlFlow::Poll);
+
+    let mut async_event_loop = Async::new(event_loop)?;
+    let exit_code = loop {
+        async_event_loop.readable().await?;
+
+        // SAFETY: event_loop I/O is not dropped
+        let status = unsafe {
+            let event_loop = async_event_loop.get_mut();
+            event_loop.pump_events(Some(Duration::ZERO), |event, target| {
+                handler.handle(event, target);
+            })
+        };
+
+        if let PumpStatus::Exit(exit_code) = status {
+            break exit_code;
+        }
+    };
+
+    // For some reason it's necessary to return event_loop, because otherwise we get segfault.
+    let event_loop = async_event_loop.into_inner()?;
+    Ok((exit_code, event_loop))
 }
 
 fn initialize_logger(level_filter: LevelFilter, ignore_filters: Vec<String>) -> Result<()> {

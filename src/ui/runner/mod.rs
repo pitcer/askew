@@ -70,13 +70,23 @@ impl WindowRunner {
         })
     }
 
-    pub fn run(
+    pub fn handle(
+        &mut self,
+        event: Event<RunnerRequest>,
+        target: &EventLoopWindowTarget<RunnerRequest>,
+    ) {
+        log::debug!("<cyan><b>Event loop:</>\n<bright_black>{event:?}</>");
+        let result = self.handle_event(event, target);
+        if let Err(error) = result {
+            log::error!("Error during event handling: {error}");
+        }
+    }
+
+    fn handle_event(
         &mut self,
         event: Event<RunnerRequest>,
         target: &EventLoopWindowTarget<RunnerRequest>,
     ) -> Result<()> {
-        log::debug!("<cyan><b>Event loop:</>\n<bright_black>{event:?}</>");
-
         match event {
             Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
                 self.handle_window_event(event, target)?;
@@ -101,24 +111,10 @@ impl WindowRunner {
             }
             _ => {}
         }
-
         Ok(())
     }
 
-    pub fn paint(&mut self) -> Result<()> {
-        let size = self.window.size_rectangle();
-        let mut buffer = self.window.buffer_mut()?;
-        let panel = Panel::from_buffer(&mut buffer, size);
-        let view = WindowView::new(&self.frame, &self.command);
-
-        self.painter.paint(view, panel)?;
-
-        let result = buffer.present();
-        result.map_err(|error| anyhow!(error.to_string()))?;
-        Ok(())
-    }
-
-    pub fn handle_window_event(
+    fn handle_window_event(
         &mut self,
         event: WindowEvent,
         target: &EventLoopWindowTarget<RunnerRequest>,
@@ -153,6 +149,19 @@ impl WindowRunner {
         Ok(())
     }
 
+    fn paint(&mut self) -> Result<()> {
+        let size = self.window.size_rectangle();
+        let mut buffer = self.window.buffer_mut()?;
+        let panel = Panel::from_buffer(&mut buffer, size);
+        let view = WindowView::new(&self.frame, &self.command);
+
+        self.painter.paint(view, panel)?;
+
+        let result = buffer.present();
+        result.map_err(|error| anyhow!(error.to_string()))?;
+        Ok(())
+    }
+
     fn handle_request(
         &mut self,
         request: RunnerRequest,
@@ -176,10 +185,6 @@ impl WindowRunner {
                     let result = result?;
                     log::info!("Task {task_id} finished with result: `{result:?}`");
                 }
-                Ok(())
-            }
-            RunnerRequest::ProgressIpcServer(runnable) => {
-                runnable.run();
                 Ok(())
             }
         }

@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::net::Shutdown;
 use std::path::Path;
 use std::{fs, slice};
@@ -24,7 +25,10 @@ pub struct IpcServer {
 }
 
 impl IpcServer {
-    pub fn run(path: impl AsRef<Path>, proxy: RunnerSender) -> Result<IpcServerHandle> {
+    pub fn run(
+        path: impl AsRef<Path>,
+        proxy: RunnerSender,
+    ) -> Result<(impl Future<Output = Result<()>>, Sender<IpcReply>)> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -35,15 +39,8 @@ impl IpcServer {
 
         let listener = UnixListener::bind(path)?;
 
-        let future = async move { server.listen(listener).await };
-        let schedule = move |runnable| {
-            proxy.send_event(RunnerRequest::ProgressIpcServer(runnable)).unwrap();
-        };
-        let (runnable, task) = async_task::spawn(future, schedule);
-        runnable.schedule();
-
-        let handle = IpcServerHandle::new(task, sender);
-        Ok(handle)
+        let future = server.listen(listener);
+        Ok((future, sender))
     }
 
     fn new(proxy: RunnerSender, receiver: Receiver<IpcReply>) -> Self {
@@ -106,7 +103,8 @@ pub struct IpcServerHandle {
 }
 
 impl IpcServerHandle {
-    fn new(task: ServerTask, sender: Sender<IpcReply>) -> Self {
+    #[must_use]
+    pub fn new(task: ServerTask, sender: Sender<IpcReply>) -> Self {
         Self { task, sender }
     }
 
