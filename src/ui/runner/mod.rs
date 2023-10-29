@@ -1,240 +1,65 @@
-use std::mem;
 use std::time::Duration;
 
-use anyhow::{anyhow, Result};
-use winit::event::{Event, StartCause, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoopWindowTarget};
+use anyhow::Result;
+use async_io::Async;
+use winit::event_loop::ControlFlow;
+use winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
 
-use crate::canvas::math::point::Point;
-use crate::canvas::math::vector::Vector;
-use crate::canvas::request::declare::RotateCurveById;
-use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
-use crate::command;
-use crate::command::program_view::ProgramView;
-use crate::ipc::server::IpcServerHandle;
-use crate::request::{RequestSubHandler, RequestSubHandlerMut};
-use crate::ui::command_state::CommandState;
-use crate::ui::frame::panel::Panel;
-use crate::ui::frame::Frame;
-use crate::ui::input_event_handler::InputEventHandler;
-use crate::ui::input_handler::InputHandler;
-use crate::ui::painter::view::WindowView;
-use crate::ui::painter::Painter;
-use crate::ui::runner::request::{RunnerRequest, RunnerSender};
-use crate::ui::runner::task::sleep::SleepingTasks;
-use crate::ui::runner::task::Tasks;
-use crate::ui::window;
-use crate::ui::window::Window;
-use crate::wasm::request::{Request, Response};
-use crate::wasm::state::RequestHandle;
+use crate::ui::handler::message::HandlerMessage;
+use crate::ui::handler::WindowHandler;
 
-pub mod request;
 pub mod task;
 
-pub struct WindowRunner<'a> {
-    commands: Vec<String>,
-    window: Window<'a>,
-    frame: Frame,
-    painter: Painter,
-    command: CommandState,
-    event_handler: InputEventHandler,
-    ipc_server: Option<IpcServerHandle>,
-    tasks: Tasks,
-    sleeping_tasks: SleepingTasks,
+type EventLoop = winit::event_loop::EventLoop<HandlerMessage>;
+
+pub async fn run(
+    event_loop: EventLoop,
+    event_handler: &mut WindowHandler<'_>,
+) -> Result<RunnerExitResult> {
+    // Prevents blocking on `pump_events`.
+    event_loop.set_control_flow(ControlFlow::Poll);
+
+    let mut async_event_loop = Async::new(event_loop)?;
+
+    let exit_code = loop {
+        async_event_loop.readable().await?;
+
+        // SAFETY: event_loop I/O is not dropped
+        let status = unsafe {
+            let event_loop = async_event_loop.get_mut();
+            event_loop.pump_events(Some(Duration::ZERO), |event, target| {
+                event_handler.handle(event, target);
+            })
+        };
+
+        if let PumpStatus::Exit(exit_code) = status {
+            break exit_code;
+        }
+    };
+
+    // For some reason it's necessary to return event_loop, because otherwise we get segfault.
+    let event_loop = async_event_loop.into_inner()?;
+    Ok(RunnerExitResult::new(exit_code, event_loop))
 }
 
-impl<'a> WindowRunner<'a> {
-    pub fn new(
-        commands: Vec<String>,
-        window: Window<'a>,
-        frame: Frame,
-        painter: Painter,
-        ipc_server: IpcServerHandle,
-        sender: RunnerSender,
-    ) -> Result<WindowRunner<'a>> {
-        let command = CommandState::new();
-        let event_handler = InputEventHandler::new();
-        let ipc_server = Some(ipc_server);
-        let tasks = Tasks::new(sender.clone())?;
-        let sleeping_tasks = SleepingTasks::new();
+pub struct RunnerExitResult {
+    exit_code: i32,
+    event_loop: EventLoop,
+}
 
-        Ok(Self {
-            commands,
-            window,
-            frame,
-            painter,
-            command,
-            event_handler,
-            ipc_server,
-            tasks,
-            sleeping_tasks,
-        })
+impl RunnerExitResult {
+    #[must_use]
+    pub fn new(exit_code: i32, event_loop: EventLoop) -> Self {
+        Self { exit_code, event_loop }
     }
 
-    pub fn handle(
-        &mut self,
-        event: Event<RunnerRequest>,
-        target: &EventLoopWindowTarget<RunnerRequest>,
-    ) {
-        log::debug!("<cyan><b>Event loop:</>\n<bright_black>{event:?}</>");
-        let result = self.handle_event(event, target);
-        if let Err(error) = result {
-            log::error!("Error during event handling: {error}");
-        }
+    #[must_use]
+    pub fn exit_code(&self) -> i32 {
+        self.exit_code
     }
 
-    fn handle_event(
-        &mut self,
-        event: Event<RunnerRequest>,
-        target: &EventLoopWindowTarget<RunnerRequest>,
-    ) -> Result<()> {
-        match event {
-            Event::WindowEvent { event, window_id } if self.window.has_id(window_id) => {
-                self.handle_window_event(event, target)?;
-            }
-            Event::UserEvent(request) => self.handle_request(request, target)?,
-            Event::NewEvents(StartCause::Init) => {
-                for command in mem::take(&mut self.commands) {
-                    log::debug!("<cyan>Initial command input:</> '{command}'");
-
-                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
-                    let result = command::execute(&command, state)?;
-
-                    log::info!("Initial command result: `{result:?}`");
-                }
-            }
-            Event::NewEvents(StartCause::ResumeTimeReached { start: _start, requested_resume }) => {
-                let wake_time = self.sleeping_tasks.wake(requested_resume)?;
-                match wake_time {
-                    None => target.set_control_flow(ControlFlow::Wait),
-                    Some(wake_time) => target.set_control_flow(ControlFlow::WaitUntil(wake_time)),
-                }
-            }
-            _ => {}
-        }
-        Ok(())
-    }
-
-    fn handle_window_event(
-        &mut self,
-        event: WindowEvent,
-        target: &EventLoopWindowTarget<RunnerRequest>,
-    ) -> Result<()> {
-        match event {
-            WindowEvent::RedrawRequested => {
-                self.paint()?;
-            }
-            WindowEvent::Resized(size) => {
-                self.window.resize_surface(size)?;
-            }
-            WindowEvent::CloseRequested => {
-                if let Some(handle) = self.ipc_server.take() {
-                    handle.close();
-                }
-
-                target.exit();
-            }
-            _ => {
-                let input = self.event_handler.handle(event)?;
-                if let Some(input) = input {
-                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
-                    let handler = InputHandler::new(&mut self.command, state);
-                    let result = handler.handle_input(input);
-                    if let Err(error) = result {
-                        log::debug!("{error}");
-                    }
-                    self.window.request_redraw();
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn paint(&mut self) -> Result<()> {
-        let size = self.window.size_rectangle();
-        let mut buffer = self.window.buffer_mut()?;
-        let pixels = window::buffer_as_pixels(&mut buffer);
-        let panel = Panel::new(pixels, size);
-        let view = WindowView::new(&self.frame, &self.command);
-
-        self.painter.paint(view, panel)?;
-
-        let result = buffer.present();
-        result.map_err(|error| anyhow!(error.to_string()))?;
-        Ok(())
-    }
-
-    fn handle_request(
-        &mut self,
-        request: RunnerRequest,
-        target: &EventLoopWindowTarget<RunnerRequest>,
-    ) -> Result<()> {
-        match request {
-            RunnerRequest::IpcMessage(message) => {
-                let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
-                let reply = message.handle(state);
-                let handle = self.ipc_server.as_ref().expect("IPC server should exist");
-                handle.send(reply)?;
-                self.window.request_redraw();
-                Ok(())
-            }
-            RunnerRequest::TaskRequest(request) => self.handle_task_request(request, target),
-            RunnerRequest::ProgressTask(task) => {
-                let task_id = task.task_id();
-                task.progress();
-
-                if let Some(result) = self.tasks.try_finish_task(task_id) {
-                    let result = result?;
-                    log::info!("Task {task_id} finished with result: `{result:?}`");
-                }
-                Ok(())
-            }
-        }
-    }
-
-    fn handle_task_request(
-        &mut self,
-        request: RequestHandle,
-        target: &EventLoopWindowTarget<RunnerRequest>,
-    ) -> Result<()> {
-        let RequestHandle { request, responder } = request;
-        match request {
-            Request::MoveCurve { id: _id, horizontal, vertical } => {
-                // TODO: move curve specified by id
-                let shift = Vector::new(horizontal, vertical);
-                self.frame.sub_handle_mut(MoveCurve::new(shift))?;
-                responder.respond(Response::Empty);
-                self.window.request_redraw();
-                Ok(())
-            }
-            Request::RotateCurve { id, angle_radians } => {
-                self.frame.sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
-                responder.respond(Response::Empty);
-                self.window.request_redraw();
-                Ok(())
-            }
-            Request::Sleep { seconds, nanoseconds } => {
-                if seconds == 0 && nanoseconds == 0 {
-                    responder.respond(Response::Sleep);
-                    return Ok(());
-                }
-
-                let duration = Duration::new(seconds, nanoseconds);
-                let wake_time = self.sleeping_tasks.sleep(responder, duration);
-                target.set_control_flow(ControlFlow::WaitUntil(wake_time));
-                Ok(())
-            }
-            Request::GetPosition { id: _id } => {
-                // TODO: get position of curve specified by id
-                let center = self.frame.sub_handle(GetCurveCenter)?;
-                // TODO: return None instead of (0, 0)
-                let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
-                responder.respond(Response::GetPosition {
-                    horizontal: center.horizontal(),
-                    vertical: center.vertical(),
-                });
-                Ok(())
-            }
-        }
+    #[must_use]
+    pub fn into_event_loop(self) -> EventLoop {
+        self.event_loop
     }
 }

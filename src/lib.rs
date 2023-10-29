@@ -45,34 +45,31 @@
 )]
 
 use std::convert;
-use std::time::Duration;
 
 use anyhow::Result;
-use async_executor::Executor;
-use async_io::Async;
 use clap::Parser;
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, TermLogger, TerminalMode};
-use winit::event_loop::{ControlFlow, EventLoop, EventLoopBuilder};
-use winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
+use winit::event_loop::EventLoopBuilder;
 use winit::window::WindowBuilder;
 
 use cli::{Command, SubCommands};
 use ipc::client::IpcClient;
 use ipc::server::IpcServer;
+use ui::handler::WindowHandler;
 
 use crate::config::Config;
-use crate::ipc::server::IpcServerHandle;
 use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
-use crate::ui::runner::request::RunnerRequest;
-use crate::ui::runner::WindowRunner;
+use crate::ui::runner;
+use crate::ui::runner::RunnerExitResult;
 use crate::ui::window::Window;
 
 pub mod canvas;
 pub mod cli;
 pub mod command;
 pub mod config;
+pub mod executor;
 pub mod ipc;
 pub mod request;
 pub mod ui;
@@ -86,9 +83,9 @@ pub fn main() -> Result<()> {
 
     let mut config = Config::from_file(command.config)?;
     match command.command {
-        SubCommands::Run(run) => {
-            config.overwrite_with_run(run);
-            crate::run(config)
+        SubCommands::Run(arguments) => {
+            config.overwrite_with_run(arguments);
+            run(config)
         }
         SubCommands::Ipc(ipc) => {
             let socket_path = ipc.socket_path.unwrap_or(config.ipc_socket_path);
@@ -108,50 +105,17 @@ fn run(config: Config) -> Result<()> {
 
     // TODO: add option to disable IPC server
     let proxy = event_loop.create_proxy();
-    let (server_future, server_sender) = IpcServer::run(&config.ipc_socket_path, proxy)?;
-
-    let executor = Executor::new();
-    let server_task = executor.spawn(server_future);
-    let ipc_server = IpcServerHandle::new(server_task, server_sender);
+    let ipc_server = IpcServer::run(&config.ipc_socket_path, proxy)?;
 
     let proxy = event_loop.create_proxy();
-    let handler =
-        WindowRunner::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
-
-    let event_loop_future = run_event_loop(event_loop, handler);
-    let event_loop_task = executor.run(event_loop_future);
-    async_io::block_on(event_loop_task)?;
+    let mut handler =
+        WindowHandler::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
+    let run_future = runner::run(event_loop, &mut handler);
+    let exited_runner: RunnerExitResult = executor::block_on_run(run_future)?;
+    let exit_code = exited_runner.exit_code();
+    log::info!("Loop exited with code {exit_code}.");
 
     Ok(())
-}
-
-async fn run_event_loop(
-    event_loop: EventLoop<RunnerRequest>,
-    mut handler: WindowRunner<'_>,
-) -> Result<(i32, EventLoop<RunnerRequest>)> {
-    // Prevents blocking on `pump_events`.
-    event_loop.set_control_flow(ControlFlow::Poll);
-
-    let mut async_event_loop = Async::new(event_loop)?;
-    let exit_code = loop {
-        async_event_loop.readable().await?;
-
-        // SAFETY: event_loop I/O is not dropped
-        let status = unsafe {
-            let event_loop = async_event_loop.get_mut();
-            event_loop.pump_events(Some(Duration::ZERO), |event, target| {
-                handler.handle(event, target);
-            })
-        };
-
-        if let PumpStatus::Exit(exit_code) = status {
-            break exit_code;
-        }
-    };
-
-    // For some reason it's necessary to return event_loop, because otherwise we get segfault.
-    let event_loop = async_event_loop.into_inner()?;
-    Ok((exit_code, event_loop))
 }
 
 fn initialize_logger(level_filter: LevelFilter, ignore_filters: Vec<String>) -> Result<()> {

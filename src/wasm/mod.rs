@@ -9,7 +9,7 @@ use wasmtime_wasi::preview2::{Table, WasiCtxBuilder};
 
 use state::State;
 
-use crate::ui::runner::request::RunnerSender;
+use crate::ui::handler::message::RunnerSender;
 use crate::ui::runner::task::lock::TaskLock;
 use crate::ui::runner::task::{TaskId, TaskResult};
 use crate::wasm::wit::{Askew, RunArgument};

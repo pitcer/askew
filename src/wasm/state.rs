@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use async_channel::{SendError, Sender};
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
-use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, RunnerSender};
 use crate::ui::runner::task::lock::{LockToken, TaskLock};
 use crate::ui::runner::task::TaskId;
 use crate::wasm::request::{Request, Response};
@@ -47,7 +47,7 @@ impl State {
         let (response_sender, response_receiver) = async_channel::bounded(1);
         let responder = Responder::new(self.task_id, response_sender);
         let request = RequestHandle::new(request, responder);
-        let request = RunnerRequest::TaskRequest(request);
+        let request = HandlerMessage::TaskRequest(request);
         self.runner.send_event(request)?;
 
         let response = response_receiver.recv().await?;

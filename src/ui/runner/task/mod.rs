@@ -8,7 +8,8 @@ use async_task::Runnable;
 use bitvec::vec::BitVec;
 use futures_lite::future;
 
-use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::executor;
+use crate::ui::handler::message::{HandlerMessage, RunnerSender};
 use crate::ui::runner::task::lock::TaskLock;
 use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
@@ -47,13 +48,20 @@ impl Tasks {
 
         let proxy = self.runner.clone();
         let schedule = move |runnable| {
-            let request = RunnerRequest::ProgressTask(TaskHandle::new(task_id, runnable));
+            let request = HandlerMessage::ProgressTask(TaskHandle::new(task_id, runnable));
             proxy.send_event(request).expect("event loop should not be closed");
         };
 
         let (runnable, task) = async_task::spawn(future, schedule);
         runnable.schedule();
 
+        // let sender = RunnerSender::clone(&self.runner);
+        // let future = async move {
+        //     let result = wasm_task.run(argument).await;
+        //     sender.send_event(HandlerMessage::TaskFinished(task_id))?;
+        //     result
+        // };
+        // let task = executor::spawn(future);
         let task = Task::new(task, task_id, path);
 
         let result = self.tasks.insert(task_id, task);
@@ -80,7 +88,7 @@ impl Tasks {
     pub fn finish_task(&mut self, task_id: TaskId) -> TaskResult {
         let task = self.tasks.remove(&task_id);
         let task = task.expect("task should be in the map");
-        let result = future::block_on(task.task);
+        let result = task.finish();
 
         self.task_id_mask.remove_task_id(task_id);
 

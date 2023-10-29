@@ -1,4 +1,3 @@
-use std::future::Future;
 use std::net::Shutdown;
 use std::path::Path;
 use std::{fs, slice};
@@ -9,11 +8,11 @@ use async_net::unix::UnixListener;
 use async_task::Task;
 use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 
-use crate::command;
 use crate::command::message::{Message, MessageType};
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::runner::request::{RunnerRequest, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, RunnerSender};
+use crate::{command, executor};
 
 pub type IpcReply = (Status, Option<String>);
 
@@ -25,10 +24,7 @@ pub struct IpcServer {
 }
 
 impl IpcServer {
-    pub fn run(
-        path: impl AsRef<Path>,
-        proxy: RunnerSender,
-    ) -> Result<(impl Future<Output = Result<()>>, Sender<IpcReply>)> {
+    pub fn run(path: impl AsRef<Path>, proxy: RunnerSender) -> Result<IpcServerHandle> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -39,8 +35,11 @@ impl IpcServer {
 
         let listener = UnixListener::bind(path)?;
 
-        let future = server.listen(listener);
-        Ok((future, sender))
+        let listen_future = server.listen(listener);
+        let task = executor::spawn(listen_future);
+
+        let handle = IpcServerHandle::new(task, sender);
+        Ok(handle)
     }
 
     fn new(proxy: RunnerSender, receiver: Receiver<IpcReply>) -> Self {
@@ -54,7 +53,7 @@ impl IpcServer {
             stream.shutdown(Shutdown::Read)?;
 
             let message = IpcMessage::new(message);
-            self.proxy.send_event(RunnerRequest::IpcMessage(message))?;
+            self.proxy.send_event(HandlerMessage::IpcMessage(message))?;
             let (status, reply) = self.receiver.recv().await?;
 
             stream.write_all(slice::from_ref(&status)).await?;
@@ -103,8 +102,7 @@ pub struct IpcServerHandle {
 }
 
 impl IpcServerHandle {
-    #[must_use]
-    pub fn new(task: ServerTask, sender: Sender<IpcReply>) -> Self {
+    fn new(task: ServerTask, sender: Sender<IpcReply>) -> Self {
         Self { task, sender }
     }
 
