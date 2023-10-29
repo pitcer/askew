@@ -101,7 +101,7 @@ pub fn main() -> Result<()> {
 fn run(config: Config) -> Result<()> {
     let event_loop = EventLoopBuilder::with_user_event().build()?;
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
-    let window = Window::from_winit(window)?;
+    let window = Window::from_winit(&window)?;
     let size = window.size_rectangle();
     let frame = Frame::new(size, config.frame, config.canvas)?;
     let painter = Painter::new(config.ui)?;
@@ -127,7 +127,7 @@ fn run(config: Config) -> Result<()> {
 
 async fn run_event_loop(
     event_loop: EventLoop<RunnerRequest>,
-    mut handler: WindowRunner,
+    mut handler: WindowRunner<'_>,
 ) -> Result<(i32, EventLoop<RunnerRequest>)> {
     // Prevents blocking on `pump_events`.
     event_loop.set_control_flow(ControlFlow::Poll);

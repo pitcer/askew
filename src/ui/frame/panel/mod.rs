@@ -5,7 +5,6 @@ use pixel::Pixel;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::math::size::Size;
-use crate::ui::window::Buffer;
 
 pub mod bar;
 pub mod pixel;
@@ -19,11 +18,6 @@ pub struct Panel<'a> {
 impl<'a> Panel<'a> {
     pub fn new(buffer: &'a mut [Pixel], area: Rectangle<u32>) -> Self {
         Self { buffer, area }
-    }
-
-    pub fn from_buffer(buffer: &'a mut Buffer<'_>, area: Rectangle<u32>) -> Self {
-        let buffer = bytemuck::cast_slice_mut(buffer);
-        Self::new(buffer, area)
     }
 
     #[must_use]

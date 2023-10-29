@@ -1,5 +1,4 @@
 use std::num::NonZeroU32;
-use std::rc::Rc;
 
 use anyhow::{anyhow, Result};
 use softbuffer::Context;
@@ -8,21 +7,21 @@ use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
+use crate::ui::frame::panel::pixel::Pixel;
 
-type Surface = softbuffer::Surface<Rc<WinitWindow>, Rc<WinitWindow>>;
-pub type Buffer<'a> = softbuffer::Buffer<'a, Rc<WinitWindow>, Rc<WinitWindow>>;
+type WindowRef<'a> = &'a WinitWindow;
+type Surface<'a> = softbuffer::Surface<WindowRef<'a>, WindowRef<'a>>;
+type Buffer<'a, 'b> = softbuffer::Buffer<'a, WindowRef<'b>, WindowRef<'b>>;
 
-pub struct Window {
-    window: Rc<WinitWindow>,
-    surface: Surface,
+pub struct Window<'a> {
+    window: WindowRef<'a>,
+    surface: Surface<'a>,
 }
 
-impl Window {
-    pub fn from_winit(window: WinitWindow) -> Result<Self> {
-        let window = Rc::new(window);
-        let context = Context::new(Rc::clone(&window)).expect("platform should be supported");
-        let surface =
-            Surface::new(&context, Rc::clone(&window)).expect("platform should be supported");
+impl<'a> Window<'a> {
+    pub fn from_winit(window: &'a WinitWindow) -> Result<Self> {
+        let context = Context::new(window).map_err(|error| anyhow!(error.to_string()))?;
+        let surface = Surface::new(&context, window).map_err(|error| anyhow!(error.to_string()))?;
         let size = window.inner_size();
         let mut window = Self { window, surface };
         window.resize_surface(size)?;
@@ -35,7 +34,7 @@ impl Window {
         self.surface.resize(width, height).map_err(|error| anyhow!(error.to_string()))
     }
 
-    pub fn buffer_mut(&mut self) -> Result<Buffer<'_>> {
+    pub fn buffer_mut(&mut self) -> Result<Buffer<'_, 'a>> {
         self.surface.buffer_mut().map_err(|error| anyhow!(error.to_string()))
     }
 
@@ -55,4 +54,8 @@ impl Window {
     pub fn has_id(&self, id: WindowId) -> bool {
         self.window.id() == id
     }
+}
+
+pub fn buffer_as_pixels<'a>(buffer: &'a mut Buffer<'_, '_>) -> &'a mut [Pixel] {
+    bytemuck::cast_slice_mut(buffer)
 }

@@ -23,6 +23,7 @@ use crate::ui::painter::Painter;
 use crate::ui::runner::request::{RunnerRequest, RunnerSender};
 use crate::ui::runner::task::sleep::SleepingTasks;
 use crate::ui::runner::task::Tasks;
+use crate::ui::window;
 use crate::ui::window::Window;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::state::RequestHandle;
@@ -30,9 +31,9 @@ use crate::wasm::state::RequestHandle;
 pub mod request;
 pub mod task;
 
-pub struct WindowRunner {
+pub struct WindowRunner<'a> {
     commands: Vec<String>,
-    window: Window,
+    window: Window<'a>,
     frame: Frame,
     painter: Painter,
     command: CommandState,
@@ -42,15 +43,15 @@ pub struct WindowRunner {
     sleeping_tasks: SleepingTasks,
 }
 
-impl WindowRunner {
+impl<'a> WindowRunner<'a> {
     pub fn new(
         commands: Vec<String>,
-        window: Window,
+        window: Window<'a>,
         frame: Frame,
         painter: Painter,
         ipc_server: IpcServerHandle,
         sender: RunnerSender,
-    ) -> Result<Self> {
+    ) -> Result<WindowRunner<'a>> {
         let command = CommandState::new();
         let event_handler = InputEventHandler::new();
         let ipc_server = Some(ipc_server);
@@ -152,7 +153,8 @@ impl WindowRunner {
     fn paint(&mut self) -> Result<()> {
         let size = self.window.size_rectangle();
         let mut buffer = self.window.buffer_mut()?;
-        let panel = Panel::from_buffer(&mut buffer, size);
+        let pixels = window::buffer_as_pixels(&mut buffer);
+        let panel = Panel::new(pixels, size);
         let view = WindowView::new(&self.frame, &self.command);
 
         self.painter.paint(view, panel)?;

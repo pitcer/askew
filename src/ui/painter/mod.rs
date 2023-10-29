@@ -33,6 +33,7 @@ impl Painter {
         Ok(Self { font_loader, glyph_rasterizer, status_layout, command_layout, color_scheme })
     }
 
+    // TODO: return changed regions to present_with_damage
     pub fn paint(&mut self, view: WindowView<'_>, mut panel: Panel<'_>) -> Result<()> {
         panel.fill(Pixel::from_rgba(self.color_scheme.background_color, Alpha::max()));
         if let Some(background) = &view.frame.background() {
