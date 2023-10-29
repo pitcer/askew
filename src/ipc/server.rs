@@ -107,7 +107,7 @@ impl IpcServerHandle {
     }
 
     pub fn send(&self, reply: IpcReply) -> Result<()> {
-        self.sender.send_blocking(reply)?;
+        self.sender.try_send(reply)?;
         Ok(())
     }
 

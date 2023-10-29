@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use async_channel::{SendError, Sender};
+use async_channel::{Sender, TrySendError};
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
 use crate::ui::handler::message::{HandlerMessage, RunnerSender};
@@ -68,12 +68,21 @@ impl Responder {
     }
 
     pub fn respond(&self, response: Response) {
-        let result = self.response_sender.send_blocking(response);
-        if let Err(SendError(response)) = result {
-            log::warn!(
-                "Cannot send response `{response:?}` to task {}, because receiver was closed.",
-                self.task_id
-            );
+        let result = self.response_sender.try_send(response);
+        match result {
+            Err(TrySendError::Full(response)) => {
+                log::warn!(
+                    "Cannot send response `{response:?}` to task {}, because it was already sent.",
+                    self.task_id
+                );
+            }
+            Err(TrySendError::Closed(response)) => {
+                log::warn!(
+                    "Cannot send response `{response:?}` to task {}, because receiver was closed.",
+                    self.task_id
+                );
+            }
+            Ok(()) => (),
         }
     }
 }
