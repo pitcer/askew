@@ -3,14 +3,14 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use async_io::Timer;
 use winit::event::{Event, StartCause, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoopWindowTarget};
+use winit::event_loop::EventLoopWindowTarget;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::RotateCurveById;
 use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
-use crate::command;
 use crate::command::program_view::ProgramView;
 use crate::ipc::server::IpcServerHandle;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
@@ -22,12 +22,12 @@ use crate::ui::input_event_handler::InputEventHandler;
 use crate::ui::input_handler::InputHandler;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
-use crate::ui::runner::task::sleep::SleepingTasks;
 use crate::ui::runner::task::Tasks;
 use crate::ui::window;
 use crate::ui::window::Window;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::state::RequestHandle;
+use crate::{command, executor};
 
 pub mod message;
 
@@ -40,7 +40,6 @@ pub struct WindowHandler<'a> {
     event_handler: InputEventHandler,
     ipc_server: Option<IpcServerHandle>,
     tasks: Tasks,
-    sleeping_tasks: SleepingTasks,
 }
 
 impl<'a> WindowHandler<'a> {
@@ -56,19 +55,8 @@ impl<'a> WindowHandler<'a> {
         let event_handler = InputEventHandler::new();
         let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
-        let sleeping_tasks = SleepingTasks::new();
 
-        Ok(Self {
-            commands,
-            window,
-            frame,
-            painter,
-            command,
-            event_handler,
-            ipc_server,
-            tasks,
-            sleeping_tasks,
-        })
+        Ok(Self { commands, window, frame, painter, command, event_handler, ipc_server, tasks })
     }
 
     pub fn handle(
@@ -101,13 +89,6 @@ impl<'a> WindowHandler<'a> {
                     let result = command::execute(&command, state)?;
 
                     log::info!("Initial command result: `{result:?}`");
-                }
-            }
-            Event::NewEvents(StartCause::ResumeTimeReached { start: _start, requested_resume }) => {
-                let wake_time = self.sleeping_tasks.wake(requested_resume)?;
-                match wake_time {
-                    None => target.set_control_flow(ControlFlow::Wait),
-                    Some(wake_time) => target.set_control_flow(ControlFlow::WaitUntil(wake_time)),
                 }
             }
             _ => {}
@@ -178,17 +159,7 @@ impl<'a> WindowHandler<'a> {
                 self.window.request_redraw();
                 Ok(())
             }
-            HandlerMessage::TaskRequest(request) => self.handle_task_request(request, target),
-            HandlerMessage::ProgressTask(task) => {
-                let task_id = task.task_id();
-                task.progress();
-
-                if let Some(result) = self.tasks.try_finish_task(task_id) {
-                    let result = result?;
-                    log::info!("Task {task_id} finished with result: `{result:?}`");
-                }
-                Ok(())
-            }
+            HandlerMessage::TaskRequest(request) => self.handle_task_request(request),
             HandlerMessage::TaskFinished(task_id) => {
                 let result = self.tasks.finish_task(task_id);
                 let result = result?;
@@ -198,11 +169,7 @@ impl<'a> WindowHandler<'a> {
         }
     }
 
-    fn handle_task_request(
-        &mut self,
-        request: RequestHandle,
-        target: &EventLoopWindowTarget<HandlerMessage>,
-    ) -> Result<()> {
+    fn handle_task_request(&mut self, request: RequestHandle) -> Result<()> {
         let RequestHandle { request, responder } = request;
         match request {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
@@ -226,8 +193,14 @@ impl<'a> WindowHandler<'a> {
                 }
 
                 let duration = Duration::new(seconds, nanoseconds);
-                let wake_time = self.sleeping_tasks.sleep(responder, duration);
-                target.set_control_flow(ControlFlow::WaitUntil(wake_time));
+                let timer = Timer::after(duration);
+                let timer_future = async move {
+                    timer.await;
+                    responder.respond(Response::Sleep);
+                };
+                let task = executor::spawn(timer_future);
+                // TODO: Save task in vec or something that will allow to list or kill it
+                task.detach();
                 Ok(())
             }
             Request::GetPosition { id: _id } => {

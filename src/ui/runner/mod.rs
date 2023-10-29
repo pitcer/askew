@@ -22,6 +22,11 @@ pub async fn run(
     let mut async_event_loop = Async::new(event_loop)?;
 
     let exit_code = loop {
+        // TODO: try to do something with this (maybe winit would fix this someday):
+        // There is a bug on Wayland, that if you hold some key, only the first event will trigger
+        // readability of event loop. Also those next events won't accumulate in event queue in the
+        // event loop. The following warning would be shown after pulling the key:
+        // `[calloop] Received an event for non-existence source: TokenInner`
         async_event_loop.readable().await?;
 
         // SAFETY: event_loop I/O is not dropped

@@ -1,3 +1,4 @@
+use log::LevelFilter;
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
@@ -6,15 +7,19 @@ pub struct Command {
     #[command(subcommand)]
     pub command: SubCommands,
 
-    /// Print debug logs
-    #[arg(short, long, default_value_t = false)]
-    pub debug: bool,
-
     #[arg(long, default_value = "askew_config.toml")]
     pub config: PathBuf,
 
+    /// Print debug logs
+    #[arg(short = 'l', long, default_value_t = LevelFilter::Info)]
+    pub log_level: LevelFilter,
+
+    /// Simplelog allow filters
+    #[arg(short = 'a', long)]
+    pub log_allow: Vec<String>,
+
     /// Simplelog ignore filters
-    #[arg(long)]
+    #[arg(short = 'i', long)]
     pub log_ignore: Vec<String>,
 }
 
@@ -41,7 +46,7 @@ pub struct RunArguments {
     #[arg(long)]
     pub canvas_curve_samples: Option<u32>,
 
-    #[arg(short, long)]
+    #[arg(short = 'b', long)]
     pub background_image_path: Option<PathBuf>,
 
     #[arg(short = 'o', long)]

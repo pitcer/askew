@@ -15,7 +15,6 @@ use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
 
 pub mod lock;
-pub mod sleep;
 
 pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
@@ -44,24 +43,13 @@ impl Tasks {
         let lock = TaskLock::clone(&self.lock);
         let wasm_task = self.runtime.create_task(&path, task_id, proxy, lock)?;
 
-        let future = wasm_task.run(argument);
-
-        let proxy = self.runner.clone();
-        let schedule = move |runnable| {
-            let request = HandlerMessage::ProgressTask(TaskHandle::new(task_id, runnable));
-            proxy.send_event(request).expect("event loop should not be closed");
+        let sender = RunnerSender::clone(&self.runner);
+        let future = async move {
+            let result = wasm_task.run(argument).await;
+            sender.send_event(HandlerMessage::TaskFinished(task_id))?;
+            result
         };
-
-        let (runnable, task) = async_task::spawn(future, schedule);
-        runnable.schedule();
-
-        // let sender = RunnerSender::clone(&self.runner);
-        // let future = async move {
-        //     let result = wasm_task.run(argument).await;
-        //     sender.send_event(HandlerMessage::TaskFinished(task_id))?;
-        //     result
-        // };
-        // let task = executor::spawn(future);
+        let task = executor::spawn(future);
         let task = Task::new(task, task_id, path);
 
         let result = self.tasks.insert(task_id, task);

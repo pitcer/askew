@@ -77,9 +77,7 @@ pub mod wasm;
 
 pub fn main() -> Result<()> {
     let command = Command::parse();
-
-    let filter = if command.debug { LevelFilter::Debug } else { LevelFilter::Info };
-    initialize_logger(filter, command.log_ignore)?;
+    initialize_logger(command.log_level, command.log_allow, command.log_ignore)?;
 
     let mut config = Config::from_file(command.config)?;
     match command.command {
@@ -118,7 +116,11 @@ fn run(config: Config) -> Result<()> {
     Ok(())
 }
 
-fn initialize_logger(level_filter: LevelFilter, ignore_filters: Vec<String>) -> Result<()> {
+fn initialize_logger(
+    level_filter: LevelFilter,
+    allow_filters: Vec<String>,
+    ignore_filters: Vec<String>,
+) -> Result<()> {
     let mut builder = ConfigBuilder::new();
     builder
         .set_enable_paris_formatting(true)
@@ -127,6 +129,9 @@ fn initialize_logger(level_filter: LevelFilter, ignore_filters: Vec<String>) -> 
         ))
         .set_time_offset_to_local()
         .unwrap_or_else(convert::identity);
+    for filter in allow_filters {
+        builder.add_filter_allow(filter);
+    }
     for filter in ignore_filters {
         builder.add_filter_ignore(filter);
     }
