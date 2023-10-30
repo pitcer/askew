@@ -17,8 +17,8 @@ use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
+use crate::ui::handler::input_event::InputEventHandler;
 use crate::ui::handler::message::{HandlerMessage, RunnerSender};
-use crate::ui::input_event_handler::InputEventHandler;
 use crate::ui::input_handler::InputHandler;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
@@ -29,6 +29,7 @@ use crate::wasm::request::{Request, Response};
 use crate::wasm::state::RequestHandle;
 use crate::{command, executor};
 
+pub mod input_event;
 pub mod message;
 
 pub struct WindowHandler<'a> {

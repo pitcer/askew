@@ -8,6 +8,7 @@ pub struct TaskLock {
     lock: Arc<Mutex<LockData>>,
 }
 
+#[derive(Debug)]
 pub struct LockToken(MutexGuardArc<LockData>);
 
 type LockData = ();
