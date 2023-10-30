@@ -65,6 +65,7 @@ pub struct RunArguments {
     #[arg(long)]
     pub font_path: Option<PathBuf>,
 
+    /// If empty, then IPC is disabled
     #[arg(long)]
-    pub ipc_socket_path: Option<PathBuf>,
+    pub ipc_socket_path: Option<Option<PathBuf>>,
 }

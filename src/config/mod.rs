@@ -18,7 +18,9 @@ pub mod trochoid_properties;
 #[serde(default)]
 pub struct Config {
     pub startup_commands: Vec<String>,
-    pub ipc_socket_path: PathBuf,
+
+    #[serde(default)]
+    pub ipc_socket_path: Option<PathBuf>,
 
     #[serde(flatten)]
     pub frame: FrameConfig,
@@ -74,7 +76,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             startup_commands: vec![],
-            ipc_socket_path: PathBuf::from("/tmp/askew.socket"),
+            ipc_socket_path: Some(PathBuf::from("/tmp/askew.socket")),
             frame: FrameConfig::default(),
             canvas: CanvasConfig::default(),
             ui: UiConfig::default(),

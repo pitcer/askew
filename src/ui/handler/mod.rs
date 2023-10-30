@@ -45,29 +45,28 @@ impl<'a> WindowHandler<'a> {
         window: Window<'a>,
         frame: Frame,
         painter: Painter,
-        ipc_server: IpcServerHandle,
+        ipc_server: Option<IpcServerHandle>,
         sender: HandlerSender,
     ) -> Result<WindowHandler<'a>> {
         let command = CommandState::new();
         let event_handler = InputEventHandler::new();
-        let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
 
         let mut window_handler =
             Self { sender, window, frame, painter, command, event_handler, ipc_server, tasks };
-        window_handler.run_init_commands(commands)?;
+        window_handler.run_startup_commands(commands)?;
         Ok(window_handler)
     }
 
-    fn run_init_commands(&mut self, commands: Vec<String>) -> Result<()> {
+    fn run_startup_commands(&mut self, commands: Vec<String>) -> Result<()> {
         for command in commands {
-            log::debug!("<cyan>Initial command input:</> '{command}'");
+            log::debug!("<cyan>Startup command input:</> '{command}'");
 
             let sender = HandlerSender::clone(&self.sender);
             let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
             let result = command::execute(&command, state)?;
 
-            log::info!("Initial command result: `{result:?}`");
+            log::info!("Startup command result: `{result:?}`");
         }
         Ok(())
     }
@@ -155,7 +154,9 @@ impl<'a> WindowHandler<'a> {
                 let sender = HandlerSender::clone(&self.sender);
                 let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
                 let reply = message.handle(state);
-                let handle = self.ipc_server.as_ref().expect("IPC server should exist");
+                let handle = self.ipc_server.as_ref().expect(
+                    "IPC message should only be send by a server, that is currently disabled",
+                );
                 handle.send(reply)?;
                 self.window.request_redraw();
             }

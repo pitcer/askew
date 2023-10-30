@@ -86,7 +86,10 @@ pub fn main() -> Result<()> {
             run(config)
         }
         SubCommands::Ipc(ipc) => {
-            let socket_path = ipc.socket_path.unwrap_or(config.ipc_socket_path);
+            let Some(socket_path) = ipc.socket_path.or(config.ipc_socket_path) else {
+                log::error!("Unknown IPC socket path.");
+                return Ok(());
+            };
             let client = IpcClient::new(socket_path)?;
             client.send(ipc.message)
         }
@@ -101,13 +104,12 @@ fn run(config: Config) -> Result<()> {
     let frame = Frame::new(size, config.frame, config.canvas)?;
     let painter = Painter::new(config.ui)?;
 
-    // TODO: add option to disable IPC server
-    let proxy = event_loop.create_proxy();
-    let ipc_server = IpcServer::run(&config.ipc_socket_path, proxy)?;
+    let sender = event_loop.create_proxy();
+    let ipc_server = config.ipc_socket_path.map(|path| IpcServer::run(path, sender)).transpose()?;
 
-    let proxy = event_loop.create_proxy();
+    let sender = event_loop.create_proxy();
     let mut handler =
-        WindowHandler::new(config.startup_commands, window, frame, painter, ipc_server, proxy)?;
+        WindowHandler::new(config.startup_commands, window, frame, painter, ipc_server, sender)?;
     let run_future = runner::run(event_loop, &mut handler);
     let exited_runner: RunnerExitResult = executor::block_on_run(run_future)?;
     let exit_code = exited_runner.exit_code();
