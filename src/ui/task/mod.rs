@@ -48,7 +48,7 @@ impl Tasks {
 
         let sender = HandlerSender::clone(&self.sender);
         let future = async move {
-            let result = wasm_task.run(argument).await;
+            let result = wasm_task.run(argument).await?;
             sender.send_event(HandlerMessage::TaskFinished(task_id, result))?;
             Ok(())
         };
