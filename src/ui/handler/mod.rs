@@ -1,8 +1,5 @@
-use std::time::Duration;
-
 use anyhow::anyhow;
 use anyhow::Result;
-use async_io::Timer;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoopWindowTarget;
 
@@ -10,6 +7,7 @@ use crate::canvas::math::point::Point;
 use crate::canvas::math::vector::Vector;
 use crate::canvas::request::declare::RotateCurveById;
 use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
+use crate::command;
 use crate::command::program_view::ProgramView;
 use crate::ipc::server::IpcServerHandle;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
@@ -26,7 +24,6 @@ use crate::ui::window;
 use crate::ui::window::Window;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::state::RequestHandle;
-use crate::{command, executor};
 
 pub mod input_event;
 pub mod message;
@@ -189,23 +186,6 @@ impl<'a> WindowHandler<'a> {
                 self.frame.sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
-                Ok(())
-            }
-            Request::Sleep { seconds, nanoseconds } => {
-                if seconds == 0 && nanoseconds == 0 {
-                    responder.respond(Response::Sleep);
-                    return Ok(());
-                }
-
-                let duration = Duration::new(seconds, nanoseconds);
-                let timer = Timer::after(duration);
-                let timer_future = async move {
-                    timer.await;
-                    responder.respond(Response::Sleep);
-                };
-                let task = executor::spawn(timer_future);
-                // TODO: Save task in vec or something that will allow to list or kill it
-                task.detach();
                 Ok(())
             }
             Request::GetPosition { id: _id } => {

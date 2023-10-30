@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
 use async_channel::{Sender, TrySendError};
+use async_io::Timer;
+use std::time::Duration;
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
@@ -149,10 +151,9 @@ impl curve::Host for State {
 #[async_trait::async_trait]
 impl control::Host for State {
     async fn sleep(&mut self, seconds: u64, nanoseconds: u32) -> Result<()> {
-        let request = Request::Sleep { seconds, nanoseconds };
-        let Response::Sleep = self.send_request_lockless(request).await? else {
-            return Err(anyhow!("Invalid response"));
-        };
+        let duration = Duration::new(seconds, nanoseconds);
+        let timer = Timer::after(duration);
+        timer.await;
         Ok(())
     }
 
