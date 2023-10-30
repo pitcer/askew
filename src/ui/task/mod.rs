@@ -10,7 +10,7 @@ use futures_lite::future;
 
 use crate::executor;
 use crate::ui::handler::message::{HandlerMessage, RunnerSender};
-use crate::ui::runner::task::lock::TaskLock;
+use crate::ui::task::lock::TaskLock;
 use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
 

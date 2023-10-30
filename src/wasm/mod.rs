@@ -10,8 +10,8 @@ use wasmtime_wasi::preview2::{Table, WasiCtxBuilder};
 use state::State;
 
 use crate::ui::handler::message::RunnerSender;
-use crate::ui::runner::task::lock::TaskLock;
-use crate::ui::runner::task::{TaskId, TaskResult};
+use crate::ui::task::lock::TaskLock;
+use crate::ui::task::{TaskId, TaskResult};
 use crate::wasm::wit::{Askew, RunArgument};
 
 pub mod request;

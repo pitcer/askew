@@ -8,8 +8,6 @@ use winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
 use crate::ui::handler::message::HandlerMessage;
 use crate::ui::handler::WindowHandler;
 
-pub mod task;
-
 type EventLoop = winit::event_loop::EventLoop<HandlerMessage>;
 
 pub async fn run(

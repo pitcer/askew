@@ -7,4 +7,5 @@ pub mod input_handler;
 pub mod mode;
 pub mod painter;
 pub mod runner;
+pub mod task;
 pub mod window;

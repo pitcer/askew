@@ -2,7 +2,7 @@ use winit::event_loop::EventLoopWindowTarget;
 
 use crate::ui::frame::Frame;
 use crate::ui::handler::message::HandlerMessage;
-use crate::ui::runner::task::Tasks;
+use crate::ui::task::Tasks;
 
 pub struct ProgramView<'a> {
     pub target: &'a EventLoopWindowTarget<HandlerMessage>,

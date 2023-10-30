@@ -22,7 +22,7 @@ use crate::ui::input_event_handler::InputEventHandler;
 use crate::ui::input_handler::InputHandler;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
-use crate::ui::runner::task::Tasks;
+use crate::ui::task::Tasks;
 use crate::ui::window;
 use crate::ui::window::Window;
 use crate::wasm::request::{Request, Response};

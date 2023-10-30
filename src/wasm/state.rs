@@ -3,8 +3,8 @@ use async_channel::{Sender, TrySendError};
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
 use crate::ui::handler::message::{HandlerMessage, RunnerSender};
-use crate::ui::runner::task::lock::{LockToken, TaskLock};
-use crate::ui::runner::task::TaskId;
+use crate::ui::task::lock::{LockToken, TaskLock};
+use crate::ui::task::TaskId;
 use crate::wasm::request::{Request, Response};
 use crate::wasm::wit::curve::CurveId;
 use crate::wasm::wit::{control, curve};
