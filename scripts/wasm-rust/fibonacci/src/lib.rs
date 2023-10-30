@@ -23,7 +23,7 @@ impl Guest for Fibonacci {
 
 fn fibonacci(n: u32) -> u64 {
     if n == 26 {
-        control::sleep(0, 0);
+        control::yield_to_window();
     }
     match n {
         0 => 0,

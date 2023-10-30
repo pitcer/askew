@@ -1,7 +1,8 @@
+use std::time::Duration;
+
 use anyhow::{anyhow, Result};
 use async_channel::{Sender, TrySendError};
 use async_io::Timer;
-use std::time::Duration;
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
@@ -154,6 +155,12 @@ impl control::Host for State {
         let duration = Duration::new(seconds, nanoseconds);
         let timer = Timer::after(duration);
         timer.await;
+        Ok(())
+    }
+
+    async fn yield_to_window(&mut self) -> Result<()> {
+        let response = self.send_request_lockless(Request::Yield).await?;
+        debug_assert!(matches!(response, Response::Yield));
         Ok(())
     }
 

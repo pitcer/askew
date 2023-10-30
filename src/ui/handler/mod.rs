@@ -200,6 +200,10 @@ impl<'a> WindowHandler<'a> {
                 });
                 Ok(())
             }
+            Request::Yield => {
+                responder.respond(Response::Yield);
+                Ok(())
+            }
         }
     }
 }
