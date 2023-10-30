@@ -63,6 +63,8 @@ use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
 use crate::ui::runner;
 use crate::ui::runner::RunnerExitResult;
+use crate::ui::state::{SharedState, State};
+use crate::ui::task::Tasks;
 use crate::ui::window::Window;
 
 pub mod canvas;
@@ -105,13 +107,21 @@ fn run(config: Config) -> Result<()> {
     let painter = Painter::new(config.ui)?;
 
     let sender = event_loop.create_proxy();
-    let ipc_server = config.ipc_socket_path.map(|path| IpcServer::run(path, sender)).transpose()?;
+    let tasks = Tasks::new(sender)?;
+    let state = State::new(frame, tasks);
+
+    if let Some(path) = config.ipc_socket_path {
+        let state = SharedState::clone(&state);
+        let sender = event_loop.create_proxy();
+        IpcServer::run(path, state, sender)?;
+    }
 
     let sender = event_loop.create_proxy();
-    let mut handler =
-        WindowHandler::new(config.startup_commands, window, frame, painter, ipc_server, sender)?;
+    let mut handler = WindowHandler::new(config.startup_commands, window, state, painter, sender)?;
     let run_future = runner::run(event_loop, &mut handler);
+
     let exited_runner: RunnerExitResult = executor::block_on_run(run_future)?;
+
     let exit_code = exited_runner.exit_code();
     log::info!("Loop exited with code {exit_code}.");
 

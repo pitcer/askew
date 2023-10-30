@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -11,8 +12,8 @@ use state::State;
 
 use crate::ui::handler::message::HandlerSender;
 use crate::ui::task::lock::TaskLock;
-use crate::ui::task::{TaskId, TaskResult};
-use crate::wasm::wit::{Askew, RunArgument};
+use crate::ui::task::TaskId;
+use crate::wasm::wit::{Askew, RunArgument, RunResult};
 
 pub mod request;
 pub mod state;
@@ -59,6 +60,13 @@ impl WasmRuntime {
     }
 }
 
+impl Debug for WasmRuntime {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // Wasmtime doesn't implement Debug for Engine and Linker for some reason.
+        f.debug_struct("WasmRuntime").finish_non_exhaustive()
+    }
+}
+
 pub struct WasmTask {
     store: Store<State>,
     component: Component,
@@ -70,7 +78,7 @@ impl WasmTask {
         Self { store, component, linker }
     }
 
-    pub async fn run(mut self, argument: RunArgument) -> TaskResult {
+    pub async fn run(mut self, argument: RunArgument) -> Result<RunResult> {
         let (bindings, _instance) =
             Askew::instantiate_async(&mut self.store, &self.component, &self.linker).await?;
 

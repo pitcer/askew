@@ -1,15 +1,13 @@
-use crate::ui::frame::Frame;
 use crate::ui::handler::message::HandlerSender;
-use crate::ui::task::Tasks;
+use crate::ui::state::State;
 
 pub struct ProgramView<'a> {
     pub handler_sender: HandlerSender,
-    pub frame: &'a mut Frame,
-    pub tasks: &'a mut Tasks,
+    pub state: &'a mut State,
 }
 
 impl<'a> ProgramView<'a> {
-    pub fn new(handler_sender: HandlerSender, frame: &'a mut Frame, tasks: &'a mut Tasks) -> Self {
-        Self { handler_sender, frame, tasks }
+    pub fn new(handler_sender: HandlerSender, state: &'a mut State) -> Self {
+        Self { handler_sender, state }
     }
 }

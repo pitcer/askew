@@ -11,11 +11,11 @@ use futures_lite::future;
 use crate::executor;
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::task::lock::TaskLock;
-use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
 
 pub mod lock;
 
+#[derive(Debug)]
 pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
     task_id_mask: TaskIdMask,
@@ -46,8 +46,9 @@ impl Tasks {
         let sender = HandlerSender::clone(&self.runner);
         let future = async move {
             let result = wasm_task.run(argument).await;
-            sender.send_event(HandlerMessage::TaskFinished(task_id))?;
-            result
+            sender.send_event(HandlerMessage::TaskFinished(task_id, result))?;
+            // TODO: remove task from tasks struct
+            Ok(())
         };
         let task = executor::spawn(future);
         let task = Task::new(task, task_id, path);
@@ -92,6 +93,7 @@ impl Tasks {
     }
 }
 
+#[derive(Debug)]
 pub struct TaskIdMask(BitVec);
 
 impl TaskIdMask {
@@ -132,7 +134,7 @@ impl Default for TaskIdMask {
 }
 
 pub type AsyncTask = async_task::Task<TaskResult>;
-pub type TaskResult = Result<RunResult>;
+pub type TaskResult = Result<()>;
 pub type TaskId = usize;
 
 #[derive(Debug)]

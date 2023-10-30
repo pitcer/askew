@@ -9,17 +9,14 @@ use crate::canvas::request::declare::RotateCurveById;
 use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
 use crate::command;
 use crate::command::program_view::ProgramView;
-use crate::ipc::server::IpcServerHandle;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
-use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
-use crate::ui::frame::Frame;
 use crate::ui::handler::input_event::InputEventHandler;
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
-use crate::ui::input_handler::InputHandler;
+use crate::ui::input_handler::{Input, InputHandler};
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
-use crate::ui::task::Tasks;
+use crate::ui::state::SharedState;
 use crate::ui::window;
 use crate::ui::window::Window;
 use crate::wasm::request::{Request, Response};
@@ -31,29 +28,25 @@ pub mod message;
 pub struct WindowHandler<'a> {
     sender: HandlerSender,
     window: Window<'a>,
-    frame: Frame,
     painter: Painter,
-    command: CommandState,
     event_handler: InputEventHandler,
-    ipc_server: Option<IpcServerHandle>,
-    tasks: Tasks,
+    input_handler: InputHandler,
+    state: SharedState,
 }
 
 impl<'a> WindowHandler<'a> {
     pub fn new(
         commands: Vec<String>,
         window: Window<'a>,
-        frame: Frame,
+        state: SharedState,
         painter: Painter,
-        ipc_server: Option<IpcServerHandle>,
         sender: HandlerSender,
     ) -> Result<WindowHandler<'a>> {
-        let command = CommandState::new();
         let event_handler = InputEventHandler::new();
-        let tasks = Tasks::new(sender.clone())?;
+        let input_handler = InputHandler::new();
 
         let mut window_handler =
-            Self { sender, window, frame, painter, command, event_handler, ipc_server, tasks };
+            Self { sender, window, painter, event_handler, input_handler, state };
         window_handler.run_startup_commands(commands)?;
         Ok(window_handler)
     }
@@ -63,7 +56,8 @@ impl<'a> WindowHandler<'a> {
             log::debug!("<cyan>Startup command input:</> '{command}'");
 
             let sender = HandlerSender::clone(&self.sender);
-            let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
+            let mut state = self.state.lock_arc_blocking();
+            let state = ProgramView::new(sender, &mut state);
             let result = command::execute(&command, state)?;
 
             log::info!("Startup command result: `{result:?}`");
@@ -93,7 +87,7 @@ impl<'a> WindowHandler<'a> {
                 self.handle_window_event(event, target)?;
             }
             Event::UserEvent(request) => self.handle_request(request, target)?,
-            _ => {}
+            _ => (),
         }
         Ok(())
     }
@@ -104,26 +98,13 @@ impl<'a> WindowHandler<'a> {
         target: &EventLoopWindowTarget<HandlerMessage>,
     ) -> Result<()> {
         match event {
-            WindowEvent::RedrawRequested => {
-                self.paint()?;
-            }
-            WindowEvent::Resized(size) => {
-                self.window.resize_surface(size)?;
-            }
-            WindowEvent::CloseRequested => {
-                target.exit();
-            }
+            WindowEvent::RedrawRequested => self.paint()?,
+            WindowEvent::Resized(size) => self.window.resize_surface(size)?,
+            WindowEvent::CloseRequested => target.exit(),
             _ => {
                 let input = self.event_handler.handle(event)?;
                 if let Some(input) = input {
-                    let sender = HandlerSender::clone(&self.sender);
-                    let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
-                    let handler = InputHandler::new(&mut self.command, state);
-                    let result = handler.handle_input(input);
-                    if let Err(error) = result {
-                        log::debug!("{error}");
-                    }
-                    self.window.request_redraw();
+                    self.handle_input(input)?;
                 }
             }
         }
@@ -135,12 +116,25 @@ impl<'a> WindowHandler<'a> {
         let mut buffer = self.window.buffer_mut()?;
         let pixels = window::buffer_as_pixels(&mut buffer);
         let panel = Panel::new(pixels, size);
-        let view = WindowView::new(&self.frame, &self.command);
+        let state = self.state.lock_arc_blocking();
+        let view = WindowView::new(&state.frame, self.input_handler.command());
 
         self.painter.paint(view, panel)?;
 
         let result = buffer.present();
         result.map_err(|error| anyhow!(error.to_string()))?;
+        Ok(())
+    }
+
+    fn handle_input(&mut self, input: Input) -> Result<()> {
+        let sender = HandlerSender::clone(&self.sender);
+        let mut state = self.state.lock_arc_blocking();
+        let state = ProgramView::new(sender, &mut state);
+        let result = self.input_handler.handle_input(input, state);
+        if let Err(error) = result {
+            log::error!("Error during handling input: `{error}`");
+        }
+        self.sender.send_event(HandlerMessage::Redraw)?;
         Ok(())
     }
 
@@ -150,20 +144,8 @@ impl<'a> WindowHandler<'a> {
         target: &EventLoopWindowTarget<HandlerMessage>,
     ) -> Result<()> {
         match request {
-            HandlerMessage::IpcMessage(message) => {
-                let sender = HandlerSender::clone(&self.sender);
-                let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
-                let reply = message.handle(state);
-                let handle = self.ipc_server.as_ref().expect(
-                    "IPC message should only be send by a server, that is currently disabled",
-                );
-                handle.send(reply)?;
-                self.window.request_redraw();
-            }
             HandlerMessage::TaskRequest(request) => self.handle_task_request(request)?,
-            HandlerMessage::TaskFinished(task_id) => {
-                let result = self.tasks.finish_task(task_id);
-                let result = result?;
+            HandlerMessage::TaskFinished(task_id, result) => {
                 log::info!("Task {task_id} finished with result: `{result:?}`");
             }
             HandlerMessage::Redraw => self.window.request_redraw(),
@@ -178,20 +160,23 @@ impl<'a> WindowHandler<'a> {
             Request::MoveCurve { id: _id, horizontal, vertical } => {
                 // TODO: move curve specified by id
                 let shift = Vector::new(horizontal, vertical);
-                self.frame.sub_handle_mut(MoveCurve::new(shift))?;
+                self.state.lock_arc_blocking().frame.sub_handle_mut(MoveCurve::new(shift))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::RotateCurve { id, angle_radians } => {
-                self.frame.sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
+                self.state
+                    .lock_arc_blocking()
+                    .frame
+                    .sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
                 responder.respond(Response::Empty);
                 self.window.request_redraw();
                 Ok(())
             }
             Request::GetPosition { id: _id } => {
                 // TODO: get position of curve specified by id
-                let center = self.frame.sub_handle(GetCurveCenter)?;
+                let center = self.state.lock_blocking().frame.sub_handle(GetCurveCenter)?;
                 // TODO: return None instead of (0, 0)
                 let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
                 responder.respond(Response::GetPosition {

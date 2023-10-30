@@ -10,10 +10,10 @@ pub mod message;
 pub mod parser;
 pub mod program_view;
 
-pub fn execute(input: &str, state: ProgramView<'_>) -> Result<Option<Message>> {
+pub fn execute(input: &str, view: ProgramView<'_>) -> Result<Option<Message>> {
     let mut parser = CommandParser::new(input);
     let result = parser.parse()?;
-    let mut interpreter = CommandInterpreter::new(state);
+    let mut interpreter = CommandInterpreter::new(view);
     let message = interpreter.interpret(result)?;
     Ok(message)
 }
