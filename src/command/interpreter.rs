@@ -20,6 +20,7 @@ use crate::command::parser::{Command, Get, Set, Task, Toggle};
 use crate::command::program_view::ProgramView;
 use crate::config::ShapeType;
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
+use crate::ui::handler::message::HandlerMessage;
 
 pub struct CommandInterpreter<'a> {
     state: ProgramView<'a>,
@@ -203,7 +204,7 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn quit(&mut self) -> InterpretResult {
-        self.state.target.exit();
+        self.state.handler_sender.send_event(HandlerMessage::Exit)?;
         Ok(Some(Message::info("Quit...".to_owned())))
     }
 }

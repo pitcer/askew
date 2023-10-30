@@ -1,10 +1,9 @@
-use std::mem;
 use std::time::Duration;
 
 use anyhow::anyhow;
 use anyhow::Result;
 use async_io::Timer;
-use winit::event::{Event, StartCause, WindowEvent};
+use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoopWindowTarget;
 
 use crate::canvas::math::point::Point;
@@ -18,7 +17,7 @@ use crate::ui::command_state::CommandState;
 use crate::ui::frame::panel::Panel;
 use crate::ui::frame::Frame;
 use crate::ui::handler::input_event::InputEventHandler;
-use crate::ui::handler::message::{HandlerMessage, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::input_handler::InputHandler;
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
@@ -33,7 +32,7 @@ pub mod input_event;
 pub mod message;
 
 pub struct WindowHandler<'a> {
-    commands: Vec<String>,
+    sender: HandlerSender,
     window: Window<'a>,
     frame: Frame,
     painter: Painter,
@@ -50,14 +49,30 @@ impl<'a> WindowHandler<'a> {
         frame: Frame,
         painter: Painter,
         ipc_server: IpcServerHandle,
-        sender: RunnerSender,
+        sender: HandlerSender,
     ) -> Result<WindowHandler<'a>> {
         let command = CommandState::new();
         let event_handler = InputEventHandler::new();
         let ipc_server = Some(ipc_server);
         let tasks = Tasks::new(sender.clone())?;
 
-        Ok(Self { commands, window, frame, painter, command, event_handler, ipc_server, tasks })
+        let mut window_handler =
+            Self { sender, window, frame, painter, command, event_handler, ipc_server, tasks };
+        window_handler.run_init_commands(commands)?;
+        Ok(window_handler)
+    }
+
+    fn run_init_commands(&mut self, commands: Vec<String>) -> Result<()> {
+        for command in commands {
+            log::debug!("<cyan>Initial command input:</> '{command}'");
+
+            let sender = HandlerSender::clone(&self.sender);
+            let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
+            let result = command::execute(&command, state)?;
+
+            log::info!("Initial command result: `{result:?}`");
+        }
+        Ok(())
     }
 
     pub fn handle(
@@ -82,16 +97,6 @@ impl<'a> WindowHandler<'a> {
                 self.handle_window_event(event, target)?;
             }
             Event::UserEvent(request) => self.handle_request(request, target)?,
-            Event::NewEvents(StartCause::Init) => {
-                for command in mem::take(&mut self.commands) {
-                    log::debug!("<cyan>Initial command input:</> '{command}'");
-
-                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
-                    let result = command::execute(&command, state)?;
-
-                    log::info!("Initial command result: `{result:?}`");
-                }
-            }
             _ => {}
         }
         Ok(())
@@ -110,16 +115,13 @@ impl<'a> WindowHandler<'a> {
                 self.window.resize_surface(size)?;
             }
             WindowEvent::CloseRequested => {
-                if let Some(handle) = self.ipc_server.take() {
-                    handle.close();
-                }
-
                 target.exit();
             }
             _ => {
                 let input = self.event_handler.handle(event)?;
                 if let Some(input) = input {
-                    let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
+                    let sender = HandlerSender::clone(&self.sender);
+                    let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
                     let handler = InputHandler::new(&mut self.command, state);
                     let result = handler.handle_input(input);
                     if let Err(error) = result {
@@ -153,21 +155,23 @@ impl<'a> WindowHandler<'a> {
     ) -> Result<()> {
         match request {
             HandlerMessage::IpcMessage(message) => {
-                let state = ProgramView::new(target, &mut self.frame, &mut self.tasks);
+                let sender = HandlerSender::clone(&self.sender);
+                let state = ProgramView::new(sender, &mut self.frame, &mut self.tasks);
                 let reply = message.handle(state);
                 let handle = self.ipc_server.as_ref().expect("IPC server should exist");
                 handle.send(reply)?;
                 self.window.request_redraw();
-                Ok(())
             }
-            HandlerMessage::TaskRequest(request) => self.handle_task_request(request),
+            HandlerMessage::TaskRequest(request) => self.handle_task_request(request)?,
             HandlerMessage::TaskFinished(task_id) => {
                 let result = self.tasks.finish_task(task_id);
                 let result = result?;
                 log::info!("Task {task_id} finished with result: `{result:?}`");
-                Ok(())
             }
+            HandlerMessage::Redraw => self.window.request_redraw(),
+            HandlerMessage::Exit => target.exit(),
         }
+        Ok(())
     }
 
     fn handle_task_request(&mut self, request: RequestHandle) -> Result<()> {

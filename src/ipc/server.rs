@@ -11,7 +11,7 @@ use futures_lite::{AsyncReadExt, AsyncWriteExt, StreamExt};
 use crate::command::message::{Message, MessageType};
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
-use crate::ui::handler::message::{HandlerMessage, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::{command, executor};
 
 pub type IpcReply = (Status, Option<String>);
@@ -19,12 +19,12 @@ pub type IpcReply = (Status, Option<String>);
 pub type ServerTask = Task<Result<()>>;
 
 pub struct IpcServer {
-    proxy: RunnerSender,
+    proxy: HandlerSender,
     receiver: Receiver<IpcReply>,
 }
 
 impl IpcServer {
-    pub fn run(path: impl AsRef<Path>, proxy: RunnerSender) -> Result<IpcServerHandle> {
+    pub fn run(path: impl AsRef<Path>, proxy: HandlerSender) -> Result<IpcServerHandle> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
@@ -42,7 +42,7 @@ impl IpcServer {
         Ok(handle)
     }
 
-    fn new(proxy: RunnerSender, receiver: Receiver<IpcReply>) -> Self {
+    fn new(proxy: HandlerSender, receiver: Receiver<IpcReply>) -> Self {
         Self { proxy, receiver }
     }
 

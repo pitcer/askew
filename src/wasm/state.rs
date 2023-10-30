@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use async_channel::{Sender, TrySendError};
 use wasmtime_wasi::preview2::{Table, WasiCtx, WasiView};
 
-use crate::ui::handler::message::{HandlerMessage, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::task::lock::{LockToken, TaskLock};
 use crate::ui::task::TaskId;
 use crate::wasm::request::{Request, Response};
@@ -11,7 +11,7 @@ use crate::wasm::wit::{control, curve};
 
 pub struct State {
     task_id: TaskId,
-    runner: RunnerSender,
+    runner: HandlerSender,
     lock: TaskLock,
     lock_token: Option<LockToken>,
 
@@ -23,7 +23,7 @@ impl State {
     #[must_use]
     pub fn new(
         task_id: TaskId,
-        runner: RunnerSender,
+        runner: HandlerSender,
         lock: TaskLock,
         wasi_table: Table,
         wasi_context: WasiCtx,

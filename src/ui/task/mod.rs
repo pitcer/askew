@@ -9,7 +9,7 @@ use bitvec::vec::BitVec;
 use futures_lite::future;
 
 use crate::executor;
-use crate::ui::handler::message::{HandlerMessage, RunnerSender};
+use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::task::lock::TaskLock;
 use crate::wasm::wit::RunResult;
 use crate::wasm::WasmRuntime;
@@ -20,12 +20,12 @@ pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
     task_id_mask: TaskIdMask,
     runtime: WasmRuntime,
-    runner: RunnerSender,
+    runner: HandlerSender,
     lock: TaskLock,
 }
 
 impl Tasks {
-    pub fn new(runner: RunnerSender) -> Result<Self> {
+    pub fn new(runner: HandlerSender) -> Result<Self> {
         let tasks = HashMap::new();
         let runtime = WasmRuntime::new()?;
         let task_id_mask = TaskIdMask::new();
@@ -39,11 +39,11 @@ impl Tasks {
 
     pub fn register_task(&mut self, path: PathBuf, argument: Option<String>) -> Result<TaskId> {
         let task_id = self.task_id_mask.crate_task_id();
-        let proxy = RunnerSender::clone(&self.runner);
+        let proxy = HandlerSender::clone(&self.runner);
         let lock = TaskLock::clone(&self.lock);
         let wasm_task = self.runtime.create_task(&path, task_id, proxy, lock)?;
 
-        let sender = RunnerSender::clone(&self.runner);
+        let sender = HandlerSender::clone(&self.runner);
         let future = async move {
             let result = wasm_task.run(argument).await;
             sender.send_event(HandlerMessage::TaskFinished(task_id))?;

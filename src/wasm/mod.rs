@@ -9,7 +9,7 @@ use wasmtime_wasi::preview2::{Table, WasiCtxBuilder};
 
 use state::State;
 
-use crate::ui::handler::message::RunnerSender;
+use crate::ui::handler::message::HandlerSender;
 use crate::ui::task::lock::TaskLock;
 use crate::ui::task::{TaskId, TaskResult};
 use crate::wasm::wit::{Askew, RunArgument};
@@ -43,7 +43,7 @@ impl WasmRuntime {
         &self,
         path: impl AsRef<Path>,
         task_id: TaskId,
-        runner: RunnerSender,
+        runner: HandlerSender,
         lock: TaskLock,
     ) -> Result<WasmTask> {
         let wasi_table = Table::new();
