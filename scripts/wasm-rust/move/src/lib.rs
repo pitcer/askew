@@ -28,6 +28,7 @@ impl Guest for Move {
                     curve::move_by(0, -1.0, -1.0);
                 }
                 control::unlock();
+                control::redraw();
             }
 
             control::sleep(0, 10_000_000);

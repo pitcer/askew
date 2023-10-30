@@ -6,6 +6,6 @@ pub mod input_handler;
 pub mod mode;
 pub mod painter;
 pub mod runner;
-pub mod state;
+pub mod shared;
 pub mod task;
 pub mod window;

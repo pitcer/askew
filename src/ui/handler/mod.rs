@@ -3,24 +3,17 @@ use anyhow::Result;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoopWindowTarget;
 
-use crate::canvas::math::point::Point;
-use crate::canvas::math::vector::Vector;
-use crate::canvas::request::declare::RotateCurveById;
-use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
 use crate::command;
 use crate::command::program_view::ProgramView;
-use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 use crate::ui::frame::panel::Panel;
 use crate::ui::handler::input_event::InputEventHandler;
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::input_handler::{Input, InputHandler};
 use crate::ui::painter::view::WindowView;
 use crate::ui::painter::Painter;
-use crate::ui::state::SharedState;
+use crate::ui::shared::SharedState;
 use crate::ui::window;
 use crate::ui::window::Window;
-use crate::wasm::request::{Request, Response};
-use crate::wasm::state::RequestHandle;
 
 pub mod input_event;
 pub mod message;
@@ -38,9 +31,9 @@ impl<'a> WindowHandler<'a> {
     pub fn new(
         commands: Vec<String>,
         window: Window<'a>,
-        state: SharedState,
         painter: Painter,
         sender: HandlerSender,
+        state: SharedState,
     ) -> Result<WindowHandler<'a>> {
         let event_handler = InputEventHandler::new();
         let input_handler = InputHandler::new();
@@ -56,8 +49,8 @@ impl<'a> WindowHandler<'a> {
             log::debug!("<cyan>Startup command input:</> '{command}'");
 
             let sender = HandlerSender::clone(&self.sender);
-            let mut state = self.state.lock_arc_blocking();
-            let state = ProgramView::new(sender, &mut state);
+            let (mut frame, mut tasks) = self.state.lock_blocking();
+            let state = ProgramView::new(sender, &mut frame, &mut tasks);
             let result = command::execute(&command, state)?;
 
             log::info!("Startup command result: `{result:?}`");
@@ -116,8 +109,8 @@ impl<'a> WindowHandler<'a> {
         let mut buffer = self.window.buffer_mut()?;
         let pixels = window::buffer_as_pixels(&mut buffer);
         let panel = Panel::new(pixels, size);
-        let state = self.state.lock_arc_blocking();
-        let view = WindowView::new(&state.frame, self.input_handler.command());
+        let frame = self.state.frame().lock_blocking();
+        let view = WindowView::new(&frame, self.input_handler.command());
 
         self.painter.paint(view, panel)?;
 
@@ -128,8 +121,8 @@ impl<'a> WindowHandler<'a> {
 
     fn handle_input(&mut self, input: Input) -> Result<()> {
         let sender = HandlerSender::clone(&self.sender);
-        let mut state = self.state.lock_arc_blocking();
-        let state = ProgramView::new(sender, &mut state);
+        let (mut frame, mut tasks) = self.state.lock_blocking();
+        let state = ProgramView::new(sender, &mut frame, &mut tasks);
         let result = self.input_handler.handle_input(input, state);
         if let Err(error) = result {
             log::error!("Error during handling input: `{error}`");
@@ -144,51 +137,15 @@ impl<'a> WindowHandler<'a> {
         target: &EventLoopWindowTarget<HandlerMessage>,
     ) -> Result<()> {
         match request {
-            HandlerMessage::TaskRequest(request) => self.handle_task_request(request)?,
             HandlerMessage::TaskFinished(task_id, result) => {
                 log::info!("Task {task_id} finished with result: `{result:?}`");
+                let (_, mut tasks) = self.state.lock_blocking();
+                tasks.finish_task(task_id)?;
             }
+            HandlerMessage::TaskYield(response) => response.send(),
             HandlerMessage::Redraw => self.window.request_redraw(),
             HandlerMessage::Exit => target.exit(),
         }
         Ok(())
-    }
-
-    fn handle_task_request(&mut self, request: RequestHandle) -> Result<()> {
-        let RequestHandle { request, responder } = request;
-        match request {
-            Request::MoveCurve { id: _id, horizontal, vertical } => {
-                // TODO: move curve specified by id
-                let shift = Vector::new(horizontal, vertical);
-                self.state.lock_arc_blocking().frame.sub_handle_mut(MoveCurve::new(shift))?;
-                responder.respond(Response::Empty);
-                self.window.request_redraw();
-                Ok(())
-            }
-            Request::RotateCurve { id, angle_radians } => {
-                self.state
-                    .lock_arc_blocking()
-                    .frame
-                    .sub_handle_mut(RotateCurveById::new(angle_radians, id as usize))?;
-                responder.respond(Response::Empty);
-                self.window.request_redraw();
-                Ok(())
-            }
-            Request::GetPosition { id: _id } => {
-                // TODO: get position of curve specified by id
-                let center = self.state.lock_blocking().frame.sub_handle(GetCurveCenter)?;
-                // TODO: return None instead of (0, 0)
-                let center = center.unwrap_or_else(|| Point::new(0.0, 0.0));
-                responder.respond(Response::GetPosition {
-                    horizontal: center.horizontal(),
-                    vertical: center.vertical(),
-                });
-                Ok(())
-            }
-            Request::Yield => {
-                responder.respond(Response::Yield);
-                Ok(())
-            }
-        }
     }
 }

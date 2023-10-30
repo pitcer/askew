@@ -63,7 +63,7 @@ use crate::ui::frame::Frame;
 use crate::ui::painter::Painter;
 use crate::ui::runner;
 use crate::ui::runner::RunnerExitResult;
-use crate::ui::state::{SharedState, State};
+use crate::ui::shared::{SharedFrame, SharedState, SharedTasks};
 use crate::ui::task::Tasks;
 use crate::ui::window::Window;
 
@@ -100,15 +100,20 @@ pub fn main() -> Result<()> {
 
 fn run(config: Config) -> Result<()> {
     let event_loop = EventLoopBuilder::with_user_event().build()?;
+
     let window = WindowBuilder::new().with_title("askew").build(&event_loop)?;
     let window = Window::from_winit(&window)?;
+
     let size = window.size_rectangle();
     let frame = Frame::new(size, config.frame, config.canvas)?;
-    let painter = Painter::new(config.ui)?;
+    let frame = SharedFrame::new(frame);
 
     let sender = event_loop.create_proxy();
-    let tasks = Tasks::new(sender)?;
-    let state = State::new(frame, tasks);
+    let frame_clone = SharedFrame::clone(&frame);
+    let tasks = Tasks::new(sender, frame_clone)?;
+    let tasks = SharedTasks::new(tasks);
+
+    let state = SharedState::new(frame, tasks);
 
     if let Some(path) = config.ipc_socket_path {
         let state = SharedState::clone(&state);
@@ -116,8 +121,9 @@ fn run(config: Config) -> Result<()> {
         IpcServer::run(path, state, sender)?;
     }
 
+    let painter = Painter::new(config.ui)?;
     let sender = event_loop.create_proxy();
-    let mut handler = WindowHandler::new(config.startup_commands, window, state, painter, sender)?;
+    let mut handler = WindowHandler::new(config.startup_commands, window, painter, sender, state)?;
     let run_future = runner::run(event_loop, &mut handler);
 
     let exited_runner: RunnerExitResult = executor::block_on_run(run_future)?;

@@ -11,11 +11,10 @@ use wasmtime_wasi::preview2::{Table, WasiCtxBuilder};
 use state::State;
 
 use crate::ui::handler::message::HandlerSender;
+use crate::ui::shared::SharedFrame;
 use crate::ui::task::lock::TaskLock;
-use crate::ui::task::TaskId;
 use crate::wasm::wit::{Askew, RunArgument, RunResult};
 
-pub mod request;
 pub mod state;
 pub mod wit;
 
@@ -43,15 +42,15 @@ impl WasmRuntime {
     pub fn create_task(
         &self,
         path: impl AsRef<Path>,
-        task_id: TaskId,
         runner: HandlerSender,
+        frame: SharedFrame,
         lock: TaskLock,
     ) -> Result<WasmTask> {
         let wasi_table = Table::new();
         let wasi_context = WasiCtxBuilder::new().build();
 
-        let state = State::new(task_id, runner, lock, wasi_table, wasi_context);
-        let store = Store::new(&self.engine, state);
+        let wasm_state = State::new(runner, frame, lock, wasi_table, wasi_context);
+        let store = Store::new(&self.engine, wasm_state);
         let component = Component::from_file(&self.engine, path)?;
         let linker = Arc::clone(&self.linker);
 

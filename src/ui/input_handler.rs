@@ -24,7 +24,7 @@ impl InputHandler {
     pub fn handle_input(&mut self, input: Input, state: ProgramView<'_>) -> Result<()> {
         log::debug!("<cyan><b>Event received from input:</>\n<bright_black>{input:?}</>");
 
-        let frame = &mut state.state.frame;
+        let frame = &mut *state.frame;
 
         match &mut self.command {
             CommandState::Closed(_) => {
@@ -73,14 +73,14 @@ impl InputHandler {
     fn exit_mode(&mut self, state: ProgramView<'_>) {
         if let CommandState::Closed(command) = &mut self.command {
             command.clear_message();
-            state.state.frame.mode_mut().exit();
+            state.frame.mode_mut().exit();
         } else {
             self.command.close();
         }
     }
 
     fn change_mode(&mut self, mode: Mode, state: ProgramView<'_>) {
-        let mode_state = state.state.frame.mode_mut();
+        let mode_state = state.frame.mode_mut();
         match mode {
             Mode::Curve => mode_state.exit(),
             Mode::Point => mode_state.enter_point(),

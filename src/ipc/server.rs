@@ -10,7 +10,7 @@ use crate::command::message::{Message, MessageType};
 use crate::command::program_view::ProgramView;
 use crate::ipc::{Status, STATUS_EMPTY, STATUS_ERROR, STATUS_INFO};
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
-use crate::ui::state::SharedState;
+use crate::ui::shared::SharedState;
 use crate::{command, executor};
 
 type IpcReply = (Status, Option<String>);
@@ -21,13 +21,13 @@ pub struct IpcServer {
 }
 
 impl IpcServer {
-    pub fn run(path: impl AsRef<Path>, state: SharedState, proxy: HandlerSender) -> Result<()> {
+    pub fn run(path: impl AsRef<Path>, state: SharedState, sender: HandlerSender) -> Result<()> {
         let path = path.as_ref();
         if path.exists() {
             fs::remove_file(path)?;
         }
 
-        let server = Self::new(state, proxy);
+        let server = Self::new(state, sender);
         let listener = UnixListener::bind(path)?;
         let listen_future = server.listen(listener);
 
@@ -57,16 +57,15 @@ impl IpcServer {
         }
         Ok(())
     }
-
     async fn handle_message(&mut self, message: &str) -> Result<IpcReply> {
         log::debug!("<cyan>IPC command input:</> '{}'", message);
 
         let sender = HandlerSender::clone(&self.sender);
-        let mut state = self.state.lock_arc().await;
-        let view = ProgramView::new(sender, &mut state);
+        let (mut frame, mut tasks) = self.state.lock().await;
+        let view = ProgramView::new(sender, &mut frame, &mut tasks);
 
         let result = command::execute(message, view).transpose();
-        // TODO: consider if we should redraw here always
+        // TODO: consider if we should always redraw
         self.sender.send_event(HandlerMessage::Redraw)?;
 
         let Some(message) = result else {

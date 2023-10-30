@@ -10,6 +10,7 @@ use futures_lite::future;
 
 use crate::executor;
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
+use crate::ui::shared::SharedFrame;
 use crate::ui::task::lock::TaskLock;
 use crate::wasm::WasmRuntime;
 
@@ -20,17 +21,18 @@ pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
     task_id_mask: TaskIdMask,
     runtime: WasmRuntime,
-    runner: HandlerSender,
+    sender: HandlerSender,
+    frame: SharedFrame,
     lock: TaskLock,
 }
 
 impl Tasks {
-    pub fn new(runner: HandlerSender) -> Result<Self> {
+    pub fn new(sender: HandlerSender, frame: SharedFrame) -> Result<Self> {
         let tasks = HashMap::new();
         let runtime = WasmRuntime::new()?;
         let task_id_mask = TaskIdMask::new();
         let lock = TaskLock::new()?;
-        Ok(Self { tasks, task_id_mask, runtime, runner, lock })
+        Ok(Self { tasks, task_id_mask, runtime, sender, frame, lock })
     }
 
     pub fn list_tasks(&self) -> impl Iterator<Item = &Task> {
@@ -39,15 +41,15 @@ impl Tasks {
 
     pub fn register_task(&mut self, path: PathBuf, argument: Option<String>) -> Result<TaskId> {
         let task_id = self.task_id_mask.crate_task_id();
-        let proxy = HandlerSender::clone(&self.runner);
+        let proxy = HandlerSender::clone(&self.sender);
+        let frame = SharedFrame::clone(&self.frame);
         let lock = TaskLock::clone(&self.lock);
-        let wasm_task = self.runtime.create_task(&path, task_id, proxy, lock)?;
+        let wasm_task = self.runtime.create_task(&path, proxy, frame, lock)?;
 
-        let sender = HandlerSender::clone(&self.runner);
+        let sender = HandlerSender::clone(&self.sender);
         let future = async move {
             let result = wasm_task.run(argument).await;
             sender.send_event(HandlerMessage::TaskFinished(task_id, result))?;
-            // TODO: remove task from tasks struct
             Ok(())
         };
         let task = executor::spawn(future);

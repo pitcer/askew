@@ -19,6 +19,8 @@ world askew {
     unlock: func()
 
     yield-to-window: func()
+
+    redraw: func()
   }
 
   type run-argument = option<string>
