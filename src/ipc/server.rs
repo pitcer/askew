@@ -57,14 +57,17 @@ impl IpcServer {
         }
         Ok(())
     }
+
     async fn handle_message(&mut self, message: &str) -> Result<IpcReply> {
         log::debug!("<cyan>IPC command input:</> '{}'", message);
 
         let sender = HandlerSender::clone(&self.sender);
-        let (mut frame, mut tasks) = self.state.lock().await;
-        let view = ProgramView::new(sender, &mut frame, &mut tasks);
+        let result = {
+            let (mut frame, mut tasks) = self.state.lock().await;
+            let view = ProgramView::new(sender, &mut frame, &mut tasks);
+            command::execute(message, view).transpose()
+        };
 
-        let result = command::execute(message, view).transpose();
         // TODO: consider if we should always redraw
         self.sender.send_event(HandlerMessage::Redraw)?;
 
