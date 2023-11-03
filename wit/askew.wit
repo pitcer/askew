@@ -3,6 +3,10 @@ package pitcer:askew
 world askew {
   import curve: interface {
     type curve-id = u64
+    
+    //variant shape- {
+    //  
+    //}
 
     get-position: func(id: curve-id) -> (horizontal: float32, vertical: float32)
 

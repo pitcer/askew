@@ -72,6 +72,7 @@ pub mod cli;
 pub mod command;
 pub mod config;
 pub mod executor;
+pub mod id_assigner;
 pub mod ipc;
 pub mod request;
 pub mod ui;

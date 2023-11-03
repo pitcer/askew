@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use async_task::Runnable;
-use bitvec::vec::BitVec;
 use futures_lite::future;
 
 use crate::executor;
+use crate::id_assigner::IdAssigner;
 use crate::ui::handler::message::{HandlerMessage, HandlerSender};
 use crate::ui::shared::SharedFrame;
 use crate::ui::task::lock::TaskLock;
@@ -19,7 +19,7 @@ pub mod lock;
 #[derive(Debug)]
 pub struct Tasks {
     tasks: HashMap<TaskId, Task>,
-    task_id_mask: TaskIdMask,
+    task_id_mask: IdAssigner,
     runtime: WasmRuntime,
     sender: HandlerSender,
     frame: SharedFrame,
@@ -30,7 +30,7 @@ impl Tasks {
     pub fn new(sender: HandlerSender, frame: SharedFrame) -> Result<Self> {
         let tasks = HashMap::new();
         let runtime = WasmRuntime::new()?;
-        let task_id_mask = TaskIdMask::new();
+        let task_id_mask = IdAssigner::new();
         let lock = TaskLock::new()?;
         Ok(Self { tasks, task_id_mask, runtime, sender, frame, lock })
     }
@@ -40,7 +40,7 @@ impl Tasks {
     }
 
     pub fn register_task(&mut self, path: PathBuf, argument: Option<String>) -> Result<TaskId> {
-        let task_id = self.task_id_mask.crate_task_id();
+        let task_id = self.task_id_mask.assign_id();
         let proxy = HandlerSender::clone(&self.sender);
         let frame = SharedFrame::clone(&self.frame);
         let lock = TaskLock::clone(&self.lock);
@@ -81,7 +81,7 @@ impl Tasks {
         let task = task.expect("task should be in the map");
         let result = task.finish();
 
-        self.task_id_mask.remove_task_id(task_id);
+        self.task_id_mask.remove_id(task_id);
 
         result
     }
@@ -91,47 +91,7 @@ impl Tasks {
         let task = task.expect("task should be in the map");
         task.kill();
 
-        self.task_id_mask.remove_task_id(task_id);
-    }
-}
-
-#[derive(Debug)]
-pub struct TaskIdMask(BitVec);
-
-impl TaskIdMask {
-    #[must_use]
-    pub fn new() -> Self {
-        Self(BitVec::new())
-    }
-
-    pub fn crate_task_id(&mut self) -> TaskId {
-        let free_task_id = self.0.leading_ones();
-        if free_task_id == self.0.len() {
-            self.0.push(true);
-        } else {
-            let result = self.0.replace(free_task_id, true);
-            debug_assert!(!result, "task with id {free_task_id} is already in task mask");
-        }
-        free_task_id
-    }
-
-    /// Assumes that given `task_id` is valid
-    pub fn remove_task_id(&mut self, task_id: TaskId) {
-        let result = self.0.replace(task_id, false);
-        debug_assert!(result, "task with id {task_id} is not in task mask");
-        self.truncate();
-    }
-
-    fn truncate(&mut self) {
-        let trailing_zeros = self.0.trailing_zeros();
-        let length = self.0.len();
-        self.0.truncate(length - trailing_zeros);
-    }
-}
-
-impl Default for TaskIdMask {
-    fn default() -> Self {
-        Self::new()
+        self.task_id_mask.remove_id(task_id);
     }
 }
 

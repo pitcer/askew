@@ -26,6 +26,8 @@ pub struct Frame {
     mode: ModeState,
 }
 
+// TODO: Store current object here and add highlight option to every object. Also allow to have
+// no objects on canvas (handle that case here, so that we don't have current object).
 impl Frame {
     pub fn new(
         size: Rectangle<u32>,

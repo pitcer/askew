@@ -9,9 +9,9 @@ use shape::{DrawOn, Shape, Update};
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
+use crate::canvas::objects::Objects;
 use crate::canvas::properties::CanvasProperties;
 use crate::canvas::request::declare::AddPoint;
-use crate::canvas::shape::shape_changer::ShapeChanger;
 use crate::config::{CanvasConfig, ShapeType};
 use crate::request::RequestHandlerMut;
 
@@ -19,6 +19,7 @@ pub mod base_line;
 pub mod control_points;
 pub mod control_points_curve;
 pub mod math;
+pub mod objects;
 pub mod paint;
 pub mod polygon;
 pub mod properties;
@@ -29,7 +30,7 @@ pub mod visual_path;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Canvas {
-    curves: Vec<Shape>,
+    objects: Objects,
     size: Rectangle<f32>,
     #[serde(skip)]
     properties: CanvasProperties,
@@ -40,9 +41,8 @@ impl Canvas {
     #[must_use]
     pub fn new(size: Rectangle<f32>, config: CanvasConfig) -> Self {
         let properties = CanvasProperties::default();
-        let curve = Shape::new(config.default_curve_type, &config);
-        let curves = vec![curve];
-        Self { curves, size, properties, config }
+        let objects = Objects::new(&config);
+        Self { objects, size, properties, config }
     }
 
     pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
@@ -53,8 +53,8 @@ impl Canvas {
     }
 
     fn update_all(&mut self) {
-        for curve in &mut self.curves {
-            curve.update();
+        for object in self.objects.objects_mut() {
+            object.update();
         }
     }
 
@@ -69,8 +69,8 @@ impl Canvas {
     }
 
     pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
-        for curve in &self.curves {
-            curve.draw_on(pixmap);
+        for object in self.objects.objects() {
+            object.draw_on(pixmap);
         }
     }
 
@@ -88,14 +88,6 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn change_shape_type(&mut self, id: usize, new_type: ShapeType) {
-        let shape = &mut self.curves[id];
-        replace_with::replace_with_or_abort(shape, |shape| {
-            let changer = ShapeChanger::from_shape(shape, &self.config);
-            changer.into_shape(new_type)
-        });
-    }
-
     #[must_use]
     pub fn curve_type(&self) -> ShapeType {
         self.current_curve().curve_type()
@@ -103,16 +95,18 @@ impl Canvas {
 
     #[must_use]
     pub fn current_curve(&self) -> &Shape {
-        &self.curves[self.properties.current_curve]
+        self.objects.get(self.properties.current_curve).expect("current object id should be valid")
     }
 
     pub fn current_curve_mut(&mut self) -> &mut Shape {
-        &mut self.curves[self.properties.current_curve]
+        self.objects
+            .get_mut(self.properties.current_curve)
+            .expect("current object id should be valid")
     }
 
     #[must_use]
-    pub fn curves(&self) -> &Vec<Shape> {
-        &self.curves
+    pub fn objects_length(&self) -> usize {
+        self.objects.length()
     }
 
     #[must_use]

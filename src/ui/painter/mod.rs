@@ -52,7 +52,7 @@ impl Painter {
             view.frame.current_mode(),
             name,
             canvas.properties().current_curve + 1,
-            canvas.curves().len(),
+            canvas.objects_length(),
             canvas.properties().current_point_index
         ));
         let mut status_bar = TextPanel::new(

@@ -10,6 +10,7 @@ use crate::canvas::shape::request::declare::{
     GetCurveCenter, GetInterpolationNodes, GetPoint, GetSamples, GetWeight, MoveCurve, MovePoint,
     RotateCurve, SelectPoint, SetInterpolationNodes, SetSamples,
 };
+use crate::canvas::shape::shape_changer::ShapeChanger;
 use crate::canvas::shape::Shape;
 use crate::canvas::{math, Canvas};
 use crate::request::macros::delegate_requests;
@@ -54,8 +55,8 @@ impl RequestHandlerMut<AddCurve> for Canvas {
     fn handle_mut(&mut self, _event: AddCurve) -> ResponseMut<AddCurve> {
         let curve_type = self.config.default_curve_type;
         let curve = Shape::new(curve_type, &self.config);
-        self.curves.push(curve);
-        self.properties.current_curve += 1;
+        let id = self.objects.add(curve);
+        self.properties.current_curve = id;
         Ok(())
     }
 }
@@ -63,7 +64,7 @@ impl RequestHandlerMut<AddCurve> for Canvas {
 impl RequestHandlerMut<DeleteCurve> for Canvas {
     fn handle_mut(&mut self, _event: DeleteCurve) -> ResponseMut<DeleteCurve> {
         let current_curve = self.properties.current_curve;
-        self.curves.remove(current_curve);
+        self.objects.remove(current_curve);
         Ok(())
     }
 }
@@ -73,9 +74,10 @@ impl RequestHandlerMut<ChangeCurrentCurveIndex> for Canvas {
         &mut self,
         event: ChangeCurrentCurveIndex,
     ) -> ResponseMut<ChangeCurrentCurveIndex> {
+        // TODO:
         self.properties.current_curve = math::rem_euclid(
             self.properties.current_curve as isize + event.change as isize,
-            self.curves.len() as isize,
+            self.objects.length() as isize,
         );
         Ok(())
     }
@@ -83,30 +85,33 @@ impl RequestHandlerMut<ChangeCurrentCurveIndex> for Canvas {
 
 impl RequestHandler<GetLength> for Canvas {
     fn handle(&self, event: GetLength) -> Response<GetLength> {
-        let length = self.curves[event.0].handle(GetControlPointsLength)?;
+        let object = self.objects.get(event.0).ok_or_else(|| Error::NoSuchCurve(event.0))?;
+        let length = object.handle(GetControlPointsLength)?;
         Ok(length)
     }
 }
 
 impl RequestHandler<GetCurvesLength> for Canvas {
     fn handle(&self, _event: GetCurvesLength) -> Response<GetCurvesLength> {
-        let length = self.curves.len();
+        let length = self.objects.length();
         Ok(length)
     }
 }
 
 impl RequestHandler<GetPointOnCurve> for Canvas {
     fn handle(&self, event: GetPointOnCurve) -> Response<GetPointOnCurve> {
-        let point = self.curves[event.0].handle(GetPoint(event.1))?;
+        let object = self.objects.get(event.0).ok_or_else(|| Error::NoSuchCurve(event.0))?;
+        let point = object.handle(GetPoint(event.1))?;
         Ok(point)
     }
 }
 
 impl RequestHandlerMut<MovePointOnCurve> for Canvas {
     fn handle_mut(&mut self, event: MovePointOnCurve) -> ResponseMut<MovePointOnCurve> {
-        let point = self.curves[event.0].handle(GetPoint(event.1))?;
+        let object = self.objects.get_mut(event.0).ok_or_else(|| Error::NoSuchCurve(event.0))?;
+        let point = object.handle(GetPoint(event.1))?;
         let shift = event.2 - point;
-        self.curves[event.0].handle_mut(MovePoint::new(event.1, shift))?;
+        object.handle_mut(MovePoint::new(event.1, shift))?;
         Ok(())
     }
 }
@@ -171,7 +176,13 @@ impl RequestHandlerMut<ChangeCurrentPointIndex> for Canvas {
 
 impl RequestHandlerMut<SetCurveType> for Canvas {
     fn handle_mut(&mut self, event: SetCurveType) -> ResponseMut<SetCurveType> {
-        self.change_shape_type(self.properties.current_curve, event.0);
+        let id = self.properties.current_curve;
+        let new_type = event.0;
+        let object = self.objects.get_mut(id).ok_or_else(|| Error::NoSuchCurve(id))?;
+        replace_with::replace_with_or_abort(object, |shape| {
+            let changer = ShapeChanger::from_shape(shape, &self.config);
+            changer.into_shape(new_type)
+        });
         Ok(())
     }
 }
@@ -192,7 +203,7 @@ impl RequestHandler<GetCurrentPoint> for Canvas {
 impl RequestHandlerMut<RotateCurveById> for Canvas {
     fn handle_mut(&mut self, event: RotateCurveById) -> ResponseMut<RotateCurveById> {
         let curve =
-            self.curves.get_mut(event.curve).ok_or_else(|| Error::NoSuchCurve(event.curve))?;
+            self.objects.get_mut(event.curve).ok_or_else(|| Error::NoSuchCurve(event.curve))?;
         curve.handle_mut(RotateCurve::new(event.angle))?;
         Ok(())
     }
