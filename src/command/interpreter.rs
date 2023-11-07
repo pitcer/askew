@@ -100,9 +100,7 @@ impl<'a> CommandInterpreter<'a> {
                 frame.sub_handle_mut(SetConvexHull(!value))?;
             }
             Toggle::ControlLine => {
-                // TODO: handle for current curve instead
-                self.state.frame.canvas_mut().config.show_control_line =
-                    !self.state.frame.canvas().config.show_control_line;
+                // TODO: handle for current curve
             }
         }
         Ok(None)
@@ -133,10 +131,9 @@ impl<'a> CommandInterpreter<'a> {
     }
 
     fn interpret_open(&mut self, path: Option<PathBuf>) -> InterpretResult {
-        let (path, canvas) = self.state.frame.open_canvas(path)?;
+        let path = self.state.frame.open_objects(path)?;
         let path = path.display();
         let message = Message::info(format!("Project opened from {path}"));
-        self.state.frame.load_canvas(canvas);
         Ok(Some(message))
     }
 

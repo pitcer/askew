@@ -1,7 +1,12 @@
+use std::fs::File;
+use std::path::Path;
+
+use anyhow::Result;
 use indexmap::{indexmap, IndexMap};
 use serde::{Deserialize, Deserializer};
+use tiny_skia::PixmapMut;
 
-use crate::canvas::shape::Shape;
+use crate::canvas::shape::{DrawOn, Shape, Update};
 use crate::config::CanvasConfig;
 use crate::id_assigner::IdAssigner;
 
@@ -29,16 +34,32 @@ impl Objects {
         Self { objects, assigner }
     }
 
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
+        let file = File::open(path)?;
+        let objects = serde_json::from_reader::<_, Objects>(file)?;
+        Ok(objects)
+    }
+
+    pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
+        let file = File::create(path)?;
+        serde_json::to_writer(file, self)?;
+        Ok(())
+    }
+
+    pub fn update_all(&mut self) {
+        for object in self.objects.values_mut() {
+            object.update();
+        }
+    }
+
+    pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
+        for object in self.objects.values() {
+            object.draw_on(pixmap);
+        }
+    }
+
     pub fn ids(&self) -> impl Iterator<Item = ObjectId> + '_ {
         self.objects.keys().copied()
-    }
-
-    pub fn objects(&self) -> impl Iterator<Item = &Object> {
-        self.objects.values()
-    }
-
-    pub fn objects_mut(&mut self) -> impl Iterator<Item = &mut Object> {
-        self.objects.values_mut()
     }
 
     pub fn add(&mut self, object: Object) -> ObjectId {

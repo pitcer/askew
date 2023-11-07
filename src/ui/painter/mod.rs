@@ -51,9 +51,9 @@ impl Painter {
             "{} {} {}/{} {}",
             view.frame.current_mode(),
             name,
-            canvas.properties().current_curve + 1,
+            canvas.state().current_curve + 1,
             canvas.objects_length(),
-            canvas.properties().current_point_index
+            canvas.state().current_point_index
         ));
         let mut status_bar = TextPanel::new(
             status,

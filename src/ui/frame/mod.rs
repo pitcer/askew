@@ -34,20 +34,20 @@ impl Frame {
         frame_config: FrameConfig,
         canvas_config: CanvasConfig,
     ) -> Result<Self> {
-        let background =
-            frame_config.background_to_load_path.as_ref().map(Self::load_background).transpose()?;
-
-        let mut canvas = frame_config
-            .project_to_open_path
-            .as_ref()
-            .map_or_else(|| Ok(Canvas::new(size.into(), canvas_config)), Canvas::from_file)?;
+        let size_rectangle = size.into();
+        let mut canvas = match &frame_config.project_to_open_path {
+            None => Canvas::new_empty(size_rectangle, canvas_config),
+            Some(path) => Canvas::from_file(path, size_rectangle, canvas_config)?,
+        };
 
         if frame_config.generate_random_points > 0 {
             canvas.generate_random_points(frame_config.generate_random_points)?;
         }
 
-        let properties = FrameProperties::new(frame_config);
+        let background =
+            frame_config.background_to_load_path.as_ref().map(Self::load_background).transpose()?;
         let mode = ModeState::new();
+        let properties = FrameProperties::new(frame_config);
 
         Ok(Self { canvas, size, properties, background, mode })
     }
@@ -95,19 +95,13 @@ impl Frame {
         Ok(path)
     }
 
-    pub fn open_canvas<'a, P>(&'a self, path: Option<P>) -> Result<(P, Canvas)>
+    pub fn open_objects<'a, P>(&'a mut self, path: Option<P>) -> Result<P>
     where
         P: AsRef<Path> + From<&'a PathBuf>,
     {
         let path = path.unwrap_or_else(|| P::from(&self.properties.default_project_save_path));
-        let canvas = Canvas::from_file(&path)?;
-        Ok((path, canvas))
-    }
-
-    pub fn load_canvas(&mut self, mut canvas: Canvas) {
-        let size = self.size.into();
-        canvas.resize(size);
-        self.canvas = canvas;
+        self.canvas.replace_objects_from_file(&path)?;
+        Ok(path)
     }
 
     #[must_use]

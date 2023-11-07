@@ -84,10 +84,10 @@ impl RequestHandlerMut<MouseClick> for Frame {
             Mode::PointSelect => {
                 let point = self.sub_handler().handle(SelectPoint::new(
                     click_point,
-                    self.canvas.config.default_point_radius,
+                    self.canvas.config().default_point_radius,
                 ))?;
                 if let Some(point) = point {
-                    self.canvas.properties_mut().current_point_index = point;
+                    self.canvas.state_mut().current_point_index = point;
                 }
             }
         }

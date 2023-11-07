@@ -1,16 +1,15 @@
-use std::fs::File;
 use std::path::Path;
 
 use anyhow::Result;
 use rand::Rng;
 use tiny_skia::PixmapMut;
 
-use shape::{DrawOn, Shape, Update};
+use shape::Shape;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::objects::Objects;
-use crate::canvas::properties::CanvasProperties;
+use crate::canvas::properties::CanvasState;
 use crate::canvas::request::declare::AddPoint;
 use crate::config::{CanvasConfig, ShapeType};
 use crate::request::RequestHandlerMut;
@@ -29,39 +28,50 @@ pub mod shape;
 pub mod transition;
 pub mod visual_path;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct Canvas {
     objects: Objects,
     size: Rectangle<f32>,
-    #[serde(skip)]
-    properties: CanvasProperties,
-    pub config: CanvasConfig,
+    state: CanvasState,
+    config: CanvasConfig,
 }
 
 impl Canvas {
     #[must_use]
-    pub fn new(size: Rectangle<f32>, config: CanvasConfig) -> Self {
-        let properties = CanvasProperties::default();
-        let objects = Objects::new(&config);
-        Self { objects, size, properties, config }
+    pub fn new(objects: Objects, size: Rectangle<f32>, config: CanvasConfig) -> Self {
+        let state = CanvasState::default();
+        Self { objects, size, state, config }
     }
 
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Canvas> {
-        let file = File::open(path)?;
-        let mut canvas = serde_json::from_reader::<_, Canvas>(file)?;
+    pub fn new_empty(size: Rectangle<f32>, config: CanvasConfig) -> Self {
+        let objects = Objects::new(&config);
+        Self::new(objects, size, config)
+    }
+
+    pub fn from_file(
+        path: impl AsRef<Path>,
+        size: Rectangle<f32>,
+        config: CanvasConfig,
+    ) -> Result<Canvas> {
+        let objects = Objects::from_file(path)?;
+        let mut canvas = Self::new(objects, size, config);
         canvas.update_all();
         Ok(canvas)
     }
 
+    pub fn replace_objects_from_file(&mut self, path: impl AsRef<Path>) -> Result<()> {
+        let mut objects = Objects::from_file(path)?;
+        objects.update_all();
+        self.objects = objects;
+        Ok(())
+    }
+
     fn update_all(&mut self) {
-        for object in self.objects.objects_mut() {
-            object.update();
-        }
+        self.objects.update_all();
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
-        let file = File::create(path)?;
-        serde_json::to_writer(file, self)?;
+        self.objects.save_to_file(path)?;
         Ok(())
     }
 
@@ -70,9 +80,7 @@ impl Canvas {
     }
 
     pub fn draw_on_all(&self, pixmap: &mut PixmapMut<'_>) {
-        for object in self.objects.objects() {
-            object.draw_on(pixmap);
-        }
+        self.objects.draw_on_all(pixmap);
     }
 
     pub fn generate_random_points(&mut self, number_of_points: u32) -> Result<()> {
@@ -96,13 +104,11 @@ impl Canvas {
 
     #[must_use]
     pub fn current_curve(&self) -> &Shape {
-        self.objects.get(self.properties.current_curve).expect("current object id should be valid")
+        self.objects.get(self.state.current_curve).expect("current object id should be valid")
     }
 
     pub fn current_curve_mut(&mut self) -> &mut Shape {
-        self.objects
-            .get_mut(self.properties.current_curve)
-            .expect("current object id should be valid")
+        self.objects.get_mut(self.state.current_curve).expect("current object id should be valid")
     }
 
     #[must_use]
@@ -110,14 +116,18 @@ impl Canvas {
         self.objects.length()
     }
 
-    #[must_use]
-    pub fn properties(&self) -> &CanvasProperties {
-        &self.properties
+    pub fn into_config(self) -> CanvasConfig {
+        self.config
     }
 
     #[must_use]
-    pub fn properties_mut(&mut self) -> &mut CanvasProperties {
-        &mut self.properties
+    pub fn state(&self) -> &CanvasState {
+        &self.state
+    }
+
+    #[must_use]
+    pub fn state_mut(&mut self) -> &mut CanvasState {
+        &mut self.state
     }
 
     #[must_use]

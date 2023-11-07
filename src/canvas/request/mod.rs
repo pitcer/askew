@@ -56,14 +56,14 @@ impl RequestHandlerMut<AddCurve> for Canvas {
         let curve_type = self.config.default_curve_type;
         let curve = Shape::new(curve_type, &self.config);
         let id = self.objects.add(curve);
-        self.properties.current_curve = id;
+        self.state.current_curve = id;
         Ok(())
     }
 }
 
 impl RequestHandlerMut<DeleteCurve> for Canvas {
     fn handle_mut(&mut self, _event: DeleteCurve) -> ResponseMut<DeleteCurve> {
-        let current_curve = self.properties.current_curve;
+        let current_curve = self.state.current_curve;
         self.objects.remove(current_curve);
         Ok(())
     }
@@ -75,8 +75,8 @@ impl RequestHandlerMut<ChangeCurrentCurveIndex> for Canvas {
         event: ChangeCurrentCurveIndex,
     ) -> ResponseMut<ChangeCurrentCurveIndex> {
         // TODO:
-        self.properties.current_curve = math::rem_euclid(
-            self.properties.current_curve as isize + event.change as isize,
+        self.state.current_curve = math::rem_euclid(
+            self.state.current_curve as isize + event.change as isize,
             self.objects.length() as isize,
         );
         Ok(())
@@ -137,7 +137,7 @@ impl RequestHandlerMut<ChangeCurrentPointWeight> for Canvas {
         &mut self,
         event: ChangeCurrentPointWeight,
     ) -> ResponseMut<ChangeCurrentPointWeight> {
-        let point_id = self.properties.current_point_index;
+        let point_id = self.state.current_point_index;
         let current_weight = self.sub_handler().handle(GetWeight::new(point_id))?;
 
         let change = event.weight;
@@ -149,14 +149,14 @@ impl RequestHandlerMut<ChangeCurrentPointWeight> for Canvas {
 
 impl RequestHandlerMut<DeleteCurrentPoint> for Canvas {
     fn handle_mut(&mut self, _event: DeleteCurrentPoint) -> ResponseMut<DeleteCurrentPoint> {
-        let point_id = self.properties.current_point_index;
+        let point_id = self.state.current_point_index;
         self.sub_handler_mut().handle_mut(DeletePoint::new(point_id))
     }
 }
 
 impl RequestHandlerMut<MoveCurrentPoint> for Canvas {
     fn handle_mut(&mut self, event: MoveCurrentPoint) -> ResponseMut<MoveCurrentPoint> {
-        let point_id = self.properties.current_point_index;
+        let point_id = self.state.current_point_index;
         self.sub_handler_mut().handle_mut(MovePoint::new(point_id, event.shift))
     }
 }
@@ -166,17 +166,17 @@ impl RequestHandlerMut<ChangeCurrentPointIndex> for Canvas {
         &mut self,
         event: ChangeCurrentPointIndex,
     ) -> ResponseMut<ChangeCurrentPointIndex> {
-        let point_id = self.properties.current_point_index;
+        let point_id = self.state.current_point_index;
         let length = self.sub_handler().handle(GetControlPointsLength)?;
         let new_id = math::rem_euclid(point_id as isize + event.change as isize, length as isize);
-        self.properties.current_point_index = new_id;
+        self.state.current_point_index = new_id;
         Ok(())
     }
 }
 
 impl RequestHandlerMut<SetCurveType> for Canvas {
     fn handle_mut(&mut self, event: SetCurveType) -> ResponseMut<SetCurveType> {
-        let id = self.properties.current_curve;
+        let id = self.state.current_curve;
         let new_type = event.0;
         let object = self.objects.get_mut(id).ok_or_else(|| Error::NoSuchCurve(id))?;
         replace_with::replace_with_or_abort(object, |shape| {
@@ -195,7 +195,7 @@ impl RequestHandler<GetCurveType> for Canvas {
 
 impl RequestHandler<GetCurrentPoint> for Canvas {
     fn handle(&self, _event: GetCurrentPoint) -> Response<GetCurrentPoint> {
-        let point = self.sub_handler().handle(GetPoint(self.properties.current_point_index))?;
+        let point = self.sub_handler().handle(GetPoint(self.state.current_point_index))?;
         Ok(point)
     }
 }
