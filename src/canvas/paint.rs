@@ -20,6 +20,12 @@ impl<'a> PaintBuilder<'a> {
     }
 
     #[must_use]
+    pub fn rgba_color(self, color: Rgb, alpha: Alpha) -> PaintBuilder<'a> {
+        let color = PaintColor::from_rgba(color, alpha);
+        self.color(color)
+    }
+
+    #[must_use]
     pub fn color(mut self, color: PaintColor) -> PaintBuilder<'a> {
         self.paint.set_color(color.0);
         self
@@ -37,8 +43,7 @@ pub struct PaintColor(Color);
 impl PaintColor {
     #[must_use]
     pub fn from_rgb(rgb: Rgb) -> Self {
-        const ALPHA: Alpha = Alpha::max();
-        Self::from_rgba(rgb, ALPHA)
+        Self::from_rgba(rgb, Alpha::OPAQUE)
     }
 
     #[must_use]

@@ -3,7 +3,7 @@ use tiny_skia::{Path, PathBuilder, PixmapMut, Point, Stroke, Transform};
 use crate::canvas::paint::PaintBuilder;
 use crate::canvas::visual_path::private::{VisualPathDetails, VisualPathProperties};
 use crate::canvas::visual_path::VisualPath;
-use crate::config::rgb::Rgb;
+use crate::config::rgb::{Alpha, Rgb};
 
 pub type VisualLine<const CLOSED: bool> = VisualPath<VisualLineDetails<CLOSED>>;
 
@@ -12,6 +12,7 @@ pub struct VisualLineProperties {
     pub visible: bool,
     pub width: f32,
     pub color: Rgb,
+    pub alpha: Alpha,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -48,8 +49,8 @@ impl<const CLOSED: bool> VisualPathDetails for VisualLineDetails<CLOSED> {
 
 impl VisualLineProperties {
     #[must_use]
-    pub fn new(visible: bool, width: f32, color: Rgb) -> Self {
-        Self { visible, width, color }
+    pub fn new(visible: bool, width: f32, color: Rgb, alpha: Alpha) -> Self {
+        Self { visible, width, color, alpha }
     }
 }
 

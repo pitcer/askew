@@ -3,7 +3,7 @@ use tiny_skia::{FillRule, Path, PathBuilder, PixmapMut, Point, Transform};
 use crate::canvas::paint::PaintBuilder;
 use crate::canvas::visual_path::private::{VisualPathDetails, VisualPathProperties};
 use crate::canvas::visual_path::VisualPath;
-use crate::config::rgb::Rgb;
+use crate::config::rgb::{Alpha, Rgb};
 
 pub type VisualPoint = VisualPath<VisualPointDetails>;
 
@@ -12,6 +12,7 @@ pub struct VisualPointProperties {
     visible: bool,
     radius: f32,
     color: Rgb,
+    alpha: Alpha,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -40,8 +41,8 @@ impl VisualPathDetails for VisualPointDetails {
 
 impl VisualPointProperties {
     #[must_use]
-    pub fn new(visible: bool, radius: f32, color: Rgb) -> Self {
-        Self { visible, radius, color }
+    pub fn new(visible: bool, radius: f32, color: Rgb, alpha: Alpha) -> Self {
+        Self { visible, radius, color, alpha }
     }
 }
 

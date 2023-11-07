@@ -16,7 +16,7 @@ impl<'a> TextPanel<'a> {
     }
 
     pub fn fill(&mut self) {
-        let pixel = Pixel::from_rgba(self.background_color, Alpha::max());
+        let pixel = Pixel::from_rgba(self.background_color, Alpha::OPAQUE);
         self.panel.fill(pixel);
     }
 

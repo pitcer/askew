@@ -1,5 +1,3 @@
-use std::fmt;
-use std::fmt::{Display, Formatter};
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -210,7 +208,16 @@ impl Default for UiConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, serde::Serialize, serde::Deserialize, clap::ValueEnum)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    clap::ValueEnum,
+    parse_display::Display,
+)]
 pub enum ShapeType {
     #[default]
     Polyline,
@@ -219,17 +226,4 @@ pub enum ShapeType {
     RationalBezier,
     Trochoid,
     RegularPolygon,
-}
-
-impl Display for ShapeType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            ShapeType::Polyline => write!(f, "Polyline"),
-            ShapeType::Interpolation => write!(f, "Interpolation"),
-            ShapeType::Bezier => write!(f, "Bezier"),
-            ShapeType::RationalBezier => write!(f, "RationalBezier"),
-            ShapeType::Trochoid => write!(f, "Trochoid"),
-            ShapeType::RegularPolygon => write!(f, "RegularPolygon"),
-        }
-    }
 }

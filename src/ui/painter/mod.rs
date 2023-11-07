@@ -35,7 +35,7 @@ impl Painter {
 
     // TODO: return changed regions to present_with_damage
     pub fn paint(&mut self, view: WindowView<'_>, mut panel: Panel<'_>) -> Result<()> {
-        panel.fill(Pixel::from_rgba(self.color_scheme.background_color, Alpha::max()));
+        panel.fill(Pixel::from_rgba(self.color_scheme.background_color, Alpha::OPAQUE));
         if let Some(background) = &view.frame.background() {
             panel.draw_pixmap(0, 0, background.as_ref());
         }

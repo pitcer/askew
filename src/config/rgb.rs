@@ -77,23 +77,16 @@ pub mod serde_pretty {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Alpha(u8);
 
 impl Alpha {
+    pub const TRANSPARENT: Alpha = Self(0);
+    pub const OPAQUE: Alpha = Self(255);
+
     #[must_use]
     pub const fn new(alpha: u8) -> Self {
         Self(alpha)
-    }
-
-    #[must_use]
-    pub const fn max() -> Self {
-        Self(255)
-    }
-
-    #[must_use]
-    pub const fn min() -> Self {
-        Self(0)
     }
 
     #[must_use]
@@ -114,6 +107,12 @@ impl FromStr for Hex {
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         let number = u8::from_str_radix(string, 16)?;
         Ok(Hex(number))
+    }
+}
+
+impl From<Alpha> for f32 {
+    fn from(value: Alpha) -> Self {
+        f32::from(value.alpha())
     }
 }
 

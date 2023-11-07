@@ -3,7 +3,7 @@ use tiny_skia::{PixmapMut, Point};
 use crate::canvas::shape::DrawOn;
 use crate::canvas::visual_path::line::{VisualLine, VisualLineProperties};
 use crate::canvas::visual_path::point::{VisualPoint, VisualPointProperties};
-use crate::config::rgb::Rgb;
+use crate::config::rgb::{Alpha, Rgb};
 use crate::config::CanvasConfig;
 
 pub type OpenBaseLine = VisualBaseLine<false>;
@@ -46,8 +46,13 @@ impl<const CLOSED: bool> DrawOn for VisualBaseLine<CLOSED> {
 impl<const CLOSED: bool> Default for VisualBaseLine<CLOSED> {
     fn default() -> Self {
         Self {
-            line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE)),
-            points: VisualPoint::new(VisualPointProperties::new(false, 4.0, Rgb::WHITE)),
+            line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE, Alpha::OPAQUE)),
+            points: VisualPoint::new(VisualPointProperties::new(
+                false,
+                4.0,
+                Rgb::WHITE,
+                Alpha::OPAQUE,
+            )),
             point_buffer: Vec::new(),
         }
     }
@@ -60,8 +65,14 @@ impl<const CLOSED: bool> From<&CanvasConfig> for VisualBaseLine<CLOSED> {
                 true,
                 value.default_line_width,
                 value.line_color,
+                Alpha::OPAQUE,
             )),
-            points: VisualPoint::new(VisualPointProperties::new(false, 3.0, Rgb::WHITE)),
+            points: VisualPoint::new(VisualPointProperties::new(
+                false,
+                3.0,
+                Rgb::WHITE,
+                Alpha::OPAQUE,
+            )),
             point_buffer: Vec::new(),
         }
     }

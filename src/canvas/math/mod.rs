@@ -6,6 +6,7 @@ use crate::canvas::shape::rational_bezier::RationalBezierPoint;
 
 pub mod convex_hull;
 pub mod point;
+pub mod polynomial;
 pub mod rectangle;
 pub mod size;
 pub mod vector;

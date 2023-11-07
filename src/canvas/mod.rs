@@ -26,6 +26,7 @@ pub mod properties;
 pub mod request;
 pub mod samples;
 pub mod shape;
+pub mod transition;
 pub mod visual_path;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
