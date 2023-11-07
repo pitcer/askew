@@ -22,7 +22,7 @@ impl VisualPathDetails for VisualPointDetails {
     type Properties = VisualPointProperties;
 
     fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties) {
-        let paint = PaintBuilder::new().rgb_color(properties.color).build();
+        let paint = PaintBuilder::new().rgba_color(properties.color, properties.alpha).build();
         pixmap.fill_path(path, &paint, FillRule::Winding, Transform::identity(), None);
     }
 

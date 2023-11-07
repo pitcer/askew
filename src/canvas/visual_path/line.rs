@@ -22,7 +22,7 @@ impl<const CLOSED: bool> VisualPathDetails for VisualLineDetails<CLOSED> {
     type Properties = VisualLineProperties;
 
     fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties) {
-        let paint = PaintBuilder::new().rgb_color(properties.color).build();
+        let paint = PaintBuilder::new().rgba_color(properties.color, properties.alpha).build();
         let stroke = Stroke { width: properties.width, ..Stroke::default() };
         pixmap.stroke_path(path, &paint, &stroke, Transform::identity(), None);
     }
