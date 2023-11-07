@@ -192,6 +192,7 @@ dependencies = [
  "thiserror",
  "time",
  "tiny-skia",
+ "tinyvec",
  "toml",
  "wasmtime",
  "wasmtime-wasi",

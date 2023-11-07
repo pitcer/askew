@@ -1,7 +1,8 @@
 use std::ops::{Range, RangeInclusive};
 
-use crate::config::CanvasConfig;
 use num_traits::{Num, NumCast};
+
+use crate::config::CanvasConfig;
 
 pub mod request;
 
@@ -11,10 +12,10 @@ pub struct Samples {
 }
 
 #[derive(Debug)]
-pub struct EquallySpacedIterator {
-    start: f32,
-    delta: f32,
-    length: f32,
+pub struct EquallySpacedIterator<T> {
+    start: T,
+    delta: T,
+    length: T,
     iterator: Range<usize>,
 }
 
@@ -25,7 +26,10 @@ impl Samples {
     }
 
     #[must_use]
-    pub fn equally_spaced(&self, range: RangeInclusive<f32>) -> EquallySpacedIterator {
+    pub fn equally_spaced<T>(&self, range: RangeInclusive<T>) -> EquallySpacedIterator<T>
+    where
+        T: Copy + Num + NumCast,
+    {
         EquallySpacedIterator::new(range, self.samples)
     }
 
@@ -35,24 +39,32 @@ impl Samples {
     }
 }
 
-impl EquallySpacedIterator {
+impl<T> EquallySpacedIterator<T>
+where
+    T: Copy + Num + NumCast,
+{
     #[must_use]
-    pub fn new(range: RangeInclusive<f32>, samples: usize) -> Self {
+    pub fn new(range: RangeInclusive<T>, samples: usize) -> Self {
+        debug_assert!(samples >= 2);
+
         let start = *range.start();
         let delta = *range.end() - start;
-        let length = num_traits::cast::<usize, f32>(samples - 1)
+        let length = num_traits::cast::<usize, T>(samples - 1)
             .expect("samples should be representable by the given type");
         let iterator = 0..samples;
         Self { start, delta, length, iterator }
     }
 }
 
-impl Iterator for EquallySpacedIterator {
-    type Item = f32;
+impl<T> Iterator for EquallySpacedIterator<T>
+where
+    T: Copy + Num + NumCast,
+{
+    type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
         let index = self.iterator.next()?;
-        let index = num_traits::cast::<usize, f32>(index)
+        let index = num_traits::cast::<usize, T>(index)
             .expect("index should be representable by the given type");
         Some(self.start + (index * self.delta) / self.length)
     }
@@ -67,5 +79,27 @@ impl Default for Samples {
 impl From<&CanvasConfig> for Samples {
     fn from(value: &CanvasConfig) -> Self {
         Self { samples: value.curve_samples as usize }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn two_samples_iterator() {
+        let mut iterator = EquallySpacedIterator::new(0.0..=1.0, 2);
+        assert_eq!(Some(0.0), iterator.next());
+        assert_eq!(Some(1.0), iterator.next());
+        assert!(iterator.next().is_none());
+    }
+
+    #[test]
+    fn three_samples_iterator() {
+        let mut iterator = EquallySpacedIterator::new(0.0..=1.0, 3);
+        assert_eq!(Some(0.0), iterator.next());
+        assert_eq!(Some(0.5), iterator.next());
+        assert_eq!(Some(1.0), iterator.next());
+        assert!(iterator.next().is_none());
     }
 }

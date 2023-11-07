@@ -34,13 +34,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn empty() {
-        let mut transition =
-            AlphaTransition::new(Alpha::TRANSPARENT, Alpha::OPAQUE, CubicBezier::LINEAR, 0);
-        assert!(transition.next_step().is_none());
-    }
-
-    #[test]
     fn one_step() {
         let mut transition =
             AlphaTransition::new(Alpha::TRANSPARENT, Alpha::OPAQUE, CubicBezier::LINEAR, 1);
