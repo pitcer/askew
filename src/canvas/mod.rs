@@ -43,6 +43,7 @@ impl Canvas {
         Self { objects, size, state, config }
     }
 
+    #[must_use]
     pub fn new_empty(size: Rectangle<f32>, config: CanvasConfig) -> Self {
         let objects = Objects::new(&config);
         Self::new(objects, size, config)
@@ -116,6 +117,7 @@ impl Canvas {
         self.objects.length()
     }
 
+    #[must_use]
     pub fn into_config(self) -> CanvasConfig {
         self.config
     }

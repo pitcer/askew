@@ -3,7 +3,7 @@ name = "askew"
 version = "0.2.0"
 authors = ["Piotr Dobiech"]
 edition = "2021"
-rust-version = "1.73"
+rust-version = "1.74"
 description = "Curves editor"
 repository = "https://github.com/pitcer/askew"
 license = "MIT"
@@ -30,7 +30,7 @@ delegate = "0.10.0"
 fontdue = "0.7.3"
 # TODO: remove, use version from smol dependency
 futures-lite = "2.0.0"
-itertools = "0.11.0"
+itertools = "0.12.0"
 log = "0.4.20"
 num-traits = "0.2.17"
 parse-display = "0.8.2"
@@ -58,7 +58,7 @@ version = "1.14.0"
 features = ["derive"]
 
 [dependencies.clap]
-version = "4.4.7"
+version = "4.4.8"
 features = ["derive"]
 
 [dependencies.image]
@@ -111,3 +111,44 @@ harness = false
 [[bench]]
 name = "bezier"
 harness = false
+
+[lints.rust]
+future_incompatible = "warn"
+nonstandard_style = "warn"
+rust_2018_idioms = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+clone_on_ref_ptr = "warn"
+dbg_macro = "warn"
+exit = "warn"
+filetype_is_file = "warn"
+float_cmp_const = "warn"
+get_unwrap = "warn"
+let_underscore_must_use = "warn"
+lossy_float_literal = "warn"
+map_err_ignore = "warn"
+mem_forget = "warn"
+multiple_inherent_impl = "warn"
+panic = "warn"
+rc_buffer = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+str_to_string = "warn"
+string_add = "warn"
+string_to_string = "warn"
+unnecessary_self_imports = "warn"
+unneeded_field_pattern = "warn"
+use_debug = "warn"
+verbose_file_reads = "warn"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+match_wildcard_for_single_variants = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+needless_pass_by_value = "allow"
+unused_self = "allow"
+unnecessary_wraps = "allow"
