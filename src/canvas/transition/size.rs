@@ -1,12 +1,18 @@
+use std::marker::PhantomData;
+
 use crate::canvas::transition::private::TransitionDetails;
 use crate::canvas::transition::progress::mapping::LinearMapping;
 use crate::canvas::transition::progress::Progress;
-use crate::config::rgb::Alpha;
 
-pub struct AlphaTransitionDetails;
+pub struct SizeTransitionDetails<T>(PhantomData<T>);
 
-impl TransitionDetails for AlphaTransitionDetails {
-    type Property = Alpha;
+impl<T> TransitionDetails for SizeTransitionDetails<T>
+where
+    T: Copy,
+    f32: From<T>,
+    T: From<f32>,
+{
+    type Property = T;
     type Mapping = LinearMapping;
 
     fn create_mapping(from: Self::Property, to: Self::Property) -> Self::Mapping {
@@ -17,7 +23,6 @@ impl TransitionDetails for AlphaTransitionDetails {
 
     fn from_progress(progress: Progress, mapping: &Self::Mapping) -> Self::Property {
         let progress = mapping.map(progress);
-        let alpha = progress.round() as u8;
-        Alpha::new(alpha)
+        T::from(progress)
     }
 }

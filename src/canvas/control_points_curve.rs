@@ -20,8 +20,7 @@ pub struct VisualControlPoints {
     // TODO: add current control point
     control_line: ControlLine,
 
-    // TODO: make private
-    pub convex_hull: ConvexHullLine,
+    convex_hull: ConvexHullLine,
     #[serde(skip)]
     convex_hull_buffer: Vec<CurvePoint>,
 

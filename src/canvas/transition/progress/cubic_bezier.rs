@@ -2,42 +2,11 @@ use tinyvec::tiny_vec;
 
 use crate::canvas::math::point::Point;
 use crate::canvas::math::polynomial::Polynomial;
-use crate::canvas::samples::EquallySpacedIterator;
-
-#[derive(Debug)]
-pub struct BezierTransition {
-    from: f32,
-    to: f32,
-    function: CubicBezier,
-    iterator: EquallySpacedIterator<f32>,
-}
 
 #[derive(Debug)]
 pub struct CubicBezier {
     point_1: Point<f32>,
     point_2: Point<f32>,
-}
-
-impl BezierTransition {
-    #[must_use]
-    pub fn new(from: f32, to: f32, function: CubicBezier, steps: u32) -> Self {
-        debug_assert!(steps >= 1);
-
-        let mut iterator = EquallySpacedIterator::new(0.0..=1.0, steps as usize + 1);
-        let _ = iterator.next();
-        Self { from, to, function, iterator }
-    }
-}
-
-impl Iterator for BezierTransition {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let argument = self.iterator.next()?;
-        let alpha = self.function.evaluate(argument);
-        let progress = self.from * (1.0 - alpha) + self.to * alpha;
-        Some(progress)
-    }
 }
 
 impl CubicBezier {

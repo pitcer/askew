@@ -9,8 +9,8 @@ use shape::Shape;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::rectangle::Rectangle;
 use crate::canvas::objects::Objects;
-use crate::canvas::properties::CanvasState;
 use crate::canvas::request::declare::AddPoint;
+use crate::canvas::state::CanvasState;
 use crate::config::{CanvasConfig, ShapeType};
 use crate::request::RequestHandlerMut;
 
@@ -21,10 +21,10 @@ pub mod math;
 pub mod objects;
 pub mod paint;
 pub mod polygon;
-pub mod properties;
 pub mod request;
 pub mod samples;
 pub mod shape;
+pub mod state;
 pub mod transition;
 pub mod visual_path;
 
