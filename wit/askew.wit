@@ -1,34 +1,34 @@
-package pitcer:askew
+package pitcer:askew;
 
 world askew {
   import curve: interface {
-    type curve-id = u64
+    type curve-id = u64;
     
     //variant shape- {
     //  
     //}
 
-    get-position: func(id: curve-id) -> (horizontal: float32, vertical: float32)
+    get-position: func(id: curve-id) -> (horizontal: float32, vertical: float32);
 
-    move-by: func(id: curve-id, horizontal: float32, vertical: float32)
+    move-by: func(id: curve-id, horizontal: float32, vertical: float32);
 
-    rotate-by: func(id: curve-id, angle-radians: float32)
+    rotate-by: func(id: curve-id, angle-radians: float32);
   }
 
   import control: interface {
-    sleep: func(seconds: u64, nanoseconds: u32)
+    sleep: func(seconds: u64, nanoseconds: u32);
 
-    lock: func()
+    lock: func();
 
-    unlock: func()
+    unlock: func();
 
-    yield-to-window: func()
+    yield-to-window: func();
 
-    redraw: func()
+    redraw: func();
   }
 
-  type run-argument = option<string>
-  type run-result = result<option<string>, string>
+  type run-argument = option<string>;
+  type run-result = result<option<string>, string>;
 
-  export run: func(argument: run-argument) -> run-result
+  export run: func(argument: run-argument) -> run-result;
 }

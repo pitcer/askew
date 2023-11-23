@@ -43,7 +43,7 @@ static_assertions = "1.1.0"
 thiserror = "1.0.50"
 time = "0.3.30"
 toml = "0.8.8"
-wasmtime-wasi = "14.0.4"
+wasmtime-wasi = "15.0.0"
 
 [dependencies.tinyvec]
 version = "1.6.0"
@@ -67,11 +67,11 @@ default-features = false
 features = ["png"]
 
 [dependencies.lru]
-version = "0.12.0"
+version = "0.12.1"
 default-features = false
 
 [dependencies.serde]
-version = "1.0.192"
+version = "1.0.193"
 features = ["derive"]
 
 [dependencies.simplelog]
@@ -91,7 +91,7 @@ default-features = false
 features = ["std", "simd"]
 
 [dependencies.wasmtime]
-version = "14.0.4"
+version = "15.0.0"
 # Disables 'cache', 'jitdump', 'parallel-compilation', 'pooling-allocator', 'vtune', 'wat'
 default-features = false
 features = ["async", "component-model", "cranelift"]
