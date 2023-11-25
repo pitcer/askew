@@ -11,7 +11,7 @@ pub struct Samples {
     samples: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EquallySpacedIterator<T> {
     start: T,
     delta: T,
@@ -53,6 +53,10 @@ where
             .expect("samples should be representable by the given type");
         let iterator = 0..samples;
         Self { start, delta, length, iterator }
+    }
+
+    pub fn steps(&self) -> usize {
+        self.iterator.end
     }
 }
 

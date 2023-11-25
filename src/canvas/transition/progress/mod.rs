@@ -7,7 +7,7 @@ pub mod mapping;
 #[derive(Debug, Copy, Clone)]
 pub struct Progress(f32);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ProgressIterator {
     function: CubicBezier,
     steps: EquallySpacedIterator<f32>,
@@ -21,6 +21,11 @@ impl ProgressIterator {
         let mut steps = EquallySpacedIterator::new(0.0..=1.0, steps as usize + 1);
         let _ = steps.next();
         Self { function, steps }
+    }
+
+    #[must_use]
+    pub fn steps(&self) -> usize {
+        self.steps.steps()
     }
 }
 

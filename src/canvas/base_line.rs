@@ -46,13 +46,11 @@ impl<const CLOSED: bool> DrawOn for VisualBaseLine<CLOSED> {
 impl<const CLOSED: bool> Default for VisualBaseLine<CLOSED> {
     fn default() -> Self {
         Self {
-            line: VisualLine::new(VisualLineProperties::new(true, 2.0, Rgb::WHITE, Alpha::OPAQUE)),
-            points: VisualPoint::new(VisualPointProperties::new(
+            line: VisualLine::new(true, VisualLineProperties::new(2.0, Rgb::WHITE, Alpha::OPAQUE)),
+            points: VisualPoint::new(
                 false,
-                4.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
+                VisualPointProperties::new(4.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
             point_buffer: Vec::new(),
         }
     }
@@ -61,18 +59,18 @@ impl<const CLOSED: bool> Default for VisualBaseLine<CLOSED> {
 impl<const CLOSED: bool> From<&CanvasConfig> for VisualBaseLine<CLOSED> {
     fn from(value: &CanvasConfig) -> Self {
         Self {
-            line: VisualLine::new(VisualLineProperties::new(
+            line: VisualLine::new(
                 true,
-                value.default_line_width,
-                value.line_color,
-                Alpha::OPAQUE,
-            )),
-            points: VisualPoint::new(VisualPointProperties::new(
+                VisualLineProperties::new(
+                    value.default_line_width,
+                    value.line_color,
+                    Alpha::OPAQUE,
+                ),
+            ),
+            points: VisualPoint::new(
                 false,
-                3.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
+                VisualPointProperties::new(3.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
             point_buffer: Vec::new(),
         }
     }

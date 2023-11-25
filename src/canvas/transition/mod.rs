@@ -12,13 +12,21 @@ pub mod point;
 pub mod progress;
 pub mod size;
 
-pub type AlphaTransition = Transition<AlphaTransitionDetails>;
-pub type ColorTransition = Transition<ColorTransitionDetails>;
-pub type PointTransition<T> = Transition<PointTransitionDetails<T>>;
-pub type SizeTransition<T> = Transition<SizeTransitionDetails<T>>;
+pub type AlphaTransition = TransitionImpl<AlphaTransitionDetails>;
+pub type ColorTransition = TransitionImpl<ColorTransitionDetails>;
+pub type PointTransition<T> = TransitionImpl<PointTransitionDetails<T>>;
+pub type SizeTransition<T> = TransitionImpl<SizeTransitionDetails<T>>;
 
-#[derive(Debug)]
-pub struct Transition<T>
+pub trait Transition {
+    type Property;
+
+    fn new(from: Self::Property, to: Self::Property, function: CubicBezier, steps: u32) -> Self;
+
+    fn step(&mut self) -> Option<Self::Property>;
+}
+
+#[derive(Debug, Clone)]
+pub struct TransitionImpl<T>
 where
     T: TransitionDetails,
 {
@@ -26,17 +34,19 @@ where
     mapping: T::Mapping,
 }
 
-impl<T> Transition<T>
+impl<T> Transition for TransitionImpl<T>
 where
     T: TransitionDetails,
 {
-    pub fn new(from: T::Property, to: T::Property, function: CubicBezier, steps: u32) -> Self {
+    type Property = T::Property;
+
+    fn new(from: Self::Property, to: Self::Property, function: CubicBezier, steps: u32) -> Self {
         let mapping = T::create_mapping(from, to);
         let progress = ProgressIterator::new(function, steps);
         Self { progress, mapping }
     }
 
-    pub fn step(&mut self) -> Option<T::Property> {
+    fn step(&mut self) -> Option<Self::Property> {
         let progress = self.progress.next()?;
         let property = T::from_progress(progress, &self.mapping);
         Some(property)

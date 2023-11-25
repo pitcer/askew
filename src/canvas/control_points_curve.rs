@@ -78,31 +78,23 @@ impl DrawOn for VisualControlPoints {
 impl Default for VisualControlPoints {
     fn default() -> Self {
         Self {
-            control_points: VisualPoint::new(VisualPointProperties::new(
+            control_points: VisualPoint::new(
                 true,
-                4.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
-            control_line: VisualLine::new(VisualLineProperties::new(
+                VisualPointProperties::new(4.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
+            control_line: VisualLine::new(
                 false,
-                4.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
-            convex_hull: VisualLine::new(VisualLineProperties::new(
+                VisualLineProperties::new(4.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
+            convex_hull: VisualLine::new(
                 false,
-                4.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
+                VisualLineProperties::new(4.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
             convex_hull_buffer: Vec::new(),
-            center_of_mass: VisualPoint::new(VisualPointProperties::new(
+            center_of_mass: VisualPoint::new(
                 true,
-                4.0,
-                Rgb::WHITE,
-                Alpha::OPAQUE,
-            )),
+                VisualPointProperties::new(4.0, Rgb::WHITE, Alpha::OPAQUE),
+            ),
         }
     }
 }
@@ -110,31 +102,39 @@ impl Default for VisualControlPoints {
 impl From<&CanvasConfig> for VisualControlPoints {
     fn from(value: &CanvasConfig) -> Self {
         Self {
-            control_points: VisualPoint::new(VisualPointProperties::new(
+            control_points: VisualPoint::new(
                 true,
-                value.default_point_radius,
-                value.control_points_color,
-                Alpha::OPAQUE,
-            )),
-            control_line: VisualLine::new(VisualLineProperties::new(
+                VisualPointProperties::new(
+                    value.default_point_radius,
+                    value.control_points_color,
+                    Alpha::OPAQUE,
+                ),
+            ),
+            control_line: VisualLine::new(
                 value.show_control_line,
-                value.default_line_width,
-                value.convex_hull_color,
-                Alpha::OPAQUE,
-            )),
-            convex_hull: VisualLine::new(VisualLineProperties::new(
+                VisualLineProperties::new(
+                    value.default_line_width,
+                    value.convex_hull_color,
+                    Alpha::OPAQUE,
+                ),
+            ),
+            convex_hull: VisualLine::new(
                 value.show_convex_hull,
-                value.default_line_width,
-                value.convex_hull_color,
-                Alpha::OPAQUE,
-            )),
+                VisualLineProperties::new(
+                    value.default_line_width,
+                    value.convex_hull_color,
+                    Alpha::OPAQUE,
+                ),
+            ),
             convex_hull_buffer: Vec::new(),
-            center_of_mass: VisualPoint::new(VisualPointProperties::new(
+            center_of_mass: VisualPoint::new(
                 value.show_center_of_mass,
-                value.default_point_radius * 2.0,
-                Rgb::new(0, 255, 0),
-                Alpha::OPAQUE,
-            )),
+                VisualPointProperties::new(
+                    value.default_point_radius * 2.0,
+                    Rgb::new(0, 255, 0),
+                    Alpha::OPAQUE,
+                ),
+            ),
         }
     }
 }

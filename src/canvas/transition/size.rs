@@ -4,6 +4,7 @@ use crate::canvas::transition::private::TransitionDetails;
 use crate::canvas::transition::progress::mapping::LinearMapping;
 use crate::canvas::transition::progress::Progress;
 
+#[derive(Debug, Copy, Clone)]
 pub struct SizeTransitionDetails<T>(PhantomData<T>);
 
 impl<T> TransitionDetails for SizeTransitionDetails<T>

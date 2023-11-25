@@ -3,6 +3,7 @@ use crate::canvas::transition::progress::mapping::LinearMapping;
 use crate::canvas::transition::progress::Progress;
 use crate::config::rgb::Rgb;
 
+#[derive(Debug, Copy, Clone)]
 pub struct ColorTransitionDetails;
 
 impl TransitionDetails for ColorTransitionDetails {

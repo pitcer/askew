@@ -1,17 +1,18 @@
-use anyhow::Result;
 use tiny_skia::{Path, PathBuilder, PixmapMut, Point};
 
 use crate::canvas::shape::DrawOn;
-use crate::canvas::visual_path::private::{VisualPathDetails, VisualPathProperties};
+use crate::canvas::visual_path::private::VisualPathDetails;
 
 pub mod line;
 pub mod point;
+pub mod property;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VisualPath<T>
 where
     T: VisualPathDetails,
 {
+    visible: bool,
     #[serde(skip)]
     path: Option<Path>,
     properties: T::Properties,
@@ -21,37 +22,23 @@ impl<T> VisualPath<T>
 where
     T: VisualPathDetails,
 {
-    pub fn new(properties: T::Properties) -> Self {
+    pub fn new(visible: bool, properties: T::Properties) -> Self {
         let path = None;
-        Self { path, properties }
-    }
-
-    pub fn from_points<P>(
-        points: impl ExactSizeIterator<Item = P>,
-        properties: T::Properties,
-    ) -> Result<Self>
-    where
-        P: Into<Point>,
-    {
-        let path =
-            properties.visible().then(|| Self::build_new_path(points, &properties)).flatten();
-        Ok(Self { path, properties })
+        Self { visible, path, properties }
     }
 
     pub fn rebuild_path<P>(&mut self, points: impl ExactSizeIterator<Item = P>)
     where
         P: Into<Point>,
     {
-        if self.properties.visible() {
-            let path = match self.path.take() {
-                None => Self::build_new_path(points, &self.properties),
-                Some(path) => {
-                    let builder = path.clear();
-                    Self::build_path_from_builder(builder, points, &self.properties)
-                }
-            };
-            self.path = path;
-        }
+        let true = self.visible else { return };
+        let path = if let Some(path) = self.path.take() {
+            let builder = path.clear();
+            Self::build_path_from_builder(builder, points, &self.properties)
+        } else {
+            Self::build_new_path(points, &self.properties)
+        };
+        self.path = path;
     }
 
     fn build_new_path<P>(
@@ -84,10 +71,9 @@ where
     T: VisualPathDetails,
 {
     fn draw_on(&self, pixmap: &mut PixmapMut<'_>) {
-        if self.properties.visible() {
-            if let Some(path) = &self.path {
-                T::draw_on(pixmap, path, &self.properties);
-            }
+        let true = self.visible else { return };
+        if let Some(path) = &self.path {
+            T::draw_on(pixmap, path, &self.properties);
         }
     }
 }
@@ -96,7 +82,7 @@ mod private {
     use super::{Path, PathBuilder, PixmapMut, Point};
 
     pub trait VisualPathDetails {
-        type Properties: VisualPathProperties;
+        type Properties;
 
         fn draw_on(pixmap: &mut PixmapMut<'_>, path: &Path, properties: &Self::Properties);
 
@@ -107,9 +93,5 @@ mod private {
             points: impl ExactSizeIterator<Item = Point>,
             properties: &Self::Properties,
         ) -> Option<Path>;
-    }
-
-    pub trait VisualPathProperties {
-        fn visible(&self) -> bool;
     }
 }

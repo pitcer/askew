@@ -3,6 +3,7 @@ use crate::canvas::transition::progress::mapping::LinearMapping;
 use crate::canvas::transition::progress::Progress;
 use crate::config::rgb::Alpha;
 
+#[derive(Debug, Copy, Clone)]
 pub struct AlphaTransitionDetails;
 
 impl TransitionDetails for AlphaTransitionDetails {

@@ -1,6 +1,6 @@
 use crate::canvas::transition::progress::Progress;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Copy, Clone)]
 pub struct LinearMapping {
     from: f32,
     to: f32,

@@ -3,7 +3,7 @@ use tinyvec::tiny_vec;
 use crate::canvas::math::point::Point;
 use crate::canvas::math::polynomial::Polynomial;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct CubicBezier {
     point_1: Point<f32>,
     point_2: Point<f32>,
