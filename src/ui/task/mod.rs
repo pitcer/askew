@@ -66,16 +66,6 @@ impl Tasks {
         self.tasks.contains_key(&task_id)
     }
 
-    pub fn try_finish_task(&mut self, task_id: TaskId) -> Option<TaskResult> {
-        let task = self.tasks.get(&task_id);
-        if let Some(task) = task {
-            if task.is_finished() {
-                return Some(self.finish_task(task_id));
-            }
-        }
-        None
-    }
-
     pub fn finish_task(&mut self, task_id: TaskId) -> TaskResult {
         let task = self.tasks.remove(&task_id);
         let task = task.expect("task should be in the map");
