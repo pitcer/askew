@@ -26,7 +26,7 @@ impl Polygon {
 
 impl Update for Polygon {
     fn update(&mut self) {
-        let points = self.points.copied_iterator();
+        let points = self.points.points_iterator();
         self.base_line.rebuild_paths(points);
 
         self.control_points.rebuild_paths(&self.points);

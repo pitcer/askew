@@ -1,6 +1,6 @@
 use num_traits::Euclid;
 
-use crate::canvas::control_points::point::CurvePoint;
+use crate::canvas::control_points::point::{CurvePoint, PointContainer};
 use crate::canvas::math::point::Point;
 use crate::canvas::shape::rational_bezier::RationalBezierPoint;
 
@@ -60,7 +60,7 @@ pub fn de_casteljau(points: &[CurvePoint], t: f32) -> CurvePoint {
 pub fn rational_de_casteljau(points: &[RationalBezierPoint], t: f32) -> CurvePoint {
     let t_1 = 1.0 - t;
     let (mut q, mut w): (Vec<Point<f32>>, Vec<f32>) =
-        points.iter().map(|point| (point.point(), point.weight())).unzip();
+        points.iter().map(|point| (point.into_point(), point.weight())).unzip();
     for k in 1..(points.len()) {
         for i in 0..(points.len() - k) {
             let u = t_1 * w[i];
@@ -119,15 +119,15 @@ pub fn rational_chudy_wozny(points: &[RationalBezierPoint], t: f32) -> CurvePoin
     let mut h = 1.0;
     let mut u = 1.0 - t;
     let n_1 = n + 1;
-    let mut q = points[0].point();
+    let mut q = points[0].into_point();
     if t <= 0.5 {
         u = t / u;
         for k in 1..points.len() {
             h = h * u * (n_1 - k) as f32 * points[k].weight();
             h = h / (k as f32 * points[k - 1].weight() + h);
             q = Point::new(
-                (1.0 - h) * q.horizontal() + h * points[k].point().horizontal(),
-                (1.0 - h) * q.vertical() + h * points[k].point().vertical(),
+                (1.0 - h) * q.horizontal() + h * points[k].into_point().horizontal(),
+                (1.0 - h) * q.vertical() + h * points[k].into_point().vertical(),
             );
         }
     } else {
@@ -136,8 +136,8 @@ pub fn rational_chudy_wozny(points: &[RationalBezierPoint], t: f32) -> CurvePoin
             h = h * (n_1 - k) as f32 * points[k].weight();
             h = h / (k as f32 * u * points[k - 1].weight() + h);
             q = Point::new(
-                (1.0 - h) * q.horizontal() + h * points[k].point().horizontal(),
-                (1.0 - h) * q.vertical() + h * points[k].point().vertical(),
+                (1.0 - h) * q.horizontal() + h * points[k].into_point().horizontal(),
+                (1.0 - h) * q.vertical() + h * points[k].into_point().vertical(),
             );
         }
     }

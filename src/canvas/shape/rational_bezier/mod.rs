@@ -1,7 +1,7 @@
 use tiny_skia::PixmapMut;
 
 use crate::canvas::base_line::VisualBaseLine;
-use crate::canvas::control_points::point::WeightedPoint;
+use crate::canvas::control_points::weighted::WeightedPoint;
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::control_points_curve::VisualControlPoints;
 use crate::canvas::shape::shape_changer::ShapeCommonValues;

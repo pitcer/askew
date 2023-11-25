@@ -1,4 +1,4 @@
-use crate::canvas::control_points::point::WeightedPoint;
+use crate::canvas::control_points::weighted::WeightedPoint;
 use crate::canvas::request::declare::{
     AddCurve, AddPoint, ChangeCurrentCurveIndex, ChangeCurrentPointIndex, ChangeCurrentPointWeight,
     DeleteCurrentPoint, DeleteCurve, GetConvexHull, GetCurrentPoint, GetCurveType, GetCurvesLength,

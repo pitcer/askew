@@ -67,7 +67,7 @@ impl Update for InterpolationCurve {
             };
 
             let (xs, ys): (Vec<_>, Vec<_>) =
-                self.points.iterator().map(|point| (*point).into()).unzip();
+                self.points.points_iterator().map(<(f32, f32)>::from).unzip();
             let path = self
                 .samples
                 .equally_spaced(first..=last)

@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
-use crate::canvas::control_points::point::CurvePoint;
+use crate::canvas::control_points::point::{CurvePoint, PointContainer};
 use crate::canvas::control_points::ControlPoints;
-use crate::canvas::math::point::Point;
 use crate::canvas::shape::rational_bezier::RationalBezierPoint;
 use crate::canvas::shape::request::declare::{
     AddControlPoint, AddWeightedControlPoint, ChangeWeight, DeletePoint, GetControlPointsLength,
@@ -56,7 +55,7 @@ impl<P> RequestHandler<GetControlPointsLength> for ControlPoints<P> {
 
 impl<P> RequestHandlerMut<MovePoint> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>>,
+    P: PointContainer<f32> + Copy,
 {
     fn handle_mut(&mut self, event: MovePoint) -> ResponseMut<MovePoint> {
         self.shift(event.id, event.shift).ok_or_else(|| Error::NoSuchPoint(event.id))?;
@@ -73,7 +72,7 @@ impl<P> RequestHandlerMut<DeletePoint> for ControlPoints<P> {
 
 impl<P> RequestHandlerMut<MoveCurve> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>>,
+    P: PointContainer<f32> + Copy,
 {
     fn handle_mut(&mut self, event: MoveCurve) -> ResponseMut<MoveCurve> {
         self.shift_all(event.shift);
@@ -83,7 +82,7 @@ where
 
 impl<P> RequestHandlerMut<RotateCurve> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Into<Point<f32>> + Copy,
+    P: PointContainer<f32> + Debug + Copy,
 {
     fn handle_mut(&mut self, event: RotateCurve) -> ResponseMut<RotateCurve> {
         self.rotate_all(event.angle);
@@ -93,7 +92,7 @@ where
 
 impl<P> RequestHandler<GetCurveCenter> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Copy + Into<Point<f32>>,
+    P: PointContainer<f32> + Debug + Copy,
 {
     fn handle(&self, _event: GetCurveCenter) -> Response<GetCurveCenter> {
         Ok(self.center_of_mass())
@@ -102,17 +101,17 @@ where
 
 impl<P> RequestHandler<GetPoint> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug,
+    P: PointContainer<f32> + Debug + Copy,
 {
     fn handle(&self, event: GetPoint) -> Response<GetPoint> {
-        let point = *self.get(event.0).ok_or_else(|| Error::NoSuchPoint(event.0))?.as_ref();
+        let point = self.get(event.0).ok_or_else(|| Error::NoSuchPoint(event.0))?.into_point();
         Ok(point)
     }
 }
 
 impl<P> RequestHandler<SelectPoint> for ControlPoints<P>
 where
-    P: AsRef<Point<f32>> + AsMut<Point<f32>> + Debug + Copy,
+    P: PointContainer<f32> + Debug + Copy,
 {
     fn handle(&self, event: SelectPoint) -> Response<SelectPoint> {
         Ok(self.select_point(event.guess, event.radius))

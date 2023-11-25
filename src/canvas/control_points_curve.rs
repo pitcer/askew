@@ -2,7 +2,7 @@ use std::mem;
 
 use tiny_skia::{PixmapMut, Point as SkiaPoint};
 
-use crate::canvas::control_points::point::CurvePoint;
+use crate::canvas::control_points::point::{CurvePoint, PointContainer};
 use crate::canvas::control_points::ControlPoints;
 use crate::canvas::math::convex_hull::GrahamScan;
 use crate::canvas::shape::DrawOn;
@@ -41,10 +41,10 @@ impl VisualControlPoints {
 
     pub fn rebuild_paths<P>(&mut self, points: &ControlPoints<P>)
     where
-        P: Into<SkiaPoint> + Into<CurvePoint> + Copy,
+        P: PointContainer<f32> + Copy,
     {
-        self.control_points.rebuild_path(points.copied_iterator());
-        self.control_line.rebuild_path(points.copied_iterator());
+        self.control_points.rebuild_path(points.points_iterator());
+        self.control_line.rebuild_path(points.points_iterator());
 
         self.rebuild_convex_hull_path(points);
 
@@ -54,10 +54,10 @@ impl VisualControlPoints {
 
     fn rebuild_convex_hull_path<P>(&mut self, points: &ControlPoints<P>)
     where
-        P: Into<SkiaPoint> + Into<CurvePoint> + Copy,
+        P: PointContainer<f32> + Copy,
     {
         self.convex_hull_buffer.clear();
-        let points = points.copied_iterator().map(Into::<CurvePoint>::into);
+        let points = points.points_iterator();
         self.convex_hull_buffer.extend(points);
         let graham_scan = GrahamScan::new(mem::take(&mut self.convex_hull_buffer));
         self.convex_hull_buffer = graham_scan.convex_hull();
