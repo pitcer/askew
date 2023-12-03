@@ -4,8 +4,8 @@ use crate::canvas::request::declare::RotateCurveById;
 use crate::canvas::shape::request::declare::{GetCurveCenter, MoveCurve};
 use crate::request::{RequestSubHandler, RequestSubHandlerMut};
 use crate::wasm::state::State;
-use crate::wasm::wit::shape::ObjectId;
 use crate::wasm::wit::shape::Host;
+use crate::wasm::wit::shape::ObjectId;
 
 #[async_trait::async_trait]
 impl Host for State {
