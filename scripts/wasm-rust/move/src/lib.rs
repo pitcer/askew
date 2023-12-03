@@ -14,7 +14,7 @@ impl Guest for Move {
         loop {
             {
                 control::lock();
-                let position = curve::get_position(0);
+                let position = shape::get_position(0);
                 if direction_forward && (position.0 > 300.0 || position.1 > 300.0) {
                     direction_forward = false;
                 }
@@ -23,15 +23,16 @@ impl Guest for Move {
                 }
 
                 if direction_forward {
-                    curve::move_by(0, 1.0, 1.0);
+                    shape::move_by(0, 1.0, 1.0);
                 } else {
-                    curve::move_by(0, -1.0, -1.0);
+                    shape::move_by(0, -1.0, -1.0);
                 }
                 control::unlock();
             }
 
             control::redraw();
             control::sleep(0, 10_000_000);
+            control::tick();
         }
     }
 }

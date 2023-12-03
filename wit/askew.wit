@@ -1,21 +1,29 @@
 package pitcer:askew;
 
 world askew {
-  import curve: interface {
-    type curve-id = u64;
-    
-    //variant shape- {
-    //  
-    //}
+  import shape: interface {
+    type object-id = u64;
 
-    get-position: func(id: curve-id) -> (horizontal: float32, vertical: float32);
+    get-position: func(id: object-id) -> (horizontal: float32, vertical: float32);
 
-    move-by: func(id: curve-id, horizontal: float32, vertical: float32);
+    move-by: func(id: object-id, horizontal: float32, vertical: float32);
 
-    rotate-by: func(id: curve-id, angle-radians: float32);
+    rotate-by: func(id: object-id, angle-radians: float32);
   }
 
   import control: interface {
+    record tick-info {
+      number: tick-number,
+    }
+
+    type tick-number = u64;
+
+    print: func(message: string);
+
+    tick: func();
+
+    get-tick-info: func() -> tick-info;
+
     sleep: func(seconds: u64, nanoseconds: u32);
 
     lock: func();

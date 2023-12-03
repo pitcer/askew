@@ -12,6 +12,7 @@ impl Guest for LongSleep {
     fn run(_argument: RunArgument) -> RunResult {
         loop {
             control::sleep(5, 0);
+            control::tick();
         }
     }
 }
